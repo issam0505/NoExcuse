@@ -16,7 +16,7 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        btnLogin = findViewById(R.id.btnLogin);
+
 
         btnLogin.setOnClickListener(v -> {
             SharedPreferences prefs = getSharedPreferences("MyApp", MODE_PRIVATE);

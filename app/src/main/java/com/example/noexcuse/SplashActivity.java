@@ -19,7 +19,7 @@ public class SplashActivity extends AppCompatActivity {
         if (lang == null) {
             startActivity(new Intent(this, LanguageActivity.class));
         } else if (!isLoggedIn) {
-            startActivity(new Intent(this, LoginActivity.class));
+            startActivity(new Intent(this, RegisterActivity.class));
         } else {
             startActivity(new Intent(this, MainActivity.class));
         }

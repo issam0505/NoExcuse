@@ -4,55 +4,96 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center"
-    android:background="#F5F5F5"
+    android:background="#0D0D0D"
     android:orientation="vertical">
 
     <androidx.cardview.widget.CardView
         android:id="@+id/cardLanguage"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="20dp"
-        app:cardCornerRadius="15dp"
-        app:cardElevation="8dp">
+        android:layout_margin="25dp"
+        app:cardBackgroundColor="#1A1A1A"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="0dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:padding="30dp">
 
             <TextView
-                android:id="@+id/tvtext"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:layout_marginBottom="20dp"
+                android:layout_marginBottom="30dp"
                 android:text="Choisir votre langue"
-                android:textColor="#333333"
-                android:textSize="24sp"
-                android:textStyle="bold" />
+                android:textColor="#FFFFFF"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.05" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnFr"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
-                android:text="Français" />
+                android:layout_height="56dp"
+                android:layout_marginBottom="12dp"
+                android:backgroundTint="#262626"
+                android:text="Français"
+                android:textAllCaps="false"
+                android:textColor="#BFBFBF"
+                app:cornerRadius="12dp"
 
-            <Button
+                app:icon="@drawable/france"
+                app:iconGravity="textEnd"
+                app:iconSize="28dp"
+                app:iconPadding="20dp"
+                android:paddingEnd="40dp"  app:iconTint="@null"
+                app:strokeColor="#3D3D3D"
+                app:strokeWidth="1dp" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnEn"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
-                android:text="English" />
+                android:layout_height="56dp"
+                android:layout_marginBottom="12dp"
+                android:backgroundTint="#262626"
+                android:text="English"
+                android:textAllCaps="false"
+                android:textColor="#BFBFBF"
+                app:cornerRadius="12dp"
 
-            <Button
+                app:icon="@drawable/usa1"
+                app:iconGravity="textEnd"
+                app:iconSize="28dp"
+                app:iconPadding="20dp"
+                android:paddingEnd="40dp"
+
+                app:iconTint="@null"
+                app:strokeColor="#3D3D3D"
+                app:strokeWidth="1dp" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAr"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="العربية" />
+                android:layout_height="56dp"
+                android:layout_marginBottom="12dp"
+                android:backgroundTint="#262626"
+                android:text="العربية"
+                android:textAllCaps="false"
+                android:textColor="#BFBFBF"
+                app:cornerRadius="12dp"
+
+                app:icon="@drawable/ksa"
+                app:iconGravity="textEnd"
+                app:iconSize="28dp"
+                app:iconPadding="25dp"
+                android:paddingEnd="40dp"
+
+                app:iconTint="@null"
+                app:strokeColor="#3D3D3D"
+                app:strokeWidth="1dp" />
 
         </LinearLayout>
     </androidx.cardview.widget.CardView>
-
 </LinearLayout>
