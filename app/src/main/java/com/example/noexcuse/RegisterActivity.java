@@ -7,7 +7,10 @@ import android.view.View;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import java.util.*;
+import retrofit2.*;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -16,19 +19,15 @@ public class RegisterActivity extends AppCompatActivity {
     Button btnSave, btnActualiser;
     LinearLayout layoutOffline;
     ScrollView mainContent;
-    TextView textLink, tvOfflineMsg;
     RelativeLayout loadingLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // تطبيق اللغة المخزنة
         SharedPreferences prefs = getSharedPreferences("MyApp", MODE_PRIVATE);
         setLocale(prefs.getString("lang", "en"));
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
-        // الربط مع الـ Views
         etFirstName = findViewById(R.id.etFirstName);
         etLastName = findViewById(R.id.etLastName);
         etEmail = findViewById(R.id.etEmail);
@@ -41,14 +40,8 @@ public class RegisterActivity extends AppCompatActivity {
         btnActualiser = findViewById(R.id.btnActualiser);
         layoutOffline = findViewById(R.id.layoutOffline);
         mainContent = findViewById(R.id.mainContent);
-        textLink = findViewById(R.id.textLink);
-        tvOfflineMsg = findViewById(R.id.tvOfflineMsg);
         loadingLayout = findViewById(R.id.loadingLayout);
 
-        // الإجراءات
-        textLink.setOnClickListener(v -> startActivity(new Intent(this, LoginActivity.class)));
-
-        // زر التحديث (مع Loading)
         btnActualiser.setOnClickListener(v -> {
             loadingLayout.setVisibility(View.VISIBLE);
             new Handler().postDelayed(() -> {
@@ -57,7 +50,6 @@ public class RegisterActivity extends AppCompatActivity {
             }, 1000);
         });
 
-        // زر التسجيل (مع Loading)
         btnSave.setOnClickListener(v -> attemptRegistration());
 
         setupSpinners();
@@ -68,6 +60,9 @@ public class RegisterActivity extends AppCompatActivity {
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
         String confirm = etConfirmPassword.getText().toString().trim();
+        String fName = etFirstName.getText().toString().trim();
+        String lName = etLastName.getText().toString().trim();
+        String birth = spDay.getSelectedItem().toString() + "/" + spMonth.getSelectedItem().toString() + "/" + spYear.getSelectedItem().toString();
 
         if (email.isEmpty() || password.isEmpty() || !password.equals(confirm)) {
             Toast.makeText(this, getString(R.string.error_pass_match), Toast.LENGTH_SHORT).show();
@@ -76,37 +71,62 @@ public class RegisterActivity extends AppCompatActivity {
 
         loadingLayout.setVisibility(View.VISIBLE);
 
-        // 1. التسجيل في Firebase
         FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        // 2. هنا يتم استدعاء Retrofit لإرسال البيانات لـ FastAPI
-                        // بعد استلام رد النجاح من FastAPI قم بإنهاء الـ Loading
-                        Toast.makeText(this, getString(R.string.success_message), Toast.LENGTH_SHORT).show();
-                        loadingLayout.setVisibility(View.GONE);
-                        startActivity(new Intent(this, MainActivity.class));
-                        finish();
+                        sendToFastAPI(task.getResult().getUser(), email, fName, lName, birth);
                     } else {
                         loadingLayout.setVisibility(View.GONE);
-                        Toast.makeText(this, getString(R.string.error_message), Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, "Auth Error: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
                     }
                 });
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        checkAndShowContent();
+    private void sendToFastAPI(FirebaseUser firebaseUser, String email, String fName, String lName, String birth) {
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://192.168.1.11:8000/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        ApiService apiService = retrofit.create(ApiService.class);
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("uid", firebaseUser.getUid());
+        userData.put("email", email);
+        userData.put("firstName", fName);
+        userData.put("lastName", lName);
+        userData.put("birthDate", birth);
+
+        apiService.registerUser(userData).enqueue(new Callback<Map<String, Object>>() {
+            @Override
+            public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
+                if (response.isSuccessful()) {
+                    loadingLayout.setVisibility(View.GONE);
+                    Toast.makeText(RegisterActivity.this, getString(R.string.success_message), Toast.LENGTH_SHORT).show();
+                    startActivity(new Intent(RegisterActivity.this, MainActivity.class));
+                    finish();
+                } else {
+                    handleRollback(firebaseUser, "API Server Error");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Map<String, Object>> call, Throwable t) {
+                handleRollback(firebaseUser, "Network Error: " + t.getMessage());
+            }
+        });
+    }
+
+    private void handleRollback(FirebaseUser user, String error) {
+        user.delete().addOnCompleteListener(task -> {
+            loadingLayout.setVisibility(View.GONE);
+            Toast.makeText(RegisterActivity.this, error + " - User Registration Cancelled.", Toast.LENGTH_LONG).show();
+        });
     }
 
     private void checkAndShowContent() {
-        if (NetworkUtils.isConnected(this)) {
-            mainContent.setVisibility(View.VISIBLE);
-            layoutOffline.setVisibility(View.GONE);
-        } else {
-            mainContent.setVisibility(View.GONE);
-            layoutOffline.setVisibility(View.VISIBLE);
-        }
+        boolean isConnected = NetworkUtils.isConnected(this);
+        mainContent.setVisibility(isConnected ? View.VISIBLE : View.GONE);
+        layoutOffline.setVisibility(isConnected ? View.GONE : View.VISIBLE);
     }
 
     private void setupSpinners() {
