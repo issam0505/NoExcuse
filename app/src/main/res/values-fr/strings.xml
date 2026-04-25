@@ -2,9 +2,14 @@
     <string name="app_name">NoExcuse</string>
     <string name="first_name">Prénom</string>
     <string name="last_name">Nom</string>
-    <string name="email">E-mail</string>
+    <string name="email">Email</string>
     <string name="password">Mot de passe</string>
     <string name="hint_confirm">Confirmer le mot de passe</string>
     <string name="error_pass_match">Les mots de passe ne correspondent pas !</string>
     <string name="btn_save">Créer un compte</string>
+    <string name="already_have_account">Déjà un compte ? Connectez-vous</string>
+    <string name="msg_no_internet">Pas de connexion internet. Veuillez vérifier votre réseau.</string>
+    <string name="btn_actualiser">Actualiser</string>
+    <string name="success_message">Compte créé avec succès !</string>
+    <string name="error_message">Échec de l\'inscription. Veuillez réessayer.</string>
 </resources>

@@ -7,4 +7,9 @@
     <string name="hint_confirm">Confirm Password</string>
     <string name="error_pass_match">Passwords do not match!</string>
     <string name="btn_save">Create Account</string>
+    <string name="already_have_account">Already have an account? Login</string>
+    <string name="msg_no_internet">No internet connection. Please check your network.</string>
+    <string name="btn_actualiser">Refresh</string>
+    <string name="success_message">Account created successfully!</string>
+    <string name="error_message">Registration failed. Please try again.</string>
 </resources>

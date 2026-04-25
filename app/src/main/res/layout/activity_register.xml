@@ -1,43 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0D0D0D"
-    android:fillViewport="true">
+    android:background="#0D0D0D">
 
     <LinearLayout
+        android:id="@+id/layoutOffline"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
+        android:gravity="center"
         android:orientation="vertical"
-        android:padding="24dp"
-        android:gravity="center_horizontal">
+        android:visibility="gone">
+        <ImageView android:layout_width="120dp" android:layout_height="120dp" android:src="@drawable/logo"/>
+        <TextView android:id="@+id/tvOfflineMsg" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:layout_margin="20dp" android:textStyle="bold" android:textSize="18sp"/>
+        <Button android:id="@+id/btnActualiser" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/btn_actualiser" android:backgroundTint="#00FF88" android:textColor="#000000"/>
+    </LinearLayout>
 
-        <ImageView
-            android:layout_width="110dp"
-            android:layout_height="110dp"
-            android:src="@drawable/logo"
-            android:layout_marginTop="30dp"
-            android:layout_marginBottom="20dp"/>
-
-        <EditText android:id="@+id/etFirstName" android:layout_width="match_parent" android:layout_height="55dp" android:textColor="#FFFFFF" android:textColorHint="#AAAAAA" android:background="#1A1A1A" android:padding="16dp" android:layout_marginBottom="12dp"/>
-        <EditText android:id="@+id/etLastName" android:layout_width="match_parent" android:layout_height="55dp" android:textColor="#FFFFFF" android:textColorHint="#AAAAAA" android:background="#1A1A1A" android:padding="16dp" android:layout_marginBottom="12dp"/>
-        <EditText android:id="@+id/etEmail" android:layout_width="match_parent" android:layout_height="55dp" android:inputType="textEmailAddress" android:textColor="#FFFFFF" android:textColorHint="#AAAAAA" android:background="#1A1A1A" android:padding="16dp" android:layout_marginBottom="12dp"/>
-        <EditText android:id="@+id/etPassword" android:layout_width="match_parent" android:layout_height="55dp" android:inputType="textPassword" android:textColor="#FFFFFF" android:textColorHint="#AAAAAA" android:background="#1A1A1A" android:padding="16dp" android:layout_marginBottom="12dp"/>
-        <EditText android:id="@+id/etConfirmPassword" android:layout_width="match_parent" android:layout_height="55dp" android:inputType="textPassword" android:textColor="#FFFFFF" android:textColorHint="#AAAAAA" android:background="#1A1A1A" android:padding="16dp" android:layout_marginBottom="12dp"/>
-
+    <ScrollView
+        android:id="@+id/mainContent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="24dp"
-            android:gravity="center">
-            <Spinner android:id="@+id/spDay" android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="1" android:background="#FFFFFF" android:layout_marginEnd="4dp"/>
-            <Spinner android:id="@+id/spMonth" android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="1" android:background="#FFFFFF" android:layout_marginEnd="4dp"/>
-            <Spinner android:id="@+id/spYear" android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="1" android:background="#FFFFFF"/>
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:gravity="center_horizontal">
+
+            <ImageView android:layout_width="110dp" android:layout_height="110dp" android:src="@drawable/logo" android:layout_marginTop="30dp" android:layout_marginBottom="20dp"/>
+
+            <EditText android:id="@+id/etFirstName" android:layout_width="match_parent" android:layout_height="55dp" android:textColor="#FFFFFF" android:textColorHint="#AAAAAA" android:background="#1A1A1A" android:padding="16dp" android:layout_marginBottom="12dp" android:hint="@string/first_name"/>
+            <EditText android:id="@+id/etLastName" android:layout_width="match_parent" android:layout_height="55dp" android:textColor="#FFFFFF" android:textColorHint="#AAAAAA" android:background="#1A1A1A" android:padding="16dp" android:layout_marginBottom="12dp" android:hint="@string/last_name"/>
+            <EditText android:id="@+id/etEmail" android:layout_width="match_parent" android:layout_height="55dp" android:inputType="textEmailAddress" android:textColor="#FFFFFF" android:textColorHint="#AAAAAA" android:background="#1A1A1A" android:padding="16dp" android:layout_marginBottom="12dp" android:hint="@string/email"/>
+            <EditText android:id="@+id/etPassword" android:layout_width="match_parent" android:layout_height="55dp" android:inputType="textPassword" android:textColor="#FFFFFF" android:textColorHint="#AAAAAA" android:background="#1A1A1A" android:padding="16dp" android:layout_marginBottom="12dp" android:hint="@string/password"/>
+            <EditText android:id="@+id/etConfirmPassword" android:layout_width="match_parent" android:layout_height="55dp" android:inputType="textPassword" android:textColor="#FFFFFF" android:textColorHint="#AAAAAA" android:background="#1A1A1A" android:padding="16dp" android:layout_marginBottom="12dp" android:hint="@string/hint_confirm"/>
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="24dp" android:gravity="center">
+                <Spinner android:id="@+id/spDay" android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="1" android:background="#FFFFFF" android:layout_marginEnd="4dp"/>
+                <Spinner android:id="@+id/spMonth" android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="1" android:background="#FFFFFF" android:layout_marginEnd="4dp"/>
+                <Spinner android:id="@+id/spYear" android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="1" android:background="#FFFFFF"/>
+            </LinearLayout>
+
+            <Button android:id="@+id/btnSave" android:layout_width="match_parent" android:layout_height="55dp" android:text="@string/btn_save" android:textStyle="bold" android:textColor="#000000" android:backgroundTint="#00FF88"/>
+            <TextView android:id="@+id/textLink" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#0000FF" android:textStyle="bold" android:clickable="true" android:layout_marginTop="20dp" android:text="@string/already_have_account"/>
         </LinearLayout>
+    </ScrollView>
 
-        <Button android:id="@+id/btnSave" android:layout_width="match_parent" android:layout_height="55dp" android:textStyle="bold" android:textColor="#000000" android:backgroundTint="#00FF88"/>
-
-        <ProgressBar android:id="@+id/progressBar" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:visibility="gone" android:indeterminateTint="#00FF88" />
-    </LinearLayout>
-</ScrollView>
+    <RelativeLayout
+        android:id="@+id/loadingLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#CC0D0D0D"
+        android:visibility="gone"
+        android:clickable="true">
+        <ProgressBar android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_centerInParent="true" android:indeterminateTint="#00FF88"/>
+    </RelativeLayout>
+</RelativeLayout>

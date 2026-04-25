@@ -1,10 +1,15 @@
 <resources>
     <string name="app_name">NoExcuse</string>
-    <string name="first_name">الاسم الأول</string>
+    <string name="first_name">الاسم الشخصي</string>
     <string name="last_name">الاسم العائلي</string>
     <string name="email">البريد الإلكتروني</string>
     <string name="password">كلمة المرور</string>
     <string name="hint_confirm">تأكيد كلمة المرور</string>
     <string name="error_pass_match">كلمتا المرور غير متطابقتين!</string>
     <string name="btn_save">إنشاء حساب</string>
+    <string name="already_have_account">لديك حساب بالفعل؟ تسجيل الدخول</string>
+    <string name="msg_no_internet">لا يوجد اتصال بالإنترنت. يرجى التحقق من الشبكة.</string>
+    <string name="btn_actualiser">تحديث</string>
+    <string name="success_message">تم إنشاء الحساب بنجاح!</string>
+    <string name="error_message">فشل التسجيل. يرجى المحاولة مرة أخرى.</string>
 </resources>
