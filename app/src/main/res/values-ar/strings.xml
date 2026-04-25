@@ -1,14 +1,10 @@
 <resources>
     <string name="app_name">NoExcuse</string>
-    <string name="reg_title">تسجيل</string>
-    <string name="hint_first_name">الاسم الشخصي</string>
-    <string name="hint_last_name">الاسم العائلي</string>
-    <string name="hint_email">البريد الإلكتروني</string>
-    <string name="hint_birth">تاريخ الميلاد (YYYY-MM-DD)</string>
-    <string name="hint_pass">كلمة السر</string>
-    <string name="hint_confirm">تأكيد كلمة السر</string>
-    <string name="btn_save">حفظ الحساب</string>
-    <string name="error_fields">المرجو ملء جميع الخانات</string>
-    <string name="error_pass_match">كلمة السر غير متطابقة!</string>
-    <string name="success_msg">تم حفظ الحساب بنجاح!</string>
+    <string name="first_name">الاسم الأول</string>
+    <string name="last_name">الاسم العائلي</string>
+    <string name="email">البريد الإلكتروني</string>
+    <string name="password">كلمة المرور</string>
+    <string name="hint_confirm">تأكيد كلمة المرور</string>
+    <string name="error_pass_match">كلمتا المرور غير متطابقتين!</string>
+    <string name="btn_save">إنشاء حساب</string>
 </resources>

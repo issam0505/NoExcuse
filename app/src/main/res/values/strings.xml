@@ -1,14 +1,10 @@
 <resources>
     <string name="app_name">NoExcuse</string>
-    <string name="reg_title">Sign Up</string>
-    <string name="hint_first_name">First Name</string>
-    <string name="hint_last_name">Last Name</string>
-    <string name="hint_email">Email</string>
-    <string name="hint_birth">Birth Date (YYYY-MM-DD)</string>
-    <string name="hint_pass">Password</string>
+    <string name="first_name">First Name</string>
+    <string name="last_name">Last Name</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
     <string name="hint_confirm">Confirm Password</string>
-    <string name="btn_save">Save Account</string>
-    <string name="error_fields">Please fill all fields</string>
     <string name="error_pass_match">Passwords do not match!</string>
-    <string name="success_msg">Account saved successfully!</string>
+    <string name="btn_save">Create Account</string>
 </resources>

@@ -1,83 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp"
-    android:background="#FFFFFF">
+    android:background="#0D0D0D"
+    android:fillViewport="true">
 
-    <ImageView
-        android:id="@+id/logo"
-        android:layout_width="120dp"
-        android:layout_height="120dp"
-        android:src="@drawable/logo"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="32dp"/>
-
-    <EditText
-        android:id="@+id/etFirstName"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/hint_first_name"
-        android:inputType="textPersonName"
-        app:layout_constraintTop_toBottomOf="@id/logo"
-        android:layout_marginTop="32dp"/>
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:gravity="center_horizontal">
 
-    <EditText
-        android:id="@+id/etLastName"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="@string/hint_last_name"
-        android:inputType="textPersonName"
-        app:layout_constraintTop_toBottomOf="@id/etFirstName"
-        android:layout_marginTop="16dp"/>
+        <ImageView
+            android:layout_width="110dp"
+            android:layout_height="110dp"
+            android:src="@drawable/logo"
+            android:layout_marginTop="30dp"
+            android:layout_marginBottom="20dp"/>
 
-    <EditText
-        android:id="@+id/etEmail"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="@string/hint_email"
-        android:inputType="textEmailAddress"
-        app:layout_constraintTop_toBottomOf="@id/etLastName"
-        android:layout_marginTop="16dp"/>
+        <EditText android:id="@+id/etFirstName" android:layout_width="match_parent" android:layout_height="55dp" android:textColor="#FFFFFF" android:textColorHint="#AAAAAA" android:background="#1A1A1A" android:padding="16dp" android:layout_marginBottom="12dp"/>
+        <EditText android:id="@+id/etLastName" android:layout_width="match_parent" android:layout_height="55dp" android:textColor="#FFFFFF" android:textColorHint="#AAAAAA" android:background="#1A1A1A" android:padding="16dp" android:layout_marginBottom="12dp"/>
+        <EditText android:id="@+id/etEmail" android:layout_width="match_parent" android:layout_height="55dp" android:inputType="textEmailAddress" android:textColor="#FFFFFF" android:textColorHint="#AAAAAA" android:background="#1A1A1A" android:padding="16dp" android:layout_marginBottom="12dp"/>
+        <EditText android:id="@+id/etPassword" android:layout_width="match_parent" android:layout_height="55dp" android:inputType="textPassword" android:textColor="#FFFFFF" android:textColorHint="#AAAAAA" android:background="#1A1A1A" android:padding="16dp" android:layout_marginBottom="12dp"/>
+        <EditText android:id="@+id/etConfirmPassword" android:layout_width="match_parent" android:layout_height="55dp" android:inputType="textPassword" android:textColor="#FFFFFF" android:textColorHint="#AAAAAA" android:background="#1A1A1A" android:padding="16dp" android:layout_marginBottom="12dp"/>
 
-    <EditText
-        android:id="@+id/etBirthDate"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="@string/hint_birth"
-        android:inputType="date"
-        app:layout_constraintTop_toBottomOf="@id/etEmail"
-        android:layout_marginTop="16dp"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="24dp"
+            android:gravity="center">
+            <Spinner android:id="@+id/spDay" android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="1" android:background="#FFFFFF" android:layout_marginEnd="4dp"/>
+            <Spinner android:id="@+id/spMonth" android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="1" android:background="#FFFFFF" android:layout_marginEnd="4dp"/>
+            <Spinner android:id="@+id/spYear" android:layout_width="0dp" android:layout_height="50dp" android:layout_weight="1" android:background="#FFFFFF"/>
+        </LinearLayout>
 
-    <EditText
-        android:id="@+id/etPassword"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="@string/hint_pass"
-        android:inputType="textPassword"
-        app:layout_constraintTop_toBottomOf="@id/etBirthDate"
-        android:layout_marginTop="16dp"/>
+        <Button android:id="@+id/btnSave" android:layout_width="match_parent" android:layout_height="55dp" android:textStyle="bold" android:textColor="#000000" android:backgroundTint="#00FF88"/>
 
-    <EditText
-        android:id="@+id/etConfirmPassword"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="@string/hint_confirm"
-        android:inputType="textPassword"
-        app:layout_constraintTop_toBottomOf="@id/etPassword"
-        android:layout_marginTop="16dp"/>
-
-    <Button
-        android:id="@+id/btnRegister"
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:text="@string/btn_save"
-        android:textSize="18sp"
-        app:layout_constraintTop_toBottomOf="@id/etConfirmPassword"
-        android:layout_marginTop="32dp"/>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <ProgressBar android:id="@+id/progressBar" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:visibility="gone" android:indeterminateTint="#00FF88" />
+    </LinearLayout>
+</ScrollView>

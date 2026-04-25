@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center"
     android:background="#0D0D0D"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    tools:context=".LanguageActivity">
 
     <androidx.cardview.widget.CardView
         android:id="@+id/cardLanguage"
@@ -27,12 +29,12 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginBottom="30dp"
-                android:text="Choisir votre langue"
+                android:text="Choose your language"
                 android:textColor="#FFFFFF"
                 android:textSize="22sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.05" />
+                android:textStyle="bold" />
 
+            <!-- FR -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnFr"
                 android:layout_width="match_parent"
@@ -43,15 +45,16 @@
                 android:textAllCaps="false"
                 android:textColor="#BFBFBF"
                 app:cornerRadius="12dp"
-
                 app:icon="@drawable/france"
                 app:iconGravity="textEnd"
                 app:iconSize="28dp"
                 app:iconPadding="20dp"
-                android:paddingEnd="40dp"  app:iconTint="@null"
+                android:paddingEnd="40dp"
+                app:iconTint="@null"
                 app:strokeColor="#3D3D3D"
                 app:strokeWidth="1dp" />
 
+            <!-- EN -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnEn"
                 android:layout_width="match_parent"
@@ -62,17 +65,16 @@
                 android:textAllCaps="false"
                 android:textColor="#BFBFBF"
                 app:cornerRadius="12dp"
-
                 app:icon="@drawable/usa1"
                 app:iconGravity="textEnd"
                 app:iconSize="28dp"
                 app:iconPadding="20dp"
                 android:paddingEnd="40dp"
-
                 app:iconTint="@null"
                 app:strokeColor="#3D3D3D"
                 app:strokeWidth="1dp" />
 
+            <!-- AR -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAr"
                 android:layout_width="match_parent"
@@ -83,13 +85,11 @@
                 android:textAllCaps="false"
                 android:textColor="#BFBFBF"
                 app:cornerRadius="12dp"
-
                 app:icon="@drawable/ksa"
                 app:iconGravity="textEnd"
                 app:iconSize="28dp"
                 app:iconPadding="25dp"
                 android:paddingEnd="40dp"
-
                 app:iconTint="@null"
                 app:strokeColor="#3D3D3D"
                 app:strokeWidth="1dp" />

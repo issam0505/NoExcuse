@@ -7,8 +7,10 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+
 import com.google.android.material.button.MaterialButton;
 
 public class LanguageActivity extends AppCompatActivity {
@@ -26,6 +28,7 @@ public class LanguageActivity extends AppCompatActivity {
         btnEn = findViewById(R.id.btnEn);
         btnAr = findViewById(R.id.btnAr);
 
+        // Animation
         Animation slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up_fade);
         cardLanguage.startAnimation(slideUp);
 
@@ -35,14 +38,14 @@ public class LanguageActivity extends AppCompatActivity {
     }
 
     private void selectButton(MaterialButton selectedBtn, String lang) {
-        // Reset all buttons stroke
+
         MaterialButton[] buttons = {btnFr, btnEn, btnAr};
+
         for (MaterialButton b : buttons) {
             b.setStrokeColor(ColorStateList.valueOf(Color.parseColor("#3D3D3D")));
             b.setStrokeWidth(1);
         }
 
-        // Highlight selected
         selectedBtn.setStrokeColor(ColorStateList.valueOf(Color.WHITE));
         selectedBtn.setStrokeWidth(4);
 
@@ -50,8 +53,11 @@ public class LanguageActivity extends AppCompatActivity {
     }
 
     private void saveLang(String lang) {
+
         SharedPreferences prefs = getSharedPreferences("MyApp", MODE_PRIVATE);
         prefs.edit().putString("lang", lang).apply();
+
+        // نمر مباشرة للـ Register (أول مرة)
         startActivity(new Intent(this, RegisterActivity.class));
         finish();
     }
