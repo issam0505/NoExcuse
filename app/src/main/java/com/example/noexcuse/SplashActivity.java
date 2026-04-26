@@ -6,35 +6,38 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import androidx.appcompat.app.AppCompatActivity;
-import com.google.firebase.auth.FirebaseAuth;
 
 public class SplashActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_splash);
+
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            try {
-                FirebaseAuth mAuth = FirebaseAuth.getInstance();
-                SharedPreferences prefs = getSharedPreferences("MyApp", MODE_PRIVATE);
-                String lang = prefs.getString("lang", null);
+            // 1. جيب الـ SharedPreferences ديال اللغة وديال المستخدم
+            SharedPreferences langPrefs = getSharedPreferences("MyApp", MODE_PRIVATE);
+            SharedPreferences userPrefs = getSharedPreferences("UserPrefs", MODE_PRIVATE);
 
-                Intent intent;
-                if (lang == null) {
-                    intent = new Intent(SplashActivity.this, LanguageActivity.class);
-                } else if (mAuth.getCurrentUser() == null) {
-                    intent = new Intent(SplashActivity.this, RegisterActivity.class);
-                } else {
-                    intent = new Intent(SplashActivity.this, RegisterActivity.class);
-                }
+            String lang = langPrefs.getString("lang", null);
+            String uid = userPrefs.getString("uid", null); // كنجيبو الـ UID اللي خازنين حنا
 
-                startActivity(intent);
-                finish();
+            Intent intent;
 
-            } catch (Exception e) {
-               System.out.println(e.getMessage());
+            // 2. المنطق:
+            if (lang == null) {
+                // إيلا ماختارش اللغة
+                intent = new Intent(SplashActivity.this, LanguageActivity.class);
+            } else if (uid == null) {
+                // إيلا ماكانش الـ UID مخزن، يعني ماكاينش Login، صيفطو للـ Register
+                intent = new Intent(SplashActivity.this, RegisterActivity.class);
+            } else {
+                // إيلا كاين الـ UID، يعني User ديجا Logged in، صيفطو للـ Main
+                intent = new Intent(SplashActivity.this, MainActivity.class);
             }
-        }, 2000); // 2 swani bach l-user ychouf loading screen
+
+            startActivity(intent);
+            finish();
+
+        }, 2000); // 2 ثواني
     }
 }

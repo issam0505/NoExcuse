@@ -43,7 +43,7 @@
             </LinearLayout>
 
             <Button android:id="@+id/btnSave" android:layout_width="match_parent" android:layout_height="55dp" android:text="@string/btn_save" android:textStyle="bold" android:textColor="#000000" android:backgroundTint="#00FF88"/>
-            <TextView android:id="@+id/textLink" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#0000FF" android:textStyle="bold" android:clickable="true" android:layout_marginTop="20dp" android:text="@string/already_have_account"/>
+            <TextView android:id="@+id/textLink" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textStyle="bold" android:clickable="true" android:layout_marginTop="20dp" android:text="@string/already_have_account"/>
         </LinearLayout>
     </ScrollView>
 

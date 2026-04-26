@@ -8,8 +8,8 @@
     <string name="error_pass_match">كلمتا المرور غير متطابقتين!</string>
     <string name="btn_save">إنشاء حساب</string>
     <string name="already_have_account">لديك حساب بالفعل؟ تسجيل الدخول</string>
-    <string name="msg_no_internet">لا يوجد اتصال بالإنترنت. يرجى التحقق من الشبكة.</string>
+    <string name="no_account">ليس لديك حساب؟ تسجيل</string>
     <string name="btn_actualiser">تحديث</string>
     <string name="success_message">تم إنشاء الحساب بنجاح!</string>
-    <string name="error_message">فشل التسجيل. يرجى المحاولة مرة أخرى.</string>
+    <string name="error_generic">البريد الإلكتروني أو كلمة المرور غير صحيحة</string>
 </resources>

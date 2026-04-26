@@ -17,6 +17,7 @@ public class RegisterActivity extends AppCompatActivity {
     EditText etFirstName, etLastName, etEmail, etPassword, etConfirmPassword;
     Spinner spDay, spMonth, spYear;
     Button btnSave, btnActualiser;
+    TextView textLink;
     LinearLayout layoutOffline;
     ScrollView mainContent;
     RelativeLayout loadingLayout;
@@ -28,6 +29,7 @@ public class RegisterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
+        // ربط العناصر
         etFirstName = findViewById(R.id.etFirstName);
         etLastName = findViewById(R.id.etLastName);
         etEmail = findViewById(R.id.etEmail);
@@ -38,9 +40,16 @@ public class RegisterActivity extends AppCompatActivity {
         spYear = findViewById(R.id.spYear);
         btnSave = findViewById(R.id.btnSave);
         btnActualiser = findViewById(R.id.btnActualiser);
+        textLink = findViewById(R.id.textLink);
         layoutOffline = findViewById(R.id.layoutOffline);
         mainContent = findViewById(R.id.mainContent);
         loadingLayout = findViewById(R.id.loadingLayout);
+
+        // التنقل لصفحة Login
+        textLink.setOnClickListener(v -> {
+            startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
+            finish();
+        });
 
         btnActualiser.setOnClickListener(v -> {
             loadingLayout.setVisibility(View.VISIBLE);
@@ -101,6 +110,11 @@ public class RegisterActivity extends AppCompatActivity {
             public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
                 if (response.isSuccessful()) {
                     loadingLayout.setVisibility(View.GONE);
+
+                    // 1. تخزين الـ UID في SharedPreferences
+                    getSharedPreferences("UserPrefs", MODE_PRIVATE)
+                            .edit().putString("uid", firebaseUser.getUid()).apply();
+
                     Toast.makeText(RegisterActivity.this, getString(R.string.success_message), Toast.LENGTH_SHORT).show();
                     startActivity(new Intent(RegisterActivity.this, MainActivity.class));
                     finish();

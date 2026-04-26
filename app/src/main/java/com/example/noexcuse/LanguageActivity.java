@@ -56,8 +56,6 @@ public class LanguageActivity extends AppCompatActivity {
 
         SharedPreferences prefs = getSharedPreferences("MyApp", MODE_PRIVATE);
         prefs.edit().putString("lang", lang).apply();
-
-        // نمر مباشرة للـ Register (أول مرة)
         startActivity(new Intent(this, RegisterActivity.class));
         finish();
     }
