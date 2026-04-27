@@ -14,7 +14,8 @@ public class SplashActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         // 1. طبق اللغة قبل ما يبان حتى شي حاجة
         SharedPreferences langPrefs = getSharedPreferences("MyApp", MODE_PRIVATE);
-        String lang = langPrefs.getString("lang", "en"); // "en" هي الديفولت
+        String lang = langPrefs.getString("lang", "en"); // "en"// هي الديفولت
+        SharedPreferences welcomePrefs = getSharedPreferences("welcomPrefs", MODE_PRIVATE);
         setLocale(lang);
 
         super.onCreate(savedInstanceState);
@@ -25,14 +26,19 @@ public class SplashActivity extends AppCompatActivity {
 
             SharedPreferences userPrefs = getSharedPreferences("UserPrefs", MODE_PRIVATE);
             String uid = userPrefs.getString("uid", null);
+            boolean welcomeShown = welcomePrefs.getBoolean("shown", false);
             Intent intent;
 
             if (langPrefs.getString("lang", null) == null) {
                 intent = new Intent(SplashActivity.this, LanguageActivity.class);
             } else if (uid == null) {
                 intent = new Intent(SplashActivity.this, RegisterActivity.class);
-            } else {
+            }
+            else if (!welcomeShown) {
+                // يلا مازال ماشافش الترحيب، صيفطو لـ WelcomeActivity
                 intent = new Intent(SplashActivity.this, WelcomeActivity.class);
+            }else {
+                intent = new Intent(SplashActivity.this, MainActivity.class);
             }
 
             startActivity(intent);

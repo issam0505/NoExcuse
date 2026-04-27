@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">NoExcuse</string>
-
     <string name="first_name">First Name</string>
     <string name="last_name">Last Name</string>
     <string name="email">Email</string>
@@ -14,6 +13,11 @@
     <string name="success_message">Account created successfully!</string>
     <string name="error_generic">Invalid email or password</string>
 
-    <string name="welcome_text">Welcome %s to NoExcuse 💪\n\nWe are delighted to welcome you.\nChoosing this app is a strong step—it shows that you care about your time, your goals, and the person you want to become.\nThis space is yours.\n\nA place to progress, stay consistent, and exceed your limits.\nNo pressure, no excuses—just progress, one step at a time.\nThank you for trusting us on this journey.\n\nLet\'s start </string>
-    <string name="btn_next">Let\'s start</string>
+    <string name="welcome_p1">Welcome %s to NoExcuse 💪\n\nWe are delighted to welcome you.\nChoosing this app is a strong step—it shows that you care about your time, your goals, and the person you want to become.\nThis space is yours.</string>
+    <string name="welcome_p2">Réveille la bête en toi. 🔥\nLe succès n’attend personne. Chaque seconde perdue est une occasion envolée. Aujourd’hui, tu as le choix : rester le même… ou devenir extraordinaire.\nNoExcuse est plus qu’une application : c’est l’étincelle qui allume ton feu intérieur, la force qui te pousse quand tu veux abandonner, l’énergie qui transforme tes rêves en réalité.\nBrise tes limites. Domine tes peurs. Dépasse-toi chaque jour.\nAucune excuse. Aucun retour en arrière. Seulement la victoire.</string>
+    <string name="welcome_p3">NoExcuse brings together everything you need to progress. 🔥\nPlan your tasks, organize your days, track your workouts, improve your sleep, and structure your study sessions in one app.\nThanks to smart reminders, performance tracking, and interactive avatars, NoExcuse helps you stay focused, consistent, and productive every day.\nAn app designed to turn your goals into results. </string>
+
+    <string name="btn_next">Next</string>
+    <string name="btn_start">Let\'s start</string>
+    <string name="loading">Loading...</string>
 </resources>

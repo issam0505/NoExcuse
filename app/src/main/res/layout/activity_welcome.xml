@@ -24,6 +24,18 @@
         android:fontFamily="sans-serif-medium"
         android:lineSpacingExtra="8dp" />
 
+    <TextView
+        android:id="@+id/tvLoading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tvWelcome"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        android:text="@string/loading"
+        android:textColor="#555555"
+        android:textSize="12sp"
+        android:visibility="gone" />
+
     <Button
         android:id="@+id/btnNext"
         android:layout_width="match_parent"

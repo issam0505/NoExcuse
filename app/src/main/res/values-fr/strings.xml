@@ -13,6 +13,11 @@
     <string name="success_message">Compte créé avec succès !</string>
     <string name="error_generic">Email ou mot de passe invalide</string>
 
-    <string name="welcome_text">Bienvenue %s sur NoExcuse 💪\n\nNous sommes ravis de vous accueillir.\nChoisir cette application, c’est déjà un pas fort — cela montre que vous pensez à votre temps, à vos objectifs et à la personne que vous voulez devenir.\nCet espace est le vôtre.\n\nUn endroit pour progresser, rester constant et dépasser vos limites.\nPas de pression, pas d’excuses — juste du progrès, un pas à la fois.\nMerci de nous faire confiance pour ce parcours.\n\nCommençons</string>
-    <string name="btn_next">Commençons</string>
+    <string name="welcome_p1">Bienvenue %s sur NoExcuse 💪\n\nNous sommes ravis de vous accueillir.\nChoisir cette application, c’est déjà un pas fort — cela montre que vous pensez à votre temps, à vos objectifs et à la personne que vous voulez devenir.\nCet espace est le vôtre.</string>
+    <string name="welcome_p2">Réveille la bête en toi. 🔥\nLe succès n’attend personne. Chaque seconde perdue est une occasion envolée. Aujourd’hui, tu as le choix : rester le même… ou devenir extraordinaire.\nNoExcuse est plus qu’une application : c’est l’étincelle qui allume ton feu intérieur, la force qui te pousse quand tu veux abandonner, l’énergie qui transforme tes rêves en réalité.\nBrise tes limites. Domine tes peurs. Dépasse-toi chaque jour.\nAucune excuse. Aucun retour en arrière. Seulement la victoire. 🔥</string>
+    <string name="welcome_p3">NoExcuse réunit tout ce dont tu as besoin pour progresser. 🔥\nPlanifie tes tâches, organise tes journées, suis tes entraînements, améliore ton sommeil et structure tes sessions d’étude dans une seule application.\nGrâce aux rappels intelligents, au suivi des performances et aux avatars interactifs, NoExcuse t’aide à rester concentré, constant et productif chaque jour.\nUne application pensée pour transformer tes objectifs en résultats. </string>
+
+    <string name="btn_next">Suivant</string>
+    <string name="btn_start">Commençons</string>
+    <string name="loading">Chargement&#8230;</string>
 </resources>
