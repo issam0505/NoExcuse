@@ -7,9 +7,12 @@
     <string name="hint_confirm">Confirmer le mot de passe</string>
     <string name="error_pass_match">Les mots de passe ne correspondent pas !</string>
     <string name="btn_save">Créer un compte</string>
-    <string name="already_have_account">Déjà un compte ? Connectez-vous</string>
-    <string name="no_account">Pas de compte ? Inscrivez-vous</string>
+    <string name="already_have_account">Vous avez déjà un compte ? Connexion</string>
+    <string name="no_account">Vous n\'avez pas de compte ? S\'inscrire</string>
     <string name="btn_actualiser">Actualiser</string>
     <string name="success_message">Compte créé avec succès !</string>
     <string name="error_generic">Email ou mot de passe invalide</string>
+
+    <string name="welcome_text">Bienvenue %s sur NoExcuse 💪\n\nNous sommes ravis de vous accueillir.\nChoisir cette application, c’est déjà un pas fort — cela montre que vous pensez à votre temps, à vos objectifs et à la personne que vous voulez devenir.\nCet espace est le vôtre.\n\nUn endroit pour progresser, rester constant et dépasser vos limites.\nPas de pression, pas d’excuses — juste du progrès, un pas à la fois.\nMerci de nous faire confiance pour ce parcours.\n\nCommençons</string>
+    <string name="btn_next">Commençons</string>
 </resources>

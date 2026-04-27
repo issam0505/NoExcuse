@@ -8,6 +8,9 @@ import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.auth.*;
 import java.util.Locale;
+import java.util.Map;
+
+import retrofit2.*;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -69,20 +72,37 @@ public class LoginActivity extends AppCompatActivity {
 
         loadingLayout.setVisibility(View.VISIBLE);
 
-        // منطق أمني: لا يتم إظهار سبب الخطأ (إيميل أو باسورد) لحماية قاعدة البيانات
         FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
-                    loadingLayout.setVisibility(View.GONE);
                     if (task.isSuccessful()) {
-                        // النجاح: حفظ الـ UID والانتقال للـ MainActivity
                         String uid = task.getResult().getUser().getUid();
-                        getSharedPreferences("UserPrefs", MODE_PRIVATE)
-                                .edit().putString("uid", uid).apply();
 
-                        startActivity(new Intent(LoginActivity.this, MainActivity.class));
-                        finish();
+                        // هنا غانخدمو بـ Retrofit باش نتأكدوا أن الـ User كاين في الـ Database ديالنا
+                        ApiService apiService = RetrofitClient.getClient().create(ApiService.class);
+                        apiService.getUserData(uid).enqueue(new Callback<Map<String, Object>>() {
+                            @Override
+                            public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
+                                loadingLayout.setVisibility(View.GONE);
+                                if (response.isSuccessful() && response.body() != null) {
+                                    getSharedPreferences("UserPrefs", MODE_PRIVATE)
+                                            .edit().putString("uid", uid).apply();
+
+                                    startActivity(new Intent(LoginActivity.this, WelcomeActivity.class));
+                                    finish();
+                                } else {
+                                    Toast.makeText(LoginActivity.this, "User not found in database", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(Call<Map<String, Object>> call, Throwable t) {
+                                loadingLayout.setVisibility(View.GONE);
+                                Toast.makeText(LoginActivity.this, "Network Error", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+
                     } else {
-                        // إظهار الميساج المترجم حسب لغة التطبيق
+                        loadingLayout.setVisibility(View.GONE);
                         Toast.makeText(this, getString(R.string.error_generic), Toast.LENGTH_SHORT).show();
                     }
                 });

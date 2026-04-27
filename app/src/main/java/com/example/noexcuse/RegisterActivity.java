@@ -91,13 +91,11 @@ public class RegisterActivity extends AppCompatActivity {
                 });
     }
 
+    // داخل RegisterActivity - تحديث ميثود sendToFastAPI فقط
     private void sendToFastAPI(FirebaseUser firebaseUser, String email, String fName, String lName, String birth) {
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://192.168.1.11:8000/")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
+        // استعمال الـ Singleton اللي صايبنا في RetrofitClient
+        ApiService apiService = RetrofitClient.getClient().create(ApiService.class);
 
-        ApiService apiService = retrofit.create(ApiService.class);
         Map<String, Object> userData = new HashMap<>();
         userData.put("uid", firebaseUser.getUid());
         userData.put("email", email);
@@ -110,13 +108,11 @@ public class RegisterActivity extends AppCompatActivity {
             public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
                 if (response.isSuccessful()) {
                     loadingLayout.setVisibility(View.GONE);
-
-                    // 1. تخزين الـ UID في SharedPreferences
                     getSharedPreferences("UserPrefs", MODE_PRIVATE)
                             .edit().putString("uid", firebaseUser.getUid()).apply();
 
                     Toast.makeText(RegisterActivity.this, getString(R.string.success_message), Toast.LENGTH_SHORT).show();
-                    startActivity(new Intent(RegisterActivity.this, MainActivity.class));
+                    startActivity(new Intent(RegisterActivity.this, WelcomeActivity.class));
                     finish();
                 } else {
                     handleRollback(firebaseUser, "API Server Error");

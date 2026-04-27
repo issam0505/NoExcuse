@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">NoExcuse</string>
+
     <string name="first_name">First Name</string>
     <string name="last_name">Last Name</string>
     <string name="email">Email</string>
@@ -12,4 +13,7 @@
     <string name="btn_actualiser">Refresh</string>
     <string name="success_message">Account created successfully!</string>
     <string name="error_generic">Invalid email or password</string>
+
+    <string name="welcome_text">Welcome %s to NoExcuse 💪\n\nWe are delighted to welcome you.\nChoosing this app is a strong step—it shows that you care about your time, your goals, and the person you want to become.\nThis space is yours.\n\nA place to progress, stay consistent, and exceed your limits.\nNo pressure, no excuses—just progress, one step at a time.\nThank you for trusting us on this journey.\n\nLet\'s start </string>
+    <string name="btn_next">Let\'s start</string>
 </resources>
