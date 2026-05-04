@@ -187,7 +187,6 @@ public class MainActivity extends AppCompatActivity {
             task.description = taskDesc;
             task.taskTime    = calendar.getTimeInMillis();
             task.isDone      = false;
-            task.isSynced    = false;
             viewModel.addTask(task);
 
             Toast.makeText(this, "Task Added! 🔥", Toast.LENGTH_SHORT).show();

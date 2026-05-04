@@ -3,53 +3,80 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="100dp"
-    android:layout_margin="8dp"
-    app:cardCornerRadius="12dp"
-    app:cardBackgroundColor="#1E1E1E"
-    app:cardElevation="4dp"
+    android:layout_height="88dp"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="6dp"
+    app:cardCornerRadius="20dp"
+    app:cardBackgroundColor="#1A1A1A"
+    app:cardElevation="0dp"
+    app:strokeColor="#2A2A2A"
+    app:strokeWidth="1dp"
     android:clickable="true"
     android:focusable="true"
-    android:foreground="?attr/selectableItemBackground"> <androidx.constraintlayout.widget.ConstraintLayout
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:padding="16dp">
+    android:foreground="?attr/selectableItemBackground">
 
-    <TextView
-        android:id="@+id/tvTaskLabel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Task"
-        android:textColor="#7C3AED"
-        android:textSize="12sp"
-        android:textStyle="bold"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"/>
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingHorizontal="20dp"
+        android:paddingVertical="14dp">
 
-    <TextView
-        android:id="@+id/tvItemTime"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="12:30"
-        android:textColor="#FFFFFF"
-        android:textSize="12sp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        <!-- Left accent bar -->
+        <View
+            android:id="@+id/accentBar"
+            android:layout_width="3dp"
+            android:layout_height="0dp"
+            android:background="#7C3AED"
+            android:backgroundTint="#7C3AED"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"/>
 
-    <TextView
-        android:id="@+id/tvItemTitle"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Task Title"
-        android:textColor="#FFFFFF"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:gravity="center"
-        app:layout_constraintTop_toBottomOf="@+id/tvTaskLabel"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        <!-- "TASK" label — top left, after accent bar -->
+        <TextView
+            android:id="@+id/tvTaskLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="TASK"
+            android:textColor="#7C3AED"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.15"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/accentBar"
+            android:layout_marginStart="14dp"/>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <!-- Time badge — top right -->
+        <TextView
+            android:id="@+id/tvItemTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="12:30"
+            android:textColor="#9CA3AF"
+            android:textSize="12sp"
+            android:background="@drawable/bg_time_badge"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="3dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- Task Title — centered vertically, slightly left-biased -->
+        <TextView
+            android:id="@+id/tvItemTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Task Title"
+            android:textColor="#F9FAFB"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:letterSpacing="0.01"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/accentBar"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="14dp"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </com.google.android.material.card.MaterialCardView>

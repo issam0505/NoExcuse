@@ -27,7 +27,8 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
     @NonNull
     @Override
     public TaskViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_task, parent, false);
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_task, parent, false);
         return new TaskViewHolder(view);
     }
 
@@ -40,18 +41,16 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
         holder.tvTime.setText(sdf.format(new Date(task.taskTime)));
 
-        // --- هاد الجزء هو اللي ناقص عندك ---
         holder.itemView.setOnClickListener(v -> {
             Context context = v.getContext();
             Intent intent = new Intent(context, TaskDetailActivity.class);
-
-            // كنصيفطو المعلومات لـ Activity الجديدة
-            intent.putExtra("TASK_TITLE", task.title);
-            intent.putExtra("TASK_DESC", task.description);
-
+            intent.putExtra("TASK_ID",      task.id);
+            intent.putExtra("TASK_TITLE",   task.title);
+            intent.putExtra("TASK_DESC",    task.description);
+            intent.putExtra("TASK_TIME",    task.taskTime);
+            intent.putExtra("TASK_IS_DONE", task.isDone);
             context.startActivity(intent);
         });
-        // ------------------------------------
     }
 
     @Override

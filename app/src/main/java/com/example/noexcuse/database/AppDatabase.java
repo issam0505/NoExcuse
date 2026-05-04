@@ -13,7 +13,7 @@ import androidx.room.RoomDatabase;
         EducationTask.class,
         SleepSettings.class,
            // ← جديد: settings ديال المستخدم
-}, version = 3)                 // ← version ارتفعت من 1 لـ 2
+}, version = 4)                 // ← version ارتفعت من 1 لـ 2
 public abstract class AppDatabase extends RoomDatabase {
 
     public abstract TaskDao taskDao();

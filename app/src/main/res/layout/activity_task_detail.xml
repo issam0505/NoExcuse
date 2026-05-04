@@ -12,46 +12,193 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <ImageView
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="30dp"
-            android:layout_marginBottom="30dp"
-            android:src="@drawable/logo" />
+        <!-- Top bar: back left, agenda icon center -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="40dp"
+            android:layout_marginBottom="28dp">
 
+            <!-- Back button circle -->
+            <FrameLayout
+                android:id="@+id/btnBack"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/bg_circle_dark"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_arrow_back"
+                    app:tint="#FFFFFF" />
+            </FrameLayout>
+
+            <!-- Agenda icon centered -->
+            <FrameLayout
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:layout_centerInParent="true"
+                android:background="@drawable/bg_agenda_icon">
+
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_calendar"
+                    app:tint="#7C3AED" />
+            </FrameLayout>
+
+        </RelativeLayout>
+
+        <!-- TASK badge -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="TASK"
+            android:textColor="#7C3AED"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.12"
+            android:background="@drawable/bg_task_badge"
+            android:paddingLeft="12dp"
+            android:paddingRight="12dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:layout_marginBottom="14dp"/>
+
+        <!-- Title -->
         <TextView
             android:id="@+id/tvTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Task Title"
-            android:textColor="#FFFFFF"
-            android:textSize="28sp"
+            android:textColor="#F9FAFB"
+            android:textSize="26sp"
             android:textStyle="bold"
-            android:layout_marginBottom="16dp"/>
+            android:lineSpacingMultiplier="1.2"
+            android:layout_marginBottom="10dp"/>
 
+        <!-- Description -->
         <TextView
             android:id="@+id/tvDesc"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Description goes here..."
-            android:textColor="#CCCCCC"
-            android:textSize="16sp" />
+            android:text="No description provided"
+            android:textColor="#9CA3AF"
+            android:textSize="14sp"
+            android:lineSpacingMultiplier="1.6"
+            android:layout_marginBottom="24dp"/>
 
+        <!-- Info card: Scheduled time + Status -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_info_card"
+            android:padding="16dp"
+            android:layout_marginBottom="24dp">
+
+            <!-- Scheduled time row -->
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:text="Scheduled time"
+                    android:textColor="#6B7280"
+                    android:textSize="12sp"/>
+
+                <TextView
+                    android:id="@+id/tvTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:text="09:00"
+                    android:textColor="#F9FAFB"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/bg_time_badge"
+                    android:paddingLeft="10dp"
+                    android:paddingRight="10dp"
+                    android:paddingTop="3dp"
+                    android:paddingBottom="3dp"/>
+            </RelativeLayout>
+
+            <!-- Status row -->
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:text="Status"
+                    android:textColor="#6B7280"
+                    android:textSize="12sp"/>
+
+                <TextView
+                    android:id="@+id/tvStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:text="Pending"
+                    android:textColor="#F59E0B"
+                    android:textSize="12sp"
+                    android:background="@drawable/bg_status_pending"
+                    android:paddingLeft="10dp"
+                    android:paddingRight="10dp"
+                    android:paddingTop="3dp"
+                    android:paddingBottom="3dp"/>
+            </RelativeLayout>
+
+        </LinearLayout>
+
+        <!-- Spacer -->
         <View
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"/>
 
-        <Button
-            android:id="@+id/btnBack"
+        <!-- Done Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDone"
             android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:text="Back"
+            android:layout_height="52dp"
+            android:text="Mark as Done ✓"
             android:textColor="#FFFFFF"
-            android:backgroundTint="#4CAF50"
             android:textStyle="bold"
-            app:cornerRadius="12dp"/>
+            android:textSize="15sp"
+            android:layout_marginBottom="10dp"
+            app:backgroundTint="#4CAF50"
+            app:cornerRadius="16dp"/>
+
+        <!-- Delete Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDelete"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="Delete Task"
+            android:textColor="#FF5252"
+            android:textStyle="bold"
+            android:textSize="15sp"
+            android:layout_marginBottom="16dp"
+            app:backgroundTint="#1A1A1A"
+            app:strokeColor="#FF5252"
+            app:strokeWidth="1dp"
+            app:cornerRadius="16dp"/>
+
     </LinearLayout>
 
     <ProgressBar

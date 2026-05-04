@@ -60,6 +60,8 @@ public class AppViewModel extends AndroidViewModel {
     public LiveData<List<PlannedExercise>> getExercisesForPlan(int planId) {
         return repository.getExercisesForPlan(planId);
     }
-
+    public void deleteTask(DailyTask task) {
+        repository.deleteTask(task);
+    }
 
 }

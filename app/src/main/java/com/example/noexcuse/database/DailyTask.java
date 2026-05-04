@@ -11,5 +11,5 @@ public class DailyTask {
     public String description;
     public long taskTime;
     public boolean isDone;
-    public boolean isSynced;
+
 }

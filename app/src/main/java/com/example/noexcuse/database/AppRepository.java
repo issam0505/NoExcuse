@@ -100,4 +100,7 @@ public class AppRepository {
     public interface OnIdGeneratedCallback {
         void onIdGenerated(int id);
     }
+    public void deleteTask(DailyTask task) {
+        executor.execute(() -> taskDao.deleteTask(task));
+    }
 }

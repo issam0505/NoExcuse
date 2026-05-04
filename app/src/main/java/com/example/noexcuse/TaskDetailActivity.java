@@ -1,14 +1,24 @@
 package com.example.noexcuse;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
-import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
+
+import com.example.noexcuse.database.AppViewModel;
+import com.example.noexcuse.database.DailyTask;
+import com.google.android.material.button.MaterialButton;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class TaskDetailActivity extends AppCompatActivity {
 
@@ -17,28 +27,76 @@ public class TaskDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_task_detail);
 
-        // ربط العناصر
-        TextView tvTitle = findViewById(R.id.tvTitle);
-        TextView tvDesc = findViewById(R.id.tvDesc);
-        Button btnBack = findViewById(R.id.btnBack);
-        ProgressBar progressBar = findViewById(R.id.progressBar);
-        LinearLayout contentLayout = findViewById(R.id.contentLayout);
+        // Bind views
+        TextView       tvTitle       = findViewById(R.id.tvTitle);
+        TextView       tvDesc        = findViewById(R.id.tvDesc);
+        TextView       tvTime        = findViewById(R.id.tvTime);
+        TextView       tvStatus      = findViewById(R.id.tvStatus);
+        FrameLayout    btnBack       = findViewById(R.id.btnBack);
+        MaterialButton btnDone       = findViewById(R.id.btnDone);
+        MaterialButton btnDelete     = findViewById(R.id.btnDelete);
+        ProgressBar    progressBar   = findViewById(R.id.progressBar);
+        LinearLayout   contentLayout = findViewById(R.id.contentLayout);
 
-        // جلب البيانات
-        String title = getIntent().getStringExtra("TASK_TITLE");
-        String desc = getIntent().getStringExtra("TASK_DESC");
+        // Get data from Intent
+        int     taskId   = getIntent().getIntExtra("TASK_ID", -1);
+        String  title    = getIntent().getStringExtra("TASK_TITLE");
+        String  desc     = getIntent().getStringExtra("TASK_DESC");
+        long    taskTime = getIntent().getLongExtra("TASK_TIME", 0);
+        boolean isDone   = getIntent().getBooleanExtra("TASK_IS_DONE", false);
 
+        // Set content
         tvTitle.setText(title);
         tvDesc.setText(desc != null && !desc.isEmpty() ? desc : "No description provided");
 
-        // Action ديال البوتون
-        btnBack.setOnClickListener(v -> {
-            // إخفاء المحتوى وإظهار الـ Loading فالوسط
+        // Format and show time
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        tvTime.setText(sdf.format(new Date(taskTime)));
+
+        // Status badge — dynamic color
+        if (isDone) {
+            tvStatus.setText("Done");
+            tvStatus.setTextColor(Color.parseColor("#4CAF50"));
+            tvStatus.setBackgroundResource(R.drawable.bg_status_done);
+        } else {
+            tvStatus.setText("Pending");
+            tvStatus.setTextColor(Color.parseColor("#F59E0B"));
+            tvStatus.setBackgroundResource(R.drawable.bg_status_pending);
+        }
+
+        AppViewModel viewModel = new ViewModelProvider(this).get(AppViewModel.class);
+
+        // Back
+        btnBack.setOnClickListener(v -> finish());
+
+        // Done
+        btnDone.setOnClickListener(v -> {
+            if (taskId == -1) { finish(); return; }
+            DailyTask task   = new DailyTask();
+            task.id          = taskId;
+            task.title       = title;
+            task.description = desc;
+            task.taskTime    = taskTime;
+            task.isDone      = true;
+            viewModel.updateTask(task);
             contentLayout.setVisibility(View.GONE);
             progressBar.setVisibility(View.VISIBLE);
+            new Handler(Looper.getMainLooper()).postDelayed(this::finish, 800);
+        });
 
-            // تأخير 1 ثانية باش يبان الـ Loading
-            new Handler(Looper.getMainLooper()).postDelayed(this::finish, 1000);
+        // Delete
+        btnDelete.setOnClickListener(v -> {
+            if (taskId == -1) { finish(); return; }
+            DailyTask task   = new DailyTask();
+            task.id          = taskId;
+            task.title       = title;
+            task.description = desc;
+            task.taskTime    = taskTime;
+            task.isDone      = false;
+            viewModel.deleteTask(task);
+            contentLayout.setVisibility(View.GONE);
+            progressBar.setVisibility(View.VISIBLE);
+            new Handler(Looper.getMainLooper()).postDelayed(this::finish, 800);
         });
     }
 }
