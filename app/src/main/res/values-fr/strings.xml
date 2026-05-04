@@ -12,12 +12,110 @@
     <string name="btn_actualiser">Actualiser</string>
     <string name="success_message">Compte créé avec succès !</string>
     <string name="error_generic">Email ou mot de passe invalide</string>
-
     <string name="welcome_p1">Bienvenue %s sur NoExcuse 💪\n\nNous sommes ravis de vous accueillir.\nChoisir cette application, c’est déjà un pas fort — cela montre que vous pensez à votre temps, à vos objectifs et à la personne que vous voulez devenir.\nCet espace est le vôtre.</string>
     <string name="welcome_p2">Réveille la bête en toi. 🔥\nLe succès n’attend personne. Chaque seconde perdue est une occasion envolée. Aujourd’hui, tu as le choix : rester le même… ou devenir extraordinaire.\nNoExcuse est plus qu’une application : c’est l’étincelle qui allume ton feu intérieur, la force qui te pousse quand tu veux abandonner, l’énergie qui transforme tes rêves en réalité.\nBrise tes limites. Domine tes peurs. Dépasse-toi chaque jour.\nAucune excuse. Aucun retour en arrière. Seulement la victoire. 🔥</string>
     <string name="welcome_p3">NoExcuse réunit tout ce dont tu as besoin pour progresser. 🔥\nPlanifie tes tâches, organise tes journées, suis tes entraînements, améliore ton sommeil et structure tes sessions d’étude dans une seule application.\nGrâce aux rappels intelligents, au suivi des performances et aux avatars interactifs, NoExcuse t’aide à rester concentré, constant et productif chaque jour.\nUne application pensée pour transformer tes objectifs en résultats. </string>
-
     <string name="btn_next">Suivant</string>
     <string name="btn_start">Commençons</string>
     <string name="loading">Chargement&#8230;</string>
+    <string-array name="motivation_quotes">
+        <item>Pas d\'excuses. Commence maintenant.</item>
+        <item>La discipline beat la motivation.</item>
+        <item>Une tâche peut changer ta journée.</item>
+        <item>Le succès commence par l\'action.</item>
+        <item>Dépasse-toi aujourd\'hui.</item>
+        <item>Ton avenir a besoin de tes efforts.</item>
+        <item>Reste concentré. Reste fort.</item>
+        <item>Le progrès commence maintenant.</item>
+        <item>Fais-le même fatigué. Fais-le quand même.</item>
+        <item>Chaque minute compte.</item>
+        <item>Les petits pas créent de grands résultats.</item>
+        <item>Gagne la journée.</item>
+        <item>Sois plus fort que tes excuses.</item>
+        <item>Commence là où tu es.</item>
+        <item>Fais en sorte que cette journée compte.</item>
+        <item>Continue d\'avancer.</item>
+        <item>Tes objectifs nécessitent de l\'action.</item>
+        <item>La constance crée la grandeur.</item>
+        <item>Entraîne ton esprit quotidiennement.</item>
+        <item>Tu es capable de plus.</item>
+        <item>Les rêves ont besoin de discipline.</item>
+        <item>L\'action tue la peur.</item>
+        <item>Concentre-toi sur la mission.</item>
+        <item>Rien ne change si rien ne change.</item>
+        <item>Travaille en silence.</item>
+        <item>Passe au niveau supérieur aujourd\'hui.</item>
+        <item>La douleur est temporaire. La fierté dure.</item>
+        <item>Pousse plus fort qu\'hier.</item>
+        <item>Toi contre Toi.</item>
+        <item>Deviens inarrêtable.</item>
+        <item>Le temps n\'attend personne.</item>
+        <item>Fais ce que les autres évitent.</item>
+        <item>Tes habitudes construisent ton futur.</item>
+        <item>Reste affamé.</item>
+        <item>Le succès aime l\'effort.</item>
+        <item>Continue de travailler dur.</item>
+        <item>Le travail acharné gagne.</item>
+        <item>Rends-toi fier.</item>
+        <item>Chaque jour est une chance.</item>
+        <item>Esprit fort. Vie forte.</item>
+        <item>La discipline, c\'est la liberté.</item>
+        <item>Fais-le maintenant.</item>
+        <item>Arrête d\'attendre. Commence.</item>
+        <item>Ta seule limite, c\'est toi.</item>
+        <item>Construis-toi chaque jour.</item>
+        <item>Reste concentré.</item>
+        <item>Lève-toi et travaille.</item>
+        <item>Gagne tes résultats.</item>
+        <item>Aujourd\'hui est ton champ de bataille.</item>
+        <item>Bats la procrastination.</item>
+        <item>Cherche le progrès, pas le confort.</item>
+        <item>Reste affûté.</item>
+        <item>Agis avec un but.</item>
+        <item>Gagne une heure à la fois.</item>
+        <item>Aie moins peur. Travaille plus.</item>
+        <item>Tiens tes promesses.</item>
+        <item>Les résultats nécessitent des sacrifices.</item>
+        <item>Finis ce que tu as commencé.</item>
+        <item>Reste dangereux.</item>
+        <item>Sois fier plus tard.</item>
+        <item>Ta mission commence maintenant.</item>
+        <item>La concentration crée la puissance.</item>
+        <item>Un pas de plus.</item>
+        <item>Fais quelque chose de difficile aujourd\'hui.</item>
+        <item>La croissance nécessite de la pression.</item>
+        <item>Sois constant.</item>
+        <item>Les excuses ne produisent rien.</item>
+        <item>Les jours difficiles construisent des gens forts.</item>
+        <item>Surmonte l\'inconfort.</item>
+        <item>Travaille jusqu\'à ce que ça marche.</item>
+        <item>Respecte ton planning.</item>
+        <item>Maîtrise tes habitudes.</item>
+        <item>L\'élan commence petit.</item>
+        <item>Protège ton temps.</item>
+        <item>Entraîne-toi comme une bête.</item>
+        <item>Étudie comme un guerrier.</item>
+        <item>Réveille-toi avec un but.</item>
+        <item>Reste discipliné.</item>
+        <item>Rien qui en vaut la peine n\'est facile.</item>
+        <item>L\'énergie suit l\'action.</item>
+        <item>Garde tes standards élevés.</item>
+        <item>Ton futur te regarde.</item>
+        <item>Combats la paresse.</item>
+        <item>Crée ton retour.</item>
+        <item>Reste engagé.</item>
+        <item>Domine la journée.</item>
+        <item>Transforme la douleur en puissance.</item>
+        <item>Finis en force.</item>
+        <item>Fais confiance au processus.</item>
+        <item>Deviens la meilleure version de toi-même.</item>
+        <item>Pas de jours à zéro.</item>
+        <item>Bouge maintenant.</item>
+        <item>Gagne ton sommeil.</item>
+        <item>Reste prêt.</item>
+        <item>Une décision change tout.</item>
+        <item>Donne tout.</item>
+        <item>Le succès commence par un mouvement.</item>
+        <item>Ton voyage continue aujourd\'hui.</item>
+    </string-array>
 </resources>

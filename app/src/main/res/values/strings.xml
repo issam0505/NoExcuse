@@ -12,12 +12,110 @@
     <string name="btn_actualiser">Refresh</string>
     <string name="success_message">Account created successfully!</string>
     <string name="error_generic">Invalid email or password</string>
-
     <string name="welcome_p1">Welcome %s to NoExcuse 💪\n\nWe are delighted to welcome you.\nChoosing this app is a strong step—it shows that you care about your time, your goals, and the person you want to become.\nThis space is yours.</string>
-    <string name="welcome_p2">Réveille la bête en toi. 🔥\nLe succès n’attend personne. Chaque seconde perdue est une occasion envolée. Aujourd’hui, tu as le choix : rester le même… ou devenir extraordinaire.\nNoExcuse est plus qu’une application : c’est l’étincelle qui allume ton feu intérieur, la force qui te pousse quand tu veux abandonner, l’énergie qui transforme tes rêves en réalité.\nBrise tes limites. Domine tes peurs. Dépasse-toi chaque jour.\nAucune excuse. Aucun retour en arrière. Seulement la victoire.</string>
+    <string name="welcome_p2">Awaken the beast within you. 🔥\nSuccess waits for no one. Every second lost is a missed opportunity. Today, you have a choice: remain the same… or become extraordinary.\nNoExcuse is more than just an app: it’s the spark that ignites your inner fire, the force that drives you when you want to give up, and the energy that turns your dreams into reality.\nBreak your limits. Dominate your fears. Outdo yourself every single day.\nNo excuses. No turning back. Only victory.</string>
     <string name="welcome_p3">NoExcuse brings together everything you need to progress. 🔥\nPlan your tasks, organize your days, track your workouts, improve your sleep, and structure your study sessions in one app.\nThanks to smart reminders, performance tracking, and interactive avatars, NoExcuse helps you stay focused, consistent, and productive every day.\nAn app designed to turn your goals into results. </string>
-
     <string name="btn_next">Next</string>
     <string name="btn_start">Let\'s start</string>
     <string name="loading">Loading...</string>
+    <string-array name="motivation_quotes">
+        <item>No excuses. Start now.</item>
+        <item>Discipline beats motivation.</item>
+        <item>One task can change your day.</item>
+        <item>Success begins with action.</item>
+        <item>Push yourself today.</item>
+        <item>Your future needs your effort.</item>
+        <item>Stay focused. Stay strong.</item>
+        <item>Progress starts now.</item>
+        <item>Do it tired. Do it anyway.</item>
+        <item>Every minute matters.</item>
+        <item>Small steps create big results.</item>
+        <item>Win the day.</item>
+        <item>Be stronger than your excuses.</item>
+        <item>Start where you are.</item>
+        <item>Make today count.</item>
+        <item>Keep moving forward.</item>
+        <item>Your goals need action.</item>
+        <item>Consistency creates greatness.</item>
+        <item>Train your mind daily.</item>
+        <item>You are capable of more.</item>
+        <item>Dreams need discipline.</item>
+        <item>Action kills fear.</item>
+        <item>Focus on the mission.</item>
+        <item>Nothing changes if nothing changes.</item>
+        <item>Work in silence.</item>
+        <item>Level up today.</item>
+        <item>Pain is temporary. Pride lasts.</item>
+        <item>Push harder than yesterday.</item>
+        <item>You vs You.</item>
+        <item>Become unstoppable.</item>
+        <item>Time waits for no one.</item>
+        <item>Do what others avoid.</item>
+        <item>Your habits build your future.</item>
+        <item>Stay hungry.</item>
+        <item>Success loves effort.</item>
+        <item>Keep grinding.</item>
+        <item>Hard work wins.</item>
+        <item>Make yourself proud.</item>
+        <item>Every day is a chance.</item>
+        <item>Strong mind. Strong life.</item>
+        <item>Discipline is freedom.</item>
+        <item>Do it now.</item>
+        <item>Stop waiting. Begin.</item>
+        <item>Your only limit is you.</item>
+        <item>Build yourself daily.</item>
+        <item>Stay locked in.</item>
+        <item>Rise and grind.</item>
+        <item>Earn your results.</item>
+        <item>Today is your battlefield.</item>
+        <item>Beat procrastination.</item>
+        <item>Chase progress not comfort.</item>
+        <item>Stay sharp.</item>
+        <item>Move with purpose.</item>
+        <item>Win one hour at a time.</item>
+        <item>Fear less. Work more.</item>
+        <item>Keep your promises.</item>
+        <item>Results need sacrifice.</item>
+        <item>Finish what you started.</item>
+        <item>Stay dangerous.</item>
+        <item>Be proud later.</item>
+        <item>Your mission starts now.</item>
+        <item>Focus creates power.</item>
+        <item>One more step.</item>
+        <item>Do something difficult today.</item>
+        <item>Growth needs pressure.</item>
+        <item>Be consistent.</item>
+        <item>Excuses make nothing.</item>
+        <item>Hard days build strong people.</item>
+        <item>Push through discomfort.</item>
+        <item>Work until it works.</item>
+        <item>Respect your schedule.</item>
+        <item>Master your habits.</item>
+        <item>Momentum starts small.</item>
+        <item>Protect your time.</item>
+        <item>Train like a beast.</item>
+        <item>Study like a warrior.</item>
+        <item>Wake up with purpose.</item>
+        <item>Stay disciplined.</item>
+        <item>Nothing worth it is easy.</item>
+        <item>Energy follows action.</item>
+        <item>Keep your standards high.</item>
+        <item>Your future is watching.</item>
+        <item>Fight laziness.</item>
+        <item>Create your comeback.</item>
+        <item>Stay committed.</item>
+        <item>Dominate the day.</item>
+        <item>Turn pain into power.</item>
+        <item>Finish strong.</item>
+        <item>Trust the process.</item>
+        <item>Become the best version of you.</item>
+        <item>No zero days.</item>
+        <item>Move now.</item>
+        <item>Earn your sleep.</item>
+        <item>Stay ready.</item>
+        <item>One decision changes everything.</item>
+        <item>Go all in.</item>
+        <item>Success starts with one move.</item>
+        <item>Your journey continues today.</item>
+    </string-array>
 </resources>

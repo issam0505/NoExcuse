@@ -28,7 +28,7 @@ public class WelcomeActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // 1. تطبيق اللغة المختارة
+
         SharedPreferences langPrefs = getSharedPreferences("MyApp", MODE_PRIVATE);
         setLocale(langPrefs.getString("lang", "en"));
 
@@ -42,7 +42,6 @@ public class WelcomeActivity extends AppCompatActivity {
         tvLoading.setText(getString(R.string.loading));
         tvLoading.setVisibility(View.VISIBLE);
 
-        // 2. جيب الـ UID من الـ Shared
         String uid = getSharedPreferences("UserPrefs", MODE_PRIVATE).getString("uid", null);
 
         if (uid != null) {
@@ -61,6 +60,12 @@ public class WelcomeActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     String firstName = (String) response.body().get("firstName");
                     String lastName = (String) response.body().get("lastName");
+                    getSharedPreferences("UserPrefs", MODE_PRIVATE)
+                            .edit()
+                            .putString("firstName", firstName)
+                            .apply();
+
+
                     setupPages(firstName, lastName);
                 } else {
                     setupPages("User", "");
@@ -87,13 +92,11 @@ public class WelcomeActivity extends AppCompatActivity {
     private void loadPage(int index) {
         tvWelcome.setText("");
         btnNext.setVisibility(View.GONE);
-
         if (index == pages.size() - 1) {
             btnNext.setText(getString(R.string.btn_start));
         } else {
             btnNext.setText(getString(R.string.btn_next));
         }
-
         animateText(pages.get(index));
     }
 
@@ -118,7 +121,6 @@ public class WelcomeActivity extends AppCompatActivity {
                 currentPage++;
                 loadPage(currentPage);
             } else {
-                // هادي هي اللي كتقول للتطبيق "راه صافي، هاد اليوزر داز من الترحيب"
                 getSharedPreferences("welcomPrefs", MODE_PRIVATE).edit().putBoolean("shown", true).apply();
                 startActivity(new Intent(WelcomeActivity.this, MainActivity.class));
                 finish();

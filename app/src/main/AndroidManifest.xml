@@ -41,6 +41,12 @@
         <activity
             android:name=".WelcomeActivity"
             android:exported="false" />
+        <activity
+            android:name=".AlarmActivity"
+            android:exported="false" />
+        <activity
+            android:name=".TaskDetailActivity"
+            android:exported="false" />
 
     </application>
 

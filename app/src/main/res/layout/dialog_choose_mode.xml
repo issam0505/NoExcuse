@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#111111"
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp"
+    android:paddingTop="16dp"
+    android:paddingBottom="32dp">
+
+    <!-- HANDLE BAR -->
+    <View
+        android:layout_width="48dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="20dp"
+        android:background="#444444"/>
+
+    <!-- LOGO -->
+    <ImageView
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="10dp"
+        android:src="@drawable/logo"/>
+
+    <!-- TITLE -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Choose Mode"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="28dp"/>
+
+    <!-- DAILY TASK — Mauve outline -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnModeDaily"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:text="📝  Daily Task"
+        android:textColor="#7C3AED"
+        android:textStyle="bold"
+        android:textSize="15sp"
+        android:textAllCaps="false"
+        android:backgroundTint="#1E1E1E"
+
+        app:strokeWidth="2dp"
+        app:cornerRadius="14dp"
+        android:layout_marginBottom="14dp"/>
+
+    <!-- GYM MODE — Orange outline -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnModeGym"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:text="🏋  Gym Mode"
+        android:textColor="#FF9800"
+        android:textStyle="bold"
+        android:textSize="15sp"
+        android:textAllCaps="false"
+        android:backgroundTint="#1E1E1E"
+        app:strokeWidth="2dp"
+        app:cornerRadius="14dp"
+        android:layout_marginBottom="14dp"
+        android:visibility="gone"/>
+
+    <!-- EDUCATION MODE — Blue outline -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnModeEdu"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:text="📘  Education Mode"
+        android:textColor="#2196F3"
+        android:textStyle="bold"
+        android:textSize="15sp"
+        android:textAllCaps="false"
+        android:backgroundTint="#1E1E1E"
+        app:strokeWidth="2dp"
+        app:cornerRadius="14dp"
+        android:visibility="gone"/>
+
+</LinearLayout>
