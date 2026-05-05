@@ -2,6 +2,7 @@
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardRoot"
     android:layout_width="match_parent"
     android:layout_height="88dp"
     android:layout_marginHorizontal="16dp"
@@ -19,9 +20,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingHorizontal="20dp"
-        android:paddingVertical="14dp">
+        android:paddingVertical="12dp">
 
-        <!-- Left accent bar — purple for TASK, blue for EDUCATION (set via code) -->
+        <!-- Left accent bar -->
         <View
             android:id="@+id/accentBar"
             android:layout_width="3dp"
@@ -31,7 +32,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"/>
 
-        <!-- Label badge — "TASK" or "EDUCATION" (set via code) -->
+        <!-- TASK / EDUCATION label — top-left above title -->
         <TextView
             android:id="@+id/tvTaskLabel"
             android:layout_width="wrap_content"
@@ -45,7 +46,27 @@
             app:layout_constraintStart_toEndOf="@+id/accentBar"
             android:layout_marginStart="14dp"/>
 
-        <!-- Time badge — top right (start time for education, task time for daily) -->
+        <!-- Title — below label, vertically centered in remaining space -->
+        <TextView
+            android:id="@+id/tvItemTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Task Title"
+            android:textColor="#F9FAFB"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"
+            app:layout_constraintTop_toBottomOf="@+id/tvTaskLabel"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/accentBar"
+            app:layout_constraintEnd_toStartOf="@+id/tvItemTime"
+            android:layout_marginStart="14dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="4dp"/>
+
+        <!-- Time — top-right -->
         <TextView
             android:id="@+id/tvItemTime"
             android:layout_width="wrap_content"
@@ -59,22 +80,20 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
-        <!-- Task / Module Title — centered vertically -->
+        <!-- ✓ Done — below time, hidden by default -->
         <TextView
-            android:id="@+id/tvItemTitle"
-            android:layout_width="0dp"
+            android:id="@+id/tvDoneCheck"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Task Title"
-            android:textColor="#F9FAFB"
-            android:textSize="18sp"
+            android:text="✓ Done"
+            android:textColor="#81C784"
+            android:textSize="10sp"
             android:textStyle="bold"
-            android:gravity="center"
-            android:letterSpacing="0.01"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/accentBar"
+            android:letterSpacing="0.05"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@+id/tvItemTime"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginStart="14dp"/>
+            android:layout_marginTop="3dp"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -34,11 +34,16 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
+
+    private static final int REQ_TASK = 101;
+    private static final int REQ_EDU  = 102;
 
     private FloatingActionButton fabAdd;
     private RecyclerView         recyclerView;
@@ -54,9 +59,13 @@ public class MainActivity extends AppCompatActivity {
 
     private AppViewModel viewModel;
 
-    // Cache des deux listes pour merge
-    private List<DailyTask>    cachedDailyTasks = new ArrayList<>();
-    private List<EducationTask> cachedEduTasks  = new ArrayList<>();
+    private List<DailyTask>     cachedDailyTasks    = new ArrayList<>();
+    private List<EducationTask> cachedEduTasks       = new ArrayList<>();
+
+    // IDs dyal items li user darithom done f had session
+    // Format: "DAILY_42" or "EDU_7"
+    // Kayjiw f le bas b green card — machi f done group 3adi
+    public final Set<String> recentlyVerifiedIds = new HashSet<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,13 +94,11 @@ public class MainActivity extends AppCompatActivity {
                 this, R.anim.recycler_fall_layout);
         recyclerView.setLayoutAnimation(anim);
 
-        // ── Observe DailyTasks ───────────────────────────────────────────
         viewModel.pendingTasks.observe(this, tasks -> {
             cachedDailyTasks = tasks != null ? tasks : new ArrayList<>();
             refreshAdapter();
         });
 
-        // ── Observe EducationTasks (table mosta9ila) ─────────────────────
         viewModel.pendingEducation.observe(this, tasks -> {
             cachedEduTasks = tasks != null ? tasks : new ArrayList<>();
             refreshAdapter();
@@ -117,24 +124,71 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Merge DailyTask + EducationTask f liste wahda, sorted b time.
-     * Hadi hiya l'endroit lwahid li kaykhlt les deux - adapter ma3rifsh shay 3la DB.
+     * Sort order:
+     *   0 — Pending (isDone=false, machi verified)  → sorted b time
+     *   1 — Verified (isDone=true, just done)        → sorted b time, f le bas b green card
+     *
+     * Items li isDone=true o machi f recentlyVerifiedIds → mayshohoumch
+     * (DAO rj3 kol items lkn gha pending + verified kayb9aw f lista)
      */
     private void refreshAdapter() {
         List<TaskItem> merged = new ArrayList<>();
 
         for (DailyTask t : cachedDailyTasks) {
-            merged.add(new TaskItem(t));
+            boolean isDone    = t.isDone;
+            boolean verified  = recentlyVerifiedIds.contains("DAILY_" + t.id);
+            // Show ila pending OR ila verified (just done this session)
+            if (!isDone || verified) {
+                merged.add(new TaskItem(t));
+            }
         }
         for (EducationTask e : cachedEduTasks) {
-            merged.add(new TaskItem(e));
+            boolean isDone   = e.isDone;
+            boolean verified = recentlyVerifiedIds.contains("EDU_" + e.id);
+            if (!isDone || verified) {
+                merged.add(new TaskItem(e));
+            }
         }
 
-        // Sort b time - DailyTask.taskTime wla EducationTask.startTime
-        Collections.sort(merged, (a, b) -> Long.compare(a.getSortTime(), b.getSortTime()));
+        // Sort: pending first (sorted b time), verified last (sorted b time)
+        Collections.sort(merged, (a, b) -> {
+            boolean aVerified = isVerified(a);
+            boolean bVerified = isVerified(b);
 
+            if (aVerified != bVerified) return aVerified ? 1 : -1;
+            return Long.compare(a.getSortTime(), b.getSortTime());
+        });
+
+        taskAdapter.setVerifiedIds(recentlyVerifiedIds);
         taskAdapter.setItems(merged);
         recyclerView.scheduleLayoutAnimation();
+    }
+
+    private boolean isVerified(TaskItem item) {
+        String key = item.type == TaskItem.Type.DAILY
+                ? "DAILY_" + item.dailyTask.id
+                : "EDU_"   + item.eduTask.id;
+        return recentlyVerifiedIds.contains(key);
+    }
+
+    /** Called from TaskDetailActivity / EducationDetailActivity via onActivityResult */
+    public void markAsVerified(boolean isEducation, int id) {
+        recentlyVerifiedIds.add(isEducation ? "EDU_" + id : "DAILY_" + id);
+        refreshAdapter();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode != RESULT_OK || data == null) return;
+
+        if (requestCode == REQ_TASK) {
+            int id = data.getIntExtra(TaskDetailActivity.EXTRA_VERIFIED_ID, -1);
+            if (id != -1) markAsVerified(false, id);
+        } else if (requestCode == REQ_EDU) {
+            int id = data.getIntExtra(EducationDetailActivity.EXTRA_VERIFIED_ID, -1);
+            if (id != -1) markAsVerified(true, id);
+        }
     }
 
     // ─────────────────────────────────────────────────────
@@ -170,7 +224,6 @@ public class MainActivity extends AppCompatActivity {
 
     // ─────────────────────────────────────────────────────
     //  EDUCATION SESSION DIALOG
-    //  Save direkt f education_tasks - machi f daily_tasks
     // ─────────────────────────────────────────────────────
     private void openEducationDialog() {
         BottomSheetDialog sheet = new BottomSheetDialog(this);
@@ -216,7 +269,6 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            // Save f education_tasks BASH - machi f daily_tasks
             EducationTask edu = new EducationTask();
             edu.moduleName  = moduleName;
             edu.studyPlan   = studyPlan;
@@ -283,7 +335,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // ─────────────────────────────────────────────────────
-    //  Helper - style BottomSheet (no repetition)
+    //  Helper - style BottomSheet
     // ─────────────────────────────────────────────────────
     private void styleBottomSheet(BottomSheetDialog sheet, View view) {
         sheet.setOnShowListener(dialog -> {

@@ -21,15 +21,13 @@ public interface EducationDao {
     @Delete
     void deleteEducation(EducationTask educationTask);
 
-    /** Bach MainActivity observe les sessions pending */
-    @Query("SELECT * FROM education_tasks WHERE isDone = 0 ORDER BY startTime ASC")
+    // Rj3 kol sessions (pending + done) — sorting kaydir f MainActivity
+    @Query("SELECT * FROM education_tasks ORDER BY startTime ASC")
     LiveData<List<EducationTask>> getPendingEducationLive();
 
-    /** Bach EducationDetailActivity tjib data b id */
     @Query("SELECT * FROM education_tasks WHERE id = :id LIMIT 1")
     EducationTask getById(int id);
 
-    /** Kept f case khassna - search b nom */
     @Query("SELECT * FROM education_tasks WHERE moduleName = :name LIMIT 1")
     EducationTask getByModuleName(String name);
 

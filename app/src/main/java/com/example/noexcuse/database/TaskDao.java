@@ -14,12 +14,13 @@ public interface TaskDao {
     @Insert
     void insertTask(DailyTask task);
 
-    // LiveData → الـ RecyclerView يتحدث تلقائياً لما تتزاد task جديدة
-    @Query("SELECT * FROM daily_tasks WHERE isDone = 0 ORDER BY taskTime ASC")
+    // Rj3 kol tasks (pending + done) — sorting kaydir f MainActivity
+    @Query("SELECT * FROM daily_tasks ORDER BY taskTime ASC")
     LiveData<List<DailyTask>> getPendingTasksLive();
 
     @Update
     void updateTask(DailyTask task);
+
     @Delete
     void deleteTask(DailyTask task);
 }
