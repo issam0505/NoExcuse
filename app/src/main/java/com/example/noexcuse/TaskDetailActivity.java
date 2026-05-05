@@ -9,6 +9,7 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -27,7 +28,6 @@ public class TaskDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_task_detail);
 
-        // Bind views
         TextView       tvTitle       = findViewById(R.id.tvTitle);
         TextView       tvDesc        = findViewById(R.id.tvDesc);
         TextView       tvTime        = findViewById(R.id.tvTime);
@@ -38,22 +38,19 @@ public class TaskDetailActivity extends AppCompatActivity {
         ProgressBar    progressBar   = findViewById(R.id.progressBar);
         LinearLayout   contentLayout = findViewById(R.id.contentLayout);
 
-        // Get data from Intent
+        // Data kamilat ji men intent - DailyTask ma3endna ma njibu mn DB
         int     taskId   = getIntent().getIntExtra("TASK_ID", -1);
         String  title    = getIntent().getStringExtra("TASK_TITLE");
         String  desc     = getIntent().getStringExtra("TASK_DESC");
         long    taskTime = getIntent().getLongExtra("TASK_TIME", 0);
         boolean isDone   = getIntent().getBooleanExtra("TASK_IS_DONE", false);
 
-        // Set content
         tvTitle.setText(title);
         tvDesc.setText(desc != null && !desc.isEmpty() ? desc : "No description provided");
 
-        // Format and show time
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
         tvTime.setText(sdf.format(new Date(taskTime)));
 
-        // Status badge — dynamic color
         if (isDone) {
             tvStatus.setText("Done");
             tvStatus.setTextColor(Color.parseColor("#4CAF50"));
@@ -66,10 +63,9 @@ public class TaskDetailActivity extends AppCompatActivity {
 
         AppViewModel viewModel = new ViewModelProvider(this).get(AppViewModel.class);
 
-        // Back
         btnBack.setOnClickListener(v -> finish());
 
-        // Done
+        // ── Mark as Done - update isDone=true f daily_tasks ─────────────
         btnDone.setOnClickListener(v -> {
             if (taskId == -1) { finish(); return; }
             DailyTask task   = new DailyTask();
@@ -77,14 +73,14 @@ public class TaskDetailActivity extends AppCompatActivity {
             task.title       = title;
             task.description = desc;
             task.taskTime    = taskTime;
-            task.isDone      = true;
+            task.isDone      = true;            // ← true = kaydher f pending list mchi
             viewModel.updateTask(task);
             contentLayout.setVisibility(View.GONE);
             progressBar.setVisibility(View.VISIBLE);
             new Handler(Looper.getMainLooper()).postDelayed(this::finish, 800);
         });
 
-        // Delete
+        // ── Delete - delete mn daily_tasks direkt ────────────────────────
         btnDelete.setOnClickListener(v -> {
             if (taskId == -1) { finish(); return; }
             DailyTask task   = new DailyTask();
@@ -92,7 +88,7 @@ public class TaskDetailActivity extends AppCompatActivity {
             task.title       = title;
             task.description = desc;
             task.taskTime    = taskTime;
-            task.isDone      = false;
+            task.isDone      = isDone;
             viewModel.deleteTask(task);
             contentLayout.setVisibility(View.GONE);
             progressBar.setVisibility(View.VISIBLE);

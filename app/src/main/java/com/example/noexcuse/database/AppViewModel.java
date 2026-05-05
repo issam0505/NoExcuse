@@ -5,22 +5,24 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class AppViewModel extends AndroidViewModel {
 
     private final AppRepository repository;
 
-    // LiveData مباشرة — الـ UI يـ observe بدون ما يعرف شي على الـ DB
-    public final LiveData<List<DailyTask>> pendingTasks;
+    public final LiveData<List<DailyTask>>    pendingTasks;
+    public final LiveData<List<EducationTask>> pendingEducation;
 
     public AppViewModel(@NonNull Application application) {
         super(application);
-        repository   = new AppRepository(application);
-        pendingTasks = repository.getPendingTasks();
-
+        repository       = new AppRepository(application);
+        pendingTasks     = repository.getPendingTasks();
+        pendingEducation = repository.getPendingEducation();
     }
 
-    // ─── TASKS ───────────────────────────────
+    // ─── DAILY TASKS ─────────────────────────
     public void addTask(DailyTask task) {
         repository.insertTask(task);
     }
@@ -29,18 +31,32 @@ public class AppViewModel extends AndroidViewModel {
         repository.updateTask(task);
     }
 
+    public void deleteTask(DailyTask task) {
+        repository.deleteTask(task);
+    }
+
     // ─── EDUCATION ───────────────────────────
     public void addEducation(EducationTask task) {
         repository.insertEducation(task);
     }
 
-    // ─── GYM ─────────────────────────────────
+    public void updateEducation(EducationTask task) {
+        repository.updateEducation(task);
+    }
+
+    public void deleteEducation(EducationTask task) {
+        repository.deleteEducation(task);
+    }
+
     /**
-     * الـ flow الصحيح:
-     * 1. addGymPlan → callback يرجع planId
-     * 2. addPlannedExercise(exercise بـ planId) → callback يرجع exerciseId
-     * 3. addPerformance(performance بـ exerciseId)
+     * Blocking call - tsta3mlha f background thread (Executors) bas
+     * EducationDetailActivity katsta3mlha hekda
      */
+    public EducationTask getEducationById(int id) {
+        return repository.getEducationById(id);
+    }
+
+    // ─── GYM ─────────────────────────────────
     public void addGymPlan(GymPlan plan, AppRepository.OnIdGeneratedCallback callback) {
         repository.insertGymPlan(plan, callback);
     }
@@ -60,8 +76,4 @@ public class AppViewModel extends AndroidViewModel {
     public LiveData<List<PlannedExercise>> getExercisesForPlan(int planId) {
         return repository.getExercisesForPlan(planId);
     }
-    public void deleteTask(DailyTask task) {
-        repository.deleteTask(task);
-    }
-
 }

@@ -47,6 +47,9 @@
         <activity
             android:name=".TaskDetailActivity"
             android:exported="false" />
+        <activity
+            android:name=".EducationDetailActivity"
+            android:exported="false" />
 
     </application>
 

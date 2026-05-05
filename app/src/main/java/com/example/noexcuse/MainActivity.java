@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
-import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.animation.LayoutAnimationController;
 import android.widget.Button;
@@ -23,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.noexcuse.database.AppViewModel;
 import com.example.noexcuse.database.DailyTask;
+import com.example.noexcuse.database.EducationTask;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
@@ -30,32 +30,39 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
 
     private FloatingActionButton fabAdd;
-    private RecyclerView recyclerView;
-    private TextView tvDate, tvMotivation;
-    private DrawerLayout drawerLayout;
-    private ImageView btnMenu;
-    private Button btnDash, btnSettings, btnAI;
-    private Switch swGym, swEdu;
-    private TaskAdapter taskAdapter;
+    private RecyclerView         recyclerView;
+    private TextView             tvDate, tvMotivation;
+    private DrawerLayout         drawerLayout;
+    private ImageView            btnMenu;
+    private Button               btnDash, btnSettings, btnAI;
+    private Switch               swGym, swEdu;
+    private TaskAdapter          taskAdapter;
 
-    public boolean isGymModeEnabled = false;
+    public boolean isGymModeEnabled       = false;
     public boolean isEducationModeEnabled = false;
+
     private AppViewModel viewModel;
+
+    // Cache des deux listes pour merge
+    private List<DailyTask>    cachedDailyTasks = new ArrayList<>();
+    private List<EducationTask> cachedEduTasks  = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Init UI
         drawerLayout = findViewById(R.id.drawer_layout);
         btnMenu      = findViewById(R.id.btnMenu);
         fabAdd       = findViewById(R.id.fabAdd);
@@ -70,41 +77,69 @@ public class MainActivity extends AppCompatActivity {
 
         viewModel = new ViewModelProvider(this).get(AppViewModel.class);
 
-        // Setup RecyclerView
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         taskAdapter = new TaskAdapter();
         recyclerView.setAdapter(taskAdapter);
 
-        // Apply Falling Animation
-        LayoutAnimationController anim = AnimationUtils.loadLayoutAnimation(this, R.anim.recycler_fall_layout);
+        LayoutAnimationController anim = AnimationUtils.loadLayoutAnimation(
+                this, R.anim.recycler_fall_layout);
         recyclerView.setLayoutAnimation(anim);
 
-        // Observe Data
+        // ── Observe DailyTasks ───────────────────────────────────────────
         viewModel.pendingTasks.observe(this, tasks -> {
-            taskAdapter.setTasks(tasks);
-            recyclerView.scheduleLayoutAnimation();
+            cachedDailyTasks = tasks != null ? tasks : new ArrayList<>();
+            refreshAdapter();
         });
 
-        // Date & Motivation
+        // ── Observe EducationTasks (table mosta9ila) ─────────────────────
+        viewModel.pendingEducation.observe(this, tasks -> {
+            cachedEduTasks = tasks != null ? tasks : new ArrayList<>();
+            refreshAdapter();
+        });
+
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
         tvDate.setText(sdf.format(new Date()));
+
         String[] quotes = getResources().getStringArray(R.array.motivation_quotes);
         if (quotes.length > 0) {
             tvMotivation.setText(quotes[new Random().nextInt(quotes.length)]);
         }
 
-        // Listeners
         btnMenu.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.END));
         btnDash.setOnClickListener(v -> drawerLayout.closeDrawer(GravityCompat.END));
         btnSettings.setOnClickListener(v -> drawerLayout.closeDrawer(GravityCompat.END));
         btnAI.setOnClickListener(v -> drawerLayout.closeDrawer(GravityCompat.END));
 
-        swGym.setOnCheckedChangeListener((buttonView, isChecked) -> isGymModeEnabled = isChecked);
-        swEdu.setOnCheckedChangeListener((buttonView, isChecked) -> isEducationModeEnabled = isChecked);
+        swGym.setOnCheckedChangeListener((btn, checked) -> isGymModeEnabled = checked);
+        swEdu.setOnCheckedChangeListener((btn, checked) -> isEducationModeEnabled = checked);
 
         fabAdd.setOnClickListener(v -> openSmartAddMenu());
     }
 
+    /**
+     * Merge DailyTask + EducationTask f liste wahda, sorted b time.
+     * Hadi hiya l'endroit lwahid li kaykhlt les deux - adapter ma3rifsh shay 3la DB.
+     */
+    private void refreshAdapter() {
+        List<TaskItem> merged = new ArrayList<>();
+
+        for (DailyTask t : cachedDailyTasks) {
+            merged.add(new TaskItem(t));
+        }
+        for (EducationTask e : cachedEduTasks) {
+            merged.add(new TaskItem(e));
+        }
+
+        // Sort b time - DailyTask.taskTime wla EducationTask.startTime
+        Collections.sort(merged, (a, b) -> Long.compare(a.getSortTime(), b.getSortTime()));
+
+        taskAdapter.setItems(merged);
+        recyclerView.scheduleLayoutAnimation();
+    }
+
+    // ─────────────────────────────────────────────────────
+    //  SMART ADD MENU
+    // ─────────────────────────────────────────────────────
     private void openSmartAddMenu() {
         if (!isGymModeEnabled && !isEducationModeEnabled) {
             openDailyTaskDialog();
@@ -114,47 +149,98 @@ public class MainActivity extends AppCompatActivity {
         BottomSheetDialog sheet = new BottomSheetDialog(this);
         View view = getLayoutInflater().inflate(R.layout.dialog_choose_mode, null);
         sheet.setContentView(view);
-
-        sheet.setOnShowListener(dialog -> {
-            View bottomSheet = (View) view.getParent();
-            if (bottomSheet != null) {
-                ((View) bottomSheet.getParent()).setBackgroundColor(Color.TRANSPARENT);
-                bottomSheet.setBackgroundColor(Color.parseColor("#111111"));
-                BottomSheetBehavior<View> behavior = BottomSheetBehavior.from(bottomSheet);
-                behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                behavior.setSkipCollapsed(true);
-            }
-        });
+        styleBottomSheet(sheet, view);
 
         MaterialButton btnDaily = view.findViewById(R.id.btnModeDaily);
         MaterialButton btnGym   = view.findViewById(R.id.btnModeGym);
         MaterialButton btnEdu   = view.findViewById(R.id.btnModeEdu);
 
-        btnGym.setVisibility(isGymModeEnabled  ? View.VISIBLE : View.GONE);
+        btnGym.setVisibility(isGymModeEnabled ? View.VISIBLE : View.GONE);
         btnEdu.setVisibility(isEducationModeEnabled ? View.VISIBLE : View.GONE);
 
         btnDaily.setOnClickListener(v -> { sheet.dismiss(); openDailyTaskDialog(); });
-        btnGym.setOnClickListener(v -> { sheet.dismiss(); Toast.makeText(this, "Gym Form Coming Next 🔥", Toast.LENGTH_SHORT).show(); });
-        btnEdu.setOnClickListener(v -> { sheet.dismiss(); Toast.makeText(this, "Education Form Coming Next 🔥", Toast.LENGTH_SHORT).show(); });
+        btnGym.setOnClickListener(v -> {
+            sheet.dismiss();
+            Toast.makeText(this, "Gym Form Coming Next 🔥", Toast.LENGTH_SHORT).show();
+        });
+        btnEdu.setOnClickListener(v -> { sheet.dismiss(); openEducationDialog(); });
 
         sheet.show();
     }
 
+    // ─────────────────────────────────────────────────────
+    //  EDUCATION SESSION DIALOG
+    //  Save direkt f education_tasks - machi f daily_tasks
+    // ─────────────────────────────────────────────────────
+    private void openEducationDialog() {
+        BottomSheetDialog sheet = new BottomSheetDialog(this);
+        View view = getLayoutInflater().inflate(R.layout.dialog_add_education, null);
+        sheet.setContentView(view);
+        styleBottomSheet(sheet, view);
+
+        TextInputEditText etModule    = view.findViewById(R.id.etModuleName);
+        TextInputEditText etPlan      = view.findViewById(R.id.etStudyPlan);
+        TextInputEditText etStartTime = view.findViewById(R.id.etStartTime);
+        TextInputEditText etEndTime   = view.findViewById(R.id.etEndTime);
+        MaterialButton    btnSave     = view.findViewById(R.id.btnSaveSession);
+
+        Calendar calStart = Calendar.getInstance();
+        Calendar calEnd   = Calendar.getInstance();
+
+        etStartTime.setOnClickListener(v ->
+                new TimePickerDialog(this, (tp, hour, minute) -> {
+                    calStart.set(Calendar.HOUR_OF_DAY, hour);
+                    calStart.set(Calendar.MINUTE, minute);
+                    calStart.set(Calendar.SECOND, 0);
+                    etStartTime.setText(String.format(Locale.getDefault(), "%02d:%02d", hour, minute));
+                }, calStart.get(Calendar.HOUR_OF_DAY), calStart.get(Calendar.MINUTE), true).show()
+        );
+
+        etEndTime.setOnClickListener(v ->
+                new TimePickerDialog(this, (tp, hour, minute) -> {
+                    calEnd.set(Calendar.HOUR_OF_DAY, hour);
+                    calEnd.set(Calendar.MINUTE, minute);
+                    calEnd.set(Calendar.SECOND, 0);
+                    etEndTime.setText(String.format(Locale.getDefault(), "%02d:%02d", hour, minute));
+                }, calEnd.get(Calendar.HOUR_OF_DAY), calEnd.get(Calendar.MINUTE), true).show()
+        );
+
+        btnSave.setOnClickListener(v -> {
+            String moduleName = etModule.getText() != null ? etModule.getText().toString().trim() : "";
+            String studyPlan  = etPlan.getText() != null ? etPlan.getText().toString().trim() : "";
+            String startStr   = etStartTime.getText() != null ? etStartTime.getText().toString().trim() : "";
+            String endStr     = etEndTime.getText() != null ? etEndTime.getText().toString().trim() : "";
+
+            if (moduleName.isEmpty() || startStr.isEmpty() || endStr.isEmpty()) {
+                Toast.makeText(this, "Fill Module, Start & End time", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Save f education_tasks BASH - machi f daily_tasks
+            EducationTask edu = new EducationTask();
+            edu.moduleName  = moduleName;
+            edu.studyPlan   = studyPlan;
+            edu.startTime   = calStart.getTimeInMillis();
+            edu.endTime     = calEnd.getTimeInMillis();
+            edu.isFocusMode = false;
+            edu.isDone      = false;
+            viewModel.addEducation(edu);
+
+            Toast.makeText(this, "Study Session Saved! 📘", Toast.LENGTH_SHORT).show();
+            sheet.dismiss();
+        });
+
+        sheet.show();
+    }
+
+    // ─────────────────────────────────────────────────────
+    //  DAILY TASK DIALOG
+    // ─────────────────────────────────────────────────────
     private void openDailyTaskDialog() {
         BottomSheetDialog sheet = new BottomSheetDialog(this);
         View view = getLayoutInflater().inflate(R.layout.dialog_add_task, null);
         sheet.setContentView(view);
-
-        sheet.setOnShowListener(dialog -> {
-            View bottomSheet = (View) view.getParent();
-            if (bottomSheet != null) {
-                ((View) bottomSheet.getParent()).setBackgroundColor(Color.TRANSPARENT);
-                bottomSheet.setBackgroundColor(Color.parseColor("#111111"));
-                BottomSheetBehavior<View> behavior = BottomSheetBehavior.from(bottomSheet);
-                behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                behavior.setSkipCollapsed(true);
-            }
-        });
+        styleBottomSheet(sheet, view);
 
         TextInputEditText etTask  = view.findViewById(R.id.etTaskName);
         TextInputEditText etDesc  = view.findViewById(R.id.etTaskDescription);
@@ -194,5 +280,21 @@ public class MainActivity extends AppCompatActivity {
         });
 
         sheet.show();
+    }
+
+    // ─────────────────────────────────────────────────────
+    //  Helper - style BottomSheet (no repetition)
+    // ─────────────────────────────────────────────────────
+    private void styleBottomSheet(BottomSheetDialog sheet, View view) {
+        sheet.setOnShowListener(dialog -> {
+            View bottomSheet = (View) view.getParent();
+            if (bottomSheet != null) {
+                ((View) bottomSheet.getParent()).setBackgroundColor(Color.TRANSPARENT);
+                bottomSheet.setBackgroundColor(Color.parseColor("#111111"));
+                BottomSheetBehavior<View> behavior = BottomSheetBehavior.from(bottomSheet);
+                behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                behavior.setSkipCollapsed(true);
+            }
+        });
     }
 }

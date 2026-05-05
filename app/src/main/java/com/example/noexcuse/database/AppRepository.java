@@ -8,10 +8,10 @@ import java.util.concurrent.Executors;
 
 public class AppRepository {
 
-    private final TaskDao taskDao;
+    private final TaskDao      taskDao;
     private final EducationDao educationDao;
-    private final GymDao gymDao;
-    private final SleepDao sleepDao;
+    private final GymDao       gymDao;
+    private final SleepDao     sleepDao;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
@@ -38,28 +38,38 @@ public class AppRepository {
         executor.execute(() -> taskDao.updateTask(task));
     }
 
+    public void deleteTask(DailyTask task) {
+        executor.execute(() -> taskDao.deleteTask(task));
+    }
+
     // ─────────────────────────────────────────
-    //  EDUCATION
+    //  EDUCATION — table mosta9ila
     // ─────────────────────────────────────────
     public void insertEducation(EducationTask task) {
         executor.execute(() -> educationDao.insertEducation(task));
     }
 
-    // ─────────────────────────────────────────
-    //  GYM — الجزء المهم: 3 جداول مترابطة
-    //
-    //  GymPlan ─── planId ──► PlannedExercise ─── plannedExerciseId ──► GymPerformance
-    //
-    //  الـ flow:
-    //  1. insertGymPlan()  → يرجع planId الجديد
-    //  2. insertPlannedExercise(exercise مع planId)  → لكل تمرين
-    //  3. insertPerformance(performance مع plannedExerciseId) → لكل set يكمّلو المستخدم
-    // ─────────────────────────────────────────
+    public void updateEducation(EducationTask task) {
+        executor.execute(() -> educationDao.updateEducation(task));
+    }
 
-    /**
-     * يحفظ GymPlan ويرجع الـ planId المولّد — ضروري باش نربط PlannedExercises بيه
-     * callback لأن الـ insert يخدم في background thread
-     */
+    public void deleteEducation(EducationTask task) {
+        executor.execute(() -> educationDao.deleteEducation(task));
+    }
+
+    /** LiveData - MainActivity observe f UI thread */
+    public LiveData<List<EducationTask>> getPendingEducation() {
+        return educationDao.getPendingEducationLive();
+    }
+
+    /** Blocking - tsta3mlo f background thread bas */
+    public EducationTask getEducationById(int id) {
+        return educationDao.getById(id);
+    }
+
+    // ─────────────────────────────────────────
+    //  GYM
+    // ─────────────────────────────────────────
     public void insertGymPlan(GymPlan plan, OnIdGeneratedCallback callback) {
         executor.execute(() -> {
             long planId = gymDao.insertPlanReturnId(plan);
@@ -67,10 +77,6 @@ public class AppRepository {
         });
     }
 
-    /**
-     * يحفظ تمرين واحد مربوط بـ planId
-     * callback يرجع الـ exerciseId — ضروري لـ GymPerformance
-     */
     public void insertPlannedExercise(PlannedExercise exercise, OnIdGeneratedCallback callback) {
         executor.execute(() -> {
             long exId = gymDao.insertExerciseReturnId(exercise);
@@ -78,9 +84,6 @@ public class AppRepository {
         });
     }
 
-    /**
-     * يحفظ أداء set واحد مربوط بـ plannedExerciseId
-     */
     public void insertPerformance(GymPerformance performance) {
         executor.execute(() -> gymDao.insertPerformance(performance));
     }
@@ -99,8 +102,5 @@ public class AppRepository {
 
     public interface OnIdGeneratedCallback {
         void onIdGenerated(int id);
-    }
-    public void deleteTask(DailyTask task) {
-        executor.execute(() -> taskDao.deleteTask(task));
     }
 }
