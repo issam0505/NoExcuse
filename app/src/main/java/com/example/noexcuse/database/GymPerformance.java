@@ -7,10 +7,11 @@ import androidx.room.PrimaryKey;
 public class GymPerformance {
     @PrimaryKey(autoGenerate = true)
     public int id;
-    public int plannedExerciseId;
-    public int setNumber;
-    public float weight;
-    public int reps;
-    public long timestamp;
-    public boolean isSynced;
+
+    public int    plannedExerciseId;      // FK → PlannedExercise.id
+    public String exerciseNameSnapshot;   // smiya dyal exercise nhar el tsejil
+
+    public int   setNumber;   // 1, 2, 3...
+    public float weight;      // poids f kg li hza f had set
+    public int   reps;        // reps li dar f had set
 }

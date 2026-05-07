@@ -1,255 +1,316 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#000000"
-    android:padding="24dp">
+    android:layout_height="match_parent">
 
-    <LinearLayout
-        android:id="@+id/contentLayout"
+    <!-- MAIN CONTENT -->
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:background="#000000"
+        android:padding="24dp">
 
-        <!-- Top bar: back left, edu icon center, menu right -->
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="40dp"
-            android:layout_marginBottom="28dp">
-
-            <!-- Back button circle -->
-            <FrameLayout
-                android:id="@+id/btnBack"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
-                android:background="@drawable/bg_circle_dark"
-                android:clickable="true"
-                android:focusable="true">
-
-                <ImageView
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_arrow_back"
-                    app:tint="#FFFFFF" />
-            </FrameLayout>
-
-            <!-- Education icon centered (blue) -->
-            <FrameLayout
-                android:layout_width="52dp"
-                android:layout_height="52dp"
-                android:layout_centerInParent="true"
-                android:background="@drawable/bg_agenda_icon">
-
-                <ImageView
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_school"
-                    app:tint="#2196F3" />
-            </FrameLayout>
-
-            <!-- Menu button right (same style as MainActivity) -->
-            <ImageView
-                android:id="@+id/btnMenu"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:src="@drawable/menu_24px"
-                android:clickable="true"
-                android:focusable="true"
-                app:tint="#FFFFFF" />
-
-        </RelativeLayout>
-
-        <!-- EDUCATION badge (blue) -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="EDUCATION"
-            android:textColor="#2196F3"
-            android:textSize="10sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.12"
-            android:background="@drawable/bg_task_badge"
-            android:paddingLeft="12dp"
-            android:paddingRight="12dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp"
-            android:layout_marginBottom="14dp"/>
-
-        <!-- Module Title -->
-        <TextView
-            android:id="@+id/tvTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Module Name"
-            android:textColor="#F9FAFB"
-            android:textSize="26sp"
-            android:textStyle="bold"
-            android:lineSpacingMultiplier="1.2"
-            android:layout_marginBottom="10dp"/>
-
-        <!-- Study Plan / Description -->
-        <TextView
-            android:id="@+id/tvDesc"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="No study plan provided"
-            android:textColor="#9CA3AF"
-            android:textSize="14sp"
-            android:lineSpacingMultiplier="1.6"
-            android:layout_marginBottom="24dp"/>
-
-        <!-- Info card: Start time + End time + Status -->
         <LinearLayout
+            android:id="@+id/contentLayout"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/bg_info_card"
-            android:padding="16dp"
-            android:layout_marginBottom="24dp">
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
-            <!-- Start time row -->
+            <!-- Top bar: back left, edu icon center, menu right -->
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp">
+                android:layout_marginTop="40dp"
+                android:layout_marginBottom="28dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                <!-- Back button circle -->
+                <FrameLayout
+                    android:id="@+id/btnBack"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_alignParentStart="true"
                     android:layout_centerVertical="true"
-                    android:text="Start time"
-                    android:textColor="#6B7280"
-                    android:textSize="12sp"/>
+                    android:background="@drawable/bg_circle_dark"
+                    android:clickable="true"
+                    android:focusable="true">
 
-                <TextView
-                    android:id="@+id/tvStartTime"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_arrow_back"
+                        app:tint="#FFFFFF" />
+                </FrameLayout>
+
+                <!-- Education icon centered (blue) -->
+                <FrameLayout
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:layout_centerInParent="true"
+                    android:background="@drawable/bg_agenda_icon">
+
+                    <ImageView
+                        android:layout_width="26dp"
+                        android:layout_height="26dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_school"
+                        app:tint="#2196F3" />
+                </FrameLayout>
+
+                <!-- Menu button right -->
+                <ImageView
+                    android:id="@+id/btnMenu"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
                     android:layout_alignParentEnd="true"
                     android:layout_centerVertical="true"
-                    android:text="09:00"
-                    android:textColor="#F9FAFB"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    android:background="@drawable/bg_time_badge"
-                    android:paddingLeft="10dp"
-                    android:paddingRight="10dp"
-                    android:paddingTop="3dp"
-                    android:paddingBottom="3dp"/>
+                    android:src="@drawable/menu_24px"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:tint="#FFFFFF" />
+
             </RelativeLayout>
 
-            <!-- End time row -->
-            <RelativeLayout
+            <!-- EDUCATION badge (blue) -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="EDUCATION"
+                android:textColor="#2196F3"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.12"
+                android:background="@drawable/bg_task_badge"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:layout_marginBottom="14dp"/>
+
+            <!-- Module Title -->
+            <TextView
+                android:id="@+id/tvTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp">
+                android:text="Module Name"
+                android:textColor="#F9FAFB"
+                android:textSize="26sp"
+                android:textStyle="bold"
+                android:lineSpacingMultiplier="1.2"
+                android:layout_marginBottom="10dp"/>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
-                    android:text="End time"
-                    android:textColor="#6B7280"
-                    android:textSize="12sp"/>
-
-                <TextView
-                    android:id="@+id/tvEndTime"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:text="11:00"
-                    android:textColor="#F9FAFB"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    android:background="@drawable/bg_time_badge"
-                    android:paddingLeft="10dp"
-                    android:paddingRight="10dp"
-                    android:paddingTop="3dp"
-                    android:paddingBottom="3dp"/>
-            </RelativeLayout>
-
-            <!-- Status row -->
-            <RelativeLayout
+            <!-- Study Plan / Description -->
+            <TextView
+                android:id="@+id/tvDesc"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:text="No study plan provided"
+                android:textColor="#9CA3AF"
+                android:textSize="14sp"
+                android:lineSpacingMultiplier="1.6"
+                android:layout_marginBottom="24dp"/>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
-                    android:text="Status"
-                    android:textColor="#6B7280"
-                    android:textSize="12sp"/>
+            <!-- Info card: Start time + End time + Status -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_info_card"
+                android:padding="16dp"
+                android:layout_marginBottom="24dp">
 
-                <TextView
-                    android:id="@+id/tvStatus"
-                    android:layout_width="wrap_content"
+                <!-- Start time row -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:text="Pending"
-                    android:textColor="#F59E0B"
-                    android:textSize="12sp"
-                    android:background="@drawable/bg_status_pending"
-                    android:paddingLeft="10dp"
-                    android:paddingRight="10dp"
-                    android:paddingTop="3dp"
-                    android:paddingBottom="3dp"/>
-            </RelativeLayout>
+                    android:layout_marginBottom="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:text="Start time"
+                        android:textColor="#6B7280"
+                        android:textSize="12sp"/>
+
+                    <TextView
+                        android:id="@+id/tvStartTime"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:text="09:00"
+                        android:textColor="#F9FAFB"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/bg_time_badge"
+                        android:paddingLeft="10dp"
+                        android:paddingRight="10dp"
+                        android:paddingTop="3dp"
+                        android:paddingBottom="3dp"/>
+                </RelativeLayout>
+
+                <!-- End time row -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:text="End time"
+                        android:textColor="#6B7280"
+                        android:textSize="12sp"/>
+
+                    <TextView
+                        android:id="@+id/tvEndTime"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:text="11:00"
+                        android:textColor="#F9FAFB"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:background="@drawable/bg_time_badge"
+                        android:paddingLeft="10dp"
+                        android:paddingRight="10dp"
+                        android:paddingTop="3dp"
+                        android:paddingBottom="3dp"/>
+                </RelativeLayout>
+
+                <!-- Status row -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:text="Status"
+                        android:textColor="#6B7280"
+                        android:textSize="12sp"/>
+
+                    <TextView
+                        android:id="@+id/tvStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:text="Pending"
+                        android:textColor="#F59E0B"
+                        android:textSize="12sp"
+                        android:background="@drawable/bg_status_pending"
+                        android:paddingLeft="10dp"
+                        android:paddingRight="10dp"
+                        android:paddingTop="3dp"
+                        android:paddingBottom="3dp"/>
+                </RelativeLayout>
+
+            </LinearLayout>
+
+            <!-- Spacer -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"/>
+
+            <!-- Done Button (blue for education) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDone"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="Mark as Done ✓"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textSize="15sp"
+                android:layout_marginBottom="10dp"
+                app:backgroundTint="#2196F3"
+                app:cornerRadius="16dp"/>
+
+            <!-- Delete Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDelete"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="Delete Session"
+                android:textColor="#FF5252"
+                android:textStyle="bold"
+                android:textSize="15sp"
+                android:layout_marginBottom="16dp"
+                app:backgroundTint="#1A1A1A"
+                app:strokeColor="#FF5252"
+                app:strokeWidth="1dp"
+                app:cornerRadius="16dp"/>
 
         </LinearLayout>
 
-        <!-- Spacer -->
-        <View
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:visibility="gone"
+            android:indeterminateTint="#2196F3" />
+
+    </RelativeLayout>
+
+    <!-- RIGHT DRAWER MENU — edu-specific -->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="260dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:background="#111111"
+        android:fitsSystemWindows="true">
+
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"/>
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:paddingTop="55dp"
+            android:paddingStart="18dp"
+            android:paddingEnd="18dp"
+            android:paddingBottom="20dp">
 
-        <!-- Done Button (blue for education) -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnDone"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:text="Mark as Done ✓"
-            android:textColor="#FFFFFF"
-            android:textStyle="bold"
-            android:textSize="15sp"
-            android:layout_marginBottom="10dp"
-            app:backgroundTint="#2196F3"
-            app:cornerRadius="16dp"/>
+            <!-- Study Helper button (AI icon + green accent) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnStudyHelper"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:text="Study Helper"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textAllCaps="false"
+                android:layout_marginBottom="14dp"
+                app:backgroundTint="#0D1A2E"
+                app:icon="@drawable/ic_ai"
+                app:iconTint="#2196F3"
+                app:iconPadding="10dp"
+                app:iconGravity="textStart"
+                app:cornerRadius="8dp"/>
 
-        <!-- Delete Button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnDelete"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:text="Delete Session"
-            android:textColor="#FF5252"
-            android:textStyle="bold"
-            android:textSize="15sp"
-            android:layout_marginBottom="16dp"
-            app:backgroundTint="#1A1A1A"
-            app:strokeColor="#FF5252"
-            app:strokeWidth="1dp"
-            app:cornerRadius="16dp"/>
+            <!-- Focus Mode toggle (Switch, green style) -->
+            <Switch
+                android:id="@+id/swFocusMode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Focus Mode"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textSize="15sp"
+                android:layout_marginBottom="16dp"
+                android:thumbTint="#2196F3"
+                android:trackTint="#0D2A4A"/>
 
-    </LinearLayout>
+        </LinearLayout>
 
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:visibility="gone"
-        android:indeterminateTint="#2196F3" />
+    </com.google.android.material.navigation.NavigationView>
 
-</RelativeLayout>
+</androidx.drawerlayout.widget.DrawerLayout>

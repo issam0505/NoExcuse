@@ -23,9 +23,10 @@ public class AppRepository {
         sleepDao     = db.sleepDao();
     }
 
-    // ─────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
     //  DAILY TASK
-    // ─────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
+
     public void insertTask(DailyTask task) {
         executor.execute(() -> taskDao.insertTask(task));
     }
@@ -42,9 +43,10 @@ public class AppRepository {
         executor.execute(() -> taskDao.deleteTask(task));
     }
 
-    // ─────────────────────────────────────────
-    //  EDUCATION — table mosta9ila
-    // ─────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
+    //  EDUCATION
+    // ─────────────────────────────────────────────────────────────────────
+
     public void insertEducation(EducationTask task) {
         executor.execute(() -> educationDao.insertEducation(task));
     }
@@ -57,25 +59,56 @@ public class AppRepository {
         executor.execute(() -> educationDao.deleteEducation(task));
     }
 
-    /** LiveData - MainActivity observe f UI thread */
     public LiveData<List<EducationTask>> getPendingEducation() {
         return educationDao.getPendingEducationLive();
     }
 
-    /** Blocking - tsta3mlo f background thread bas */
     public EducationTask getEducationById(int id) {
         return educationDao.getById(id);
     }
 
-    // ─────────────────────────────────────────
-    //  GYM
-    // ─────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
+    //  GYM PLAN
+    // ─────────────────────────────────────────────────────────────────────
+
     public void insertGymPlan(GymPlan plan, OnIdGeneratedCallback callback) {
         executor.execute(() -> {
             long planId = gymDao.insertPlanReturnId(plan);
             if (callback != null) callback.onIdGenerated((int) planId);
         });
     }
+
+    public void updateGymPlan(GymPlan plan) {
+        executor.execute(() -> gymDao.updatePlan(plan));
+    }
+
+    public void deleteGymPlan(GymPlan plan) {
+        executor.execute(() -> gymDao.deletePlan(plan));
+    }
+
+    // Kol plans (sans filtre semana)
+    public LiveData<List<GymPlan>> getAllGymPlans() {
+        return gymDao.getAllPlansLive();
+    }
+
+    // Plans dyal semana m3ayyana — utilisé pour afficher la semaine courante
+    // weekStart = "2025-05-05" (lundi dyal had semana)
+    public LiveData<List<GymPlan>> getPlansForWeek(String weekStart) {
+        return gymDao.getPlansForWeekLive(weekStart);
+    }
+
+    // Jib plan dyal nhar + semana (synchrone — lil background)
+    // day = "MONDAY", weekStart = "2025-05-05"
+    public void getGymPlanForDayAndWeek(String day, String weekStart, OnPlanLoadedCallback callback) {
+        executor.execute(() -> {
+            GymPlan plan = gymDao.getPlanForDayAndWeek(day, weekStart);
+            if (callback != null) callback.onLoaded(plan);
+        });
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    //  PLANNED EXERCISE
+    // ─────────────────────────────────────────────────────────────────────
 
     public void insertPlannedExercise(PlannedExercise exercise, OnIdGeneratedCallback callback) {
         executor.execute(() -> {
@@ -84,23 +117,44 @@ public class AppRepository {
         });
     }
 
-    public void insertPerformance(GymPerformance performance) {
-        executor.execute(() -> gymDao.insertPerformance(performance));
+    public void updatePlannedExercise(PlannedExercise exercise) {
+        executor.execute(() -> gymDao.updateExercise(exercise));
     }
 
-    public LiveData<List<GymPlan>> getAllGymPlans() {
-        return gymDao.getAllPlansLive();
+    public void deletePlannedExercise(PlannedExercise exercise) {
+        executor.execute(() -> gymDao.deleteExercise(exercise));
     }
 
     public LiveData<List<PlannedExercise>> getExercisesForPlan(int planId) {
         return gymDao.getExercisesForPlanLive(planId);
     }
 
-    public void deleteOldPerformance() {
-        executor.execute(() -> gymDao.deleteOldPerformance(System.currentTimeMillis()));
+    // ─────────────────────────────────────────────────────────────────────
+    //  GYM PERFORMANCE
+    // ─────────────────────────────────────────────────────────────────────
+
+    // ⭐ Zid performance — MUHIM: dima set exerciseNameSnapshot 9bel ma tsift!
+    // GymPerformance perf = new GymPerformance();
+    // perf.exerciseNameSnapshot = exercise.exerciseName;  ← dima!
+    public void insertPerformance(GymPerformance performance) {
+        executor.execute(() -> gymDao.insertPerformance(performance));
     }
+
+
+
+    // ─────────────────────────────────────────────────────────────────────
+    //  CALLBACKS
+    // ─────────────────────────────────────────────────────────────────────
 
     public interface OnIdGeneratedCallback {
         void onIdGenerated(int id);
+    }
+
+    public interface OnPlanLoadedCallback {
+        void onLoaded(GymPlan plan);
+    }
+
+    public interface OnPerformanceLoadedCallback {
+        void onLoaded(List<GymPerformance> performances);
     }
 }

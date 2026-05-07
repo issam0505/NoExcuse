@@ -1,9 +1,12 @@
 package com.example.noexcuse.database;
 
 import android.content.Context;
+import androidx.annotation.NonNull;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
+import androidx.room.migration.Migration;
+import androidx.sqlite.db.SupportSQLiteDatabase;
 
 @Database(entities = {
         DailyTask.class,
@@ -12,17 +15,60 @@ import androidx.room.RoomDatabase;
         GymPerformance.class,
         EducationTask.class,
         SleepSettings.class,
-           // ← جديد: settings ديال المستخدم
-}, version = 4)                 // ← version ارتفعت من 1 لـ 2
+}, version = 7)
 public abstract class AppDatabase extends RoomDatabase {
 
-    public abstract TaskDao taskDao();
+    public abstract TaskDao      taskDao();
     public abstract EducationDao educationDao();
-    public abstract GymDao gymDao();
-    public abstract SleepDao sleepDao();
-
+    public abstract GymDao       gymDao();
+    public abstract SleepDao     sleepDao();
 
     private static volatile AppDatabase INSTANCE;
+
+    // 5→6 : zid weekStartDate + exerciseNameSnapshot
+    static final Migration MIGRATION_5_6 = new Migration(5, 6) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase db) {
+            db.execSQL("ALTER TABLE gym_plans ADD COLUMN weekStartDate TEXT");
+            db.execSQL("ALTER TABLE gym_performance ADD COLUMN exerciseNameSnapshot TEXT");
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_gym_plans_dayOfWeek_weekStartDate " +
+                    "ON gym_plans (dayOfWeek, weekStartDate)");
+        }
+    };
+
+    // 6→7 : 7ayyed timestamp f gym_performance + repsTarget/weightTarget f planned_exercises
+    // SQLite maysupportich DROP COLUMN — khassna nsawbou table jadida
+    static final Migration MIGRATION_6_7 = new Migration(6, 7) {
+        @Override
+        public void migrate(@NonNull SupportSQLiteDatabase db) {
+
+            // ── planned_exercises : 7ayyed repsTarget u weightTarget ──────
+            db.execSQL("CREATE TABLE planned_exercises_new (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," +
+                    "planId INTEGER NOT NULL," +
+                    "exerciseName TEXT," +
+                    "setsTarget INTEGER NOT NULL DEFAULT 0" +
+                    ")");
+            db.execSQL("INSERT INTO planned_exercises_new (id, planId, exerciseName, setsTarget) " +
+                    "SELECT id, planId, exerciseName, setsTarget FROM planned_exercises");
+            db.execSQL("DROP TABLE planned_exercises");
+            db.execSQL("ALTER TABLE planned_exercises_new RENAME TO planned_exercises");
+
+            // ── gym_performance : 7ayyed timestamp ───────────────────────
+            db.execSQL("CREATE TABLE gym_performance_new (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," +
+                    "plannedExerciseId INTEGER NOT NULL DEFAULT 0," +
+                    "exerciseNameSnapshot TEXT," +
+                    "setNumber INTEGER NOT NULL DEFAULT 0," +
+                    "weight REAL NOT NULL DEFAULT 0," +
+                    "reps INTEGER NOT NULL DEFAULT 0" +
+                    ")");
+            db.execSQL("INSERT INTO gym_performance_new (id, plannedExerciseId, exerciseNameSnapshot, setNumber, weight, reps) " +
+                    "SELECT id, plannedExerciseId, exerciseNameSnapshot, setNumber, weight, reps FROM gym_performance");
+            db.execSQL("DROP TABLE gym_performance");
+            db.execSQL("ALTER TABLE gym_performance_new RENAME TO gym_performance");
+        }
+    };
 
     public static AppDatabase getInstance(Context context) {
         if (INSTANCE == null) {
@@ -32,7 +78,7 @@ public abstract class AppDatabase extends RoomDatabase {
                                     context.getApplicationContext(),
                                     AppDatabase.class,
                                     "no_excuse_db")
-                            .fallbackToDestructiveMigration()
+                            .addMigrations(MIGRATION_5_6, MIGRATION_6_7)
                             .build();
                 }
             }

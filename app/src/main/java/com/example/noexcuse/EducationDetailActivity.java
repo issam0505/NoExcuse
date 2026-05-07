@@ -5,13 +5,17 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.noexcuse.database.AppViewModel;
@@ -43,6 +47,14 @@ public class EducationDetailActivity extends AppCompatActivity {
         ProgressBar    progressBar   = findViewById(R.id.progressBar);
         LinearLayout   contentLayout = findViewById(R.id.contentLayout);
 
+        // ── Drawer ───────────────────────────────────────────────────────
+        DrawerLayout drawerLayout    = findViewById(R.id.drawer_layout);
+        android.widget.ImageView btnMenu = findViewById(R.id.btnMenu);
+        Button       btnStudyHelper  = findViewById(R.id.btnStudyHelper);
+        Switch       swFocusMode     = findViewById(R.id.swFocusMode);
+
+        btnMenu.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.END));
+
         int eduId = getIntent().getIntExtra("EDU_ID", -1);
 
         if (eduId == -1) {
@@ -71,6 +83,25 @@ public class EducationDetailActivity extends AppCompatActivity {
                 tvStartTime.setText(sdf.format(new Date(edu.startTime)));
                 tvEndTime.setText(sdf.format(new Date(edu.endTime)));
 
+                // ── Focus Mode Switch — init depuis DB ────────────────────
+                swFocusMode.setChecked(edu.isFocusMode);
+                swFocusMode.setOnCheckedChangeListener((btn, checked) -> {
+                    edu.isFocusMode = checked;
+                    viewModel.updateEducation(edu);
+                    Toast.makeText(this,
+                            checked ? "Focus Mode ON 🎯" : "Focus Mode OFF",
+                            Toast.LENGTH_SHORT).show();
+                    drawerLayout.closeDrawer(GravityCompat.END);
+                });
+
+                // ── Study Helper ──────────────────────────────────────────
+                btnStudyHelper.setOnClickListener(v -> {
+                    drawerLayout.closeDrawer(GravityCompat.END);
+                    Toast.makeText(this, "Study Helper coming soon 🤖", Toast.LENGTH_SHORT).show();
+                    // TODO: ouvre StudyHelperActivity ou BottomSheet AI
+                });
+
+                // ── Status refresh ────────────────────────────────────────
                 Runnable refreshStatus = () -> {
                     if (edu.isDone) {
                         tvStatus.setText("Done");
@@ -88,19 +119,18 @@ public class EducationDetailActivity extends AppCompatActivity {
                 };
                 refreshStatus.run();
 
-                // ── Mark as Done ─────────────────────────────────────────
+                // ── Mark as Done ──────────────────────────────────────────
                 btnDone.setOnClickListener(v -> {
                     edu.isDone = true;
                     viewModel.updateEducation(edu);
                     refreshStatus.run();
 
-                    // Notify MainActivity bach item yji f le bas b green card
                     Intent result = new Intent();
                     result.putExtra(EXTRA_VERIFIED_ID, edu.id);
                     setResult(Activity.RESULT_OK, result);
                 });
 
-                // ── Delete ───────────────────────────────────────────────
+                // ── Delete ────────────────────────────────────────────────
                 btnDelete.setOnClickListener(v -> {
                     viewModel.deleteEducation(edu);
                     contentLayout.setVisibility(View.GONE);

@@ -7,7 +7,8 @@ import androidx.room.PrimaryKey;
 public class PlannedExercise {
     @PrimaryKey(autoGenerate = true)
     public int id;
-    public int planId;
+
+    public int    planId;
     public String exerciseName;
-    public int setsTarget;
+    public int    setsTarget;   // nbr dyal series — gha had li kaydir user f planning
 }

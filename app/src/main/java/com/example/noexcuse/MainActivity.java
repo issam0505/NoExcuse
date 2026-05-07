@@ -59,13 +59,10 @@ public class MainActivity extends AppCompatActivity {
 
     private AppViewModel viewModel;
 
-    private List<DailyTask>     cachedDailyTasks    = new ArrayList<>();
-    private List<EducationTask> cachedEduTasks       = new ArrayList<>();
+    private List<DailyTask>     cachedDailyTasks = new ArrayList<>();
+    private List<EducationTask> cachedEduTasks   = new ArrayList<>();
 
-    // IDs dyal items li user darithom done f had session
-    // Format: "DAILY_42" or "EDU_7"
-    // Kayjiw f le bas b green card — machi f done group 3adi
-    public final Set<String> recentlyVerifiedIds = new HashSet<>();
+    public final Set<String> verifiedIds = new HashSet<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,76 +121,48 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Sort order:
-     *   0 — Pending (isDone=false, machi verified)  → sorted b time
-     *   1 — Verified (isDone=true, just done)        → sorted b time, f le bas b green card
-     *
-     * Items li isDone=true o machi f recentlyVerifiedIds → mayshohoumch
-     * (DAO rj3 kol items lkn gha pending + verified kayb9aw f lista)
+     * كنعرضوا كل tasks (pending + done) ديما — مكنمسحوهمش من الـ list.
+     * isDone=true  → green style (strikethrough + Done badge) + تتنزل لـ bottom
+     * isDone=false → pending style (purple/blue accent) + فوق
      */
     private void refreshAdapter() {
         List<TaskItem> merged = new ArrayList<>();
+        verifiedIds.clear();
 
         for (DailyTask t : cachedDailyTasks) {
-            boolean isDone    = t.isDone;
-            boolean verified  = recentlyVerifiedIds.contains("DAILY_" + t.id);
-            // Show ila pending OR ila verified (just done this session)
-            if (!isDone || verified) {
-                merged.add(new TaskItem(t));
-            }
+            merged.add(new TaskItem(t));
+            if (t.isDone) verifiedIds.add("DAILY_" + t.id);
         }
         for (EducationTask e : cachedEduTasks) {
-            boolean isDone   = e.isDone;
-            boolean verified = recentlyVerifiedIds.contains("EDU_" + e.id);
-            if (!isDone || verified) {
-                merged.add(new TaskItem(e));
-            }
+            merged.add(new TaskItem(e));
+            if (e.isDone) verifiedIds.add("EDU_" + e.id);
         }
 
-        // Sort: pending first (sorted b time), verified last (sorted b time)
+        // pending فوق (sorted by time) — done تحت (sorted by time)
         Collections.sort(merged, (a, b) -> {
-            boolean aVerified = isVerified(a);
-            boolean bVerified = isVerified(b);
-
-            if (aVerified != bVerified) return aVerified ? 1 : -1;
+            boolean aDone = isDoneItem(a);
+            boolean bDone = isDoneItem(b);
+            if (aDone != bDone) return aDone ? 1 : -1;
             return Long.compare(a.getSortTime(), b.getSortTime());
         });
 
-        taskAdapter.setVerifiedIds(recentlyVerifiedIds);
+        taskAdapter.setVerifiedIds(verifiedIds);
         taskAdapter.setItems(merged);
         recyclerView.scheduleLayoutAnimation();
     }
 
-    private boolean isVerified(TaskItem item) {
-        String key = item.type == TaskItem.Type.DAILY
-                ? "DAILY_" + item.dailyTask.id
-                : "EDU_"   + item.eduTask.id;
-        return recentlyVerifiedIds.contains(key);
-    }
-
-    /** Called from TaskDetailActivity / EducationDetailActivity via onActivityResult */
-    public void markAsVerified(boolean isEducation, int id) {
-        recentlyVerifiedIds.add(isEducation ? "EDU_" + id : "DAILY_" + id);
-        refreshAdapter();
+    private boolean isDoneItem(TaskItem item) {
+        return item.type == TaskItem.Type.DAILY
+                ? item.dailyTask.isDone
+                : item.eduTask.isDone;
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode != RESULT_OK || data == null) return;
-
-        if (requestCode == REQ_TASK) {
-            int id = data.getIntExtra(TaskDetailActivity.EXTRA_VERIFIED_ID, -1);
-            if (id != -1) markAsVerified(false, id);
-        } else if (requestCode == REQ_EDU) {
-            int id = data.getIntExtra(EducationDetailActivity.EXTRA_VERIFIED_ID, -1);
-            if (id != -1) markAsVerified(true, id);
-        }
+        // LiveData كتحدث لوحدها — refreshAdapter كتتسمى أوتوماتيك
     }
 
-    // ─────────────────────────────────────────────────────
-    //  SMART ADD MENU
-    // ─────────────────────────────────────────────────────
     private void openSmartAddMenu() {
         if (!isGymModeEnabled && !isEducationModeEnabled) {
             openDailyTaskDialog();
@@ -222,9 +191,6 @@ public class MainActivity extends AppCompatActivity {
         sheet.show();
     }
 
-    // ─────────────────────────────────────────────────────
-    //  EDUCATION SESSION DIALOG
-    // ─────────────────────────────────────────────────────
     private void openEducationDialog() {
         BottomSheetDialog sheet = new BottomSheetDialog(this);
         View view = getLayoutInflater().inflate(R.layout.dialog_add_education, null);
@@ -285,9 +251,6 @@ public class MainActivity extends AppCompatActivity {
         sheet.show();
     }
 
-    // ─────────────────────────────────────────────────────
-    //  DAILY TASK DIALOG
-    // ─────────────────────────────────────────────────────
     private void openDailyTaskDialog() {
         BottomSheetDialog sheet = new BottomSheetDialog(this);
         View view = getLayoutInflater().inflate(R.layout.dialog_add_task, null);
@@ -334,9 +297,6 @@ public class MainActivity extends AppCompatActivity {
         sheet.show();
     }
 
-    // ─────────────────────────────────────────────────────
-    //  Helper - style BottomSheet
-    // ─────────────────────────────────────────────────────
     private void styleBottomSheet(BottomSheetDialog sheet, View view) {
         sheet.setOnShowListener(dialog -> {
             View bottomSheet = (View) view.getParent();
