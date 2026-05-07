@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    item_exercise_row.xml
+    ─────────────────────────────────────────────────────────────────────────────
+    Une ligne d'exercice dans Step 2 (GymSetupActivity)
+    Normal  : 🏋 Nom + Sets
+    Cardio  : 🏃 Nom + Minutes
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    app:cardBackgroundColor="#111111"
+    app:strokeColor="#1E1E1E"
+    app:strokeWidth="1dp"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="12dp">
+
+        <!-- ICON — 🏋 lil exercise 3adi, 🏃 lil cardio (kayetbadal f Java) -->
+        <TextView
+            android:id="@+id/tvExerciseIcon"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:text="🏋"
+            android:textSize="16sp"
+            android:gravity="center"
+            android:layout_marginEnd="10dp"/>
+
+        <!-- NOM DE L'EXERCICE -->
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Exercise name"
+            app:boxStrokeColor="#2A2A2A"
+            app:hintTextColor="#555555"
+            app:boxBackgroundColor="#0D0D0D"
+            app:boxCornerRadiusTopStart="10dp"
+            app:boxCornerRadiusTopEnd="10dp"
+            app:boxCornerRadiusBottomStart="10dp"
+            app:boxCornerRadiusBottomEnd="10dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etExerciseName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:inputType="textCapWords"
+                android:imeOptions="actionNext"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- SETS TARGET  ou  DURATION (hint kayetbadal f Java) -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilSetsOrDuration"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
+            android:layout_width="64dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:hint="Sets"
+            app:boxStrokeColor="#FF6D00"
+            app:hintTextColor="#FF6D00"
+            app:boxBackgroundColor="#0D0D0D"
+            app:boxCornerRadiusTopStart="10dp"
+            app:boxCornerRadiusTopEnd="10dp"
+            app:boxCornerRadiusBottomStart="10dp"
+            app:boxCornerRadiusBottomEnd="10dp">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etSetsTarget"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#FF6D00"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:inputType="number"
+                android:imeOptions="actionDone"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- BOUTON SUPPRIMER -->
+        <ImageView
+            android:id="@+id/btnDeleteExercise"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="10dp"
+            android:src="@drawable/close_24px"
+            android:padding="4dp"
+            app:tint="#444444"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"/>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

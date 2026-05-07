@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    item_day_card.xml
+    ─────────────────────────────────────────────────────────────────────────────
+    Carte d'un jour dans Step 1 (GymSetupActivity)
+    État normal  : fond #131313, bordure #252525
+    État sélectionné : fond #1A1000, bordure #FF6D00 (orange)
+    Les ChipGroup des body parts sont cachés par défaut et s'affichent
+    quand le jour est sélectionné.
+-->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    app:cardBackgroundColor="#131313"
+    app:strokeColor="#252525"
+    app:strokeWidth="1dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- LIGNE PRINCIPALE : Nom du jour + corps sélectionné -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <!-- INDICATEUR DE SÉLECTION (petit cercle) -->
+            <View
+                android:id="@+id/selectionDot"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_marginEnd="12dp"
+                android:background="@drawable/circle_gray"/>
+
+            <!-- NOM DU JOUR -->
+            <TextView
+                android:id="@+id/tvDayLabel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Monday"
+                android:textColor="#EEEEEE"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-condensed"
+                android:letterSpacing="0.02"/>
+
+            <!-- BODY PART SÉLECTIONNÉ (affiché après selection du chip) -->
+            <TextView
+                android:id="@+id/tvBodyPart"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="#FF6D00"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:background="@drawable/badge_orange_outline"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"/>
+
+        </LinearLayout>
+
+        <!-- DIVIDER (caché par défaut) -->
+        <View
+            android:id="@+id/chipDivider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#1E1E1E"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="10dp"
+            android:visibility="gone"/>
+
+        <!-- CHIPS BODY PART (cachés par défaut) -->
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupBodyParts"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:singleSelection="true"
+            app:selectionRequired="false"
+            android:visibility="gone"/>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

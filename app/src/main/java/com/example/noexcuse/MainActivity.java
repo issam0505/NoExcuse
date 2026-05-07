@@ -184,7 +184,7 @@ public class MainActivity extends AppCompatActivity {
         btnDaily.setOnClickListener(v -> { sheet.dismiss(); openDailyTaskDialog(); });
         btnGym.setOnClickListener(v -> {
             sheet.dismiss();
-            Toast.makeText(this, "Gym Form Coming Next 🔥", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(this, GymSetupActivity.class));
         });
         btnEdu.setOnClickListener(v -> { sheet.dismiss(); openEducationDialog(); });
 

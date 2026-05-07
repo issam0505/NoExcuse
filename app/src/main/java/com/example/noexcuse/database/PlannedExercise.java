@@ -8,7 +8,9 @@ public class PlannedExercise {
     @PrimaryKey(autoGenerate = true)
     public int id;
 
-    public int    planId;
-    public String exerciseName;
-    public int    setsTarget;   // nbr dyal series — gha had li kaydir user f planning
+    public int     planId;
+    public String  exerciseName;
+    public int     setsTarget;        // nbr dyal series — lil exercises 3adiya
+    public int     durationMinutes;   // duration f dqa2iq — lil Cardio (0 إذا مكانش)
+    public boolean isCardio;          // true إذا كان cardio
 }

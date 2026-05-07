@@ -10,4 +10,8 @@
     <color name="accent_orange_alpha">#33fb923c</color>
     <color name="accent_blue">#60a5fa</color>
     <color name="accent_blue_alpha">#3360a5fa</color>
+    <color name="gym_orange">#FF6D00</color>
+    <color name="card_selected_bg">#120A00</color>
+    <color name="card_bg">#131313</color>
+    <color name="card_stroke">#252525</color>
 </resources>

@@ -50,6 +50,9 @@
         <activity
             android:name=".EducationDetailActivity"
             android:exported="false" />
+        <activity
+            android:name=".GymSetupActivity"
+            android:exported="false" />
 
     </application>
 
