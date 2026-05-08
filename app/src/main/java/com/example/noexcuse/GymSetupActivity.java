@@ -1,5 +1,6 @@
 package com.example.noexcuse;
 
+import android.app.TimePickerDialog;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.os.Bundle;
@@ -29,6 +30,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class GymSetupActivity extends AppCompatActivity {
@@ -45,7 +47,6 @@ public class GymSetupActivity extends AppCompatActivity {
             "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
     };
 
-    // ─── Body parts — multi-select possible (e.g. "Biceps + Triceps") ─────────
     private static final String[] BODY_PARTS = {
             "Chest", "Back", "Legs", "Shoulders",
             "Biceps", "Triceps", "Arms",
@@ -53,7 +54,7 @@ public class GymSetupActivity extends AppCompatActivity {
             "Push", "Pull", "Rest Day"
     };
 
-    // ─── Colors inline ────────────────────────────────────────────────────────
+    // ─── Colors ───────────────────────────────────────────────────────────────
     private static final int COLOR_ORANGE          = 0xFFFF6D00;
     private static final int COLOR_ORANGE_BG       = 0xFF120A00;
     private static final int COLOR_CARD_BG         = 0xFF131313;
@@ -86,13 +87,14 @@ public class GymSetupActivity extends AppCompatActivity {
         String dayKey;
         String label;
         String bodyPart;
+        String startTime = "";  // ★ "HH:mm" — user kaykhtar mn TimePicker
         List<ExerciseEntry> exercises = new ArrayList<>();
     }
 
     private static class ExerciseEntry {
         String  name;
         int     sets;
-        int     durationMinutes; // lil Cardio
+        int     durationMinutes;
         boolean isCardio;
     }
 
@@ -124,31 +126,40 @@ public class GymSetupActivity extends AppCompatActivity {
         String savedWeek = prefs.getString(KEY_SAVED_WEEK, "");
 
         if (savedWeek.equals(currentWeek)) {
-            showReusePlanDialog();
+            // Plan exists — redirect directly to GymDetailActivity for today
+            redirectToTodayDetail(currentWeek);
         } else {
             showStepOne();
         }
     }
 
-    private void showReusePlanDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle("Plan Already Exists 💪")
-                .setMessage("You already set up a training plan for this week.\n\nDo you want to use the same plan again or create a new one?")
-                .setPositiveButton("Use Same Plan", (d, w) -> {
-                    Toast.makeText(this, "Plan loaded! Let's go 🔥", Toast.LENGTH_SHORT).show();
+    /**
+     * Ila plan kayn dyal had semana — jib plan dyal had nhar u ftah GymDetailActivity.
+     * Ila mkaynch plan lhad nhar (rest day wella mkaynch), show step one directly.
+     */
+    private void redirectToTodayDetail(String currentWeek) {
+        String todayDay = WeekUtils.getTodayDayOfWeek();
+        viewModel.getGymPlanForDayAndWeek(todayDay, currentWeek, plan -> {
+            runOnUiThread(() -> {
+                if (plan != null && plan.bodyPart != null && !plan.bodyPart.equals("Rest Day")) {
+                    // ftah GymDetailActivity directly
+                    android.content.Intent intent = new android.content.Intent(this, GymDetailActivity.class);
+                    intent.putExtra("PLAN_ID",         plan.id);
+                    intent.putExtra("PLAN_DAY",        plan.dayOfWeek);
+                    intent.putExtra("PLAN_BODY_PART",  plan.bodyPart);
+                    intent.putExtra("PLAN_START_TIME", plan.startTime);
+                    startActivity(intent);
                     finish();
-                })
-                .setNegativeButton("New Plan", (d, w) -> {
-                    getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
-                            .edit().remove(KEY_SAVED_WEEK).apply();
+                } else {
+                    // Rest day or no plan today — show setup step 1 directly
                     showStepOne();
-                })
-                .setCancelable(false)
-                .show();
+                }
+            });
+        });
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    //  STEP 1 — Sélection des jours + body parts
+    //  STEP 1 — Sélection des jours + body parts + ★ startTime
     // ═══════════════════════════════════════════════════════════════════════════
 
     private void initStepOne() {
@@ -156,7 +167,6 @@ public class GymSetupActivity extends AppCompatActivity {
         btnNext        = findViewById(R.id.btnNext);
         btnBackStepOne = findViewById(R.id.btnBackStepOne);
 
-        // Back arrow — yrej3 l MainActivity
         btnBackStepOne.setOnClickListener(v -> finish());
 
         buildDayCards();
@@ -169,6 +179,11 @@ public class GymSetupActivity extends AppCompatActivity {
             for (DayEntry entry : selectedDays.values()) {
                 if (entry.bodyPart == null || entry.bodyPart.isEmpty()) {
                     Toast.makeText(this, "Choose a muscle group for " + entry.label, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                // ★ startTime required (Rest Day mkaynsh time)
+                if (!entry.bodyPart.equals("Rest Day") && entry.startTime.isEmpty()) {
+                    Toast.makeText(this, "Set a training time for " + entry.label, Toast.LENGTH_SHORT).show();
                     return;
                 }
             }
@@ -192,16 +207,39 @@ public class GymSetupActivity extends AppCompatActivity {
 
             View card = inflater.inflate(R.layout.item_day_card, daysContainer, false);
 
-            TextView  tvDay      = card.findViewById(R.id.tvDayLabel);
-            TextView  tvBodyPart = card.findViewById(R.id.tvBodyPart);
-            ChipGroup chipGroup  = card.findViewById(R.id.chipGroupBodyParts);
-            View      divider    = card.findViewById(R.id.chipDivider);
+            TextView     tvDay         = card.findViewById(R.id.tvDayLabel);
+            TextView     tvBodyPart    = card.findViewById(R.id.tvBodyPart);
+            ChipGroup    chipGroup     = card.findViewById(R.id.chipGroupBodyParts);
+            View         divider       = card.findViewById(R.id.chipDivider);
+            LinearLayout timePickerRow = card.findViewById(R.id.timePickerRow);  // ★
+            TextView     tvStartTime   = card.findViewById(R.id.tvStartTime);   // ★
 
             tvDay.setText(dayLabel);
             chipGroup.setVisibility(View.GONE);
             divider.setVisibility(View.GONE);
+            timePickerRow.setVisibility(View.GONE);
 
-            buildBodyPartChips(chipGroup, dayKey, tvBodyPart);
+            // ★ TimePicker click — yban time picker dialog
+            tvStartTime.setOnClickListener(v -> {
+                if (!selectedDays.containsKey(dayKey)) return;
+                DayEntry entry = selectedDays.get(dayKey);
+
+                // Skip Rest Day
+                if (entry.bodyPart != null && entry.bodyPart.equals("Rest Day")) return;
+
+                android.app.TimePickerDialog tpd = new android.app.TimePickerDialog(
+                        this,
+                        (tp, hour, minute) -> {
+                            String timeStr = String.format(Locale.getDefault(), "%02d:%02d", hour, minute);
+                            entry.startTime = timeStr;
+                            tvStartTime.setText(timeStr);
+                        },
+                        7, 0, true  // default 07:00
+                );
+                tpd.show();
+            });
+
+            buildBodyPartChips(chipGroup, dayKey, tvBodyPart, timePickerRow, tvStartTime);
 
             card.setOnClickListener(v -> {
                 if (selectedDays.containsKey(dayKey)) {
@@ -210,8 +248,9 @@ public class GymSetupActivity extends AppCompatActivity {
                     applyDayCardStyle(card, false);
                     chipGroup.setVisibility(View.GONE);
                     divider.setVisibility(View.GONE);
+                    timePickerRow.setVisibility(View.GONE);
                     tvBodyPart.setText("");
-                    // reset chips
+                    tvStartTime.setText("--:--");
                     for (int ci = 0; ci < chipGroup.getChildCount(); ci++) {
                         ((Chip) chipGroup.getChildAt(ci)).setChecked(false);
                     }
@@ -224,6 +263,7 @@ public class GymSetupActivity extends AppCompatActivity {
                     applyDayCardStyle(card, true);
                     chipGroup.setVisibility(View.VISIBLE);
                     divider.setVisibility(View.VISIBLE);
+                    // timePickerRow yban fqt mn b3d ma y5tar bodyPart
                 }
             });
 
@@ -232,12 +272,11 @@ public class GymSetupActivity extends AppCompatActivity {
     }
 
     /**
-     * Multi-select chips — user y9der y5tar "Biceps + Triceps" bjoj
-     * Rest Day u Cardio single-effect (mabghach tzid m3ahom)
+     * ★ timePickerRow u tvStartTime kaytpassiw hna bach nbynohom ila bodyPart selected
      */
-    private void buildBodyPartChips(ChipGroup chipGroup, String dayKey, TextView tvBodyPart) {
+    private void buildBodyPartChips(ChipGroup chipGroup, String dayKey, TextView tvBodyPart,
+                                    LinearLayout timePickerRow, TextView tvStartTime) {
         chipGroup.removeAllViews();
-        // ★ MULTI-SELECT — machi single selection
         chipGroup.setSingleSelection(false);
 
         ColorStateList chipBgColors = new ColorStateList(
@@ -261,7 +300,6 @@ public class GymSetupActivity extends AppCompatActivity {
                 if (!selectedDays.containsKey(dayKey)) return;
                 DayEntry entry = selectedDays.get(dayKey);
 
-                // Rest Day ou Cardio — single effect: désélectionne le reste
                 if (checked && (bp.equals("Rest Day") || bp.equals("Cardio") ||
                         bp.equals("Full Body") || bp.equals("Push") || bp.equals("Pull"))) {
                     for (int ci = 0; ci < chipGroup.getChildCount(); ci++) {
@@ -270,7 +308,6 @@ public class GymSetupActivity extends AppCompatActivity {
                     }
                 }
 
-                // Jma3 kol chips li m7adddin
                 StringBuilder selected = new StringBuilder();
                 for (int ci = 0; ci < chipGroup.getChildCount(); ci++) {
                     Chip c = (Chip) chipGroup.getChildAt(ci);
@@ -281,15 +318,24 @@ public class GymSetupActivity extends AppCompatActivity {
                 }
                 entry.bodyPart = selected.toString();
                 tvBodyPart.setText(entry.bodyPart);
+
+                // ★ Wri timePickerRow — machi Rest Day
+                boolean isRestDay = entry.bodyPart.equals("Rest Day");
+                timePickerRow.setVisibility(
+                        (entry.bodyPart.isEmpty() || isRestDay) ? View.GONE : View.VISIBLE
+                );
+
+                // Rest Day → reset startTime
+                if (isRestDay) {
+                    entry.startTime = "";
+                    tvStartTime.setText("--:--");
+                }
             });
 
             chipGroup.addView(chip);
         }
     }
 
-    /**
-     * ★ FIX — kayebddel selection dot + card style
-     */
     private void applyDayCardStyle(View card, boolean selected) {
         MaterialCardView cardView = (MaterialCardView) card;
         View dot = card.findViewById(R.id.selectionDot);
@@ -326,7 +372,6 @@ public class GymSetupActivity extends AppCompatActivity {
         stepTwoView.setVisibility(View.VISIBLE);
         stepTwoView.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
 
-        // Back arrow — yrej3 l Step 1
         btnBackStepTwo.setOnClickListener(v -> {
             stepTwoView.setVisibility(View.GONE);
             showStepOne();
@@ -352,15 +397,10 @@ public class GymSetupActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * ★ FIX — Rest Day: skip mbachers
-     *       — Cardio: row b "Min" bla sets
-     */
     private void loadCurrentDay() {
         String   key   = orderedSelectedKeys.get(currentDayIndex);
         DayEntry entry = selectedDays.get(key);
 
-        // ★ Rest Day — makaynch exercises, skip
         if (entry.bodyPart != null && entry.bodyPart.equals("Rest Day")) {
             entry.exercises.clear();
             boolean isLast = (currentDayIndex == orderedSelectedKeys.size() - 1);
@@ -385,7 +425,6 @@ public class GymSetupActivity extends AppCompatActivity {
             addExerciseRow();
         }
 
-        // ★ Cardio — hide "Add Exercise" button ou changer label
         boolean dayIsCardio = isDayCardio(entry.bodyPart);
         btnAddExercise.setText(dayIsCardio ? "+ Add Cardio" : "+ Add Exercise");
 
@@ -403,10 +442,6 @@ public class GymSetupActivity extends AppCompatActivity {
         addExerciseRowWithData("", isCardio ? 0 : 3, isCardio ? 30 : 0, isCardio);
     }
 
-    /**
-     * ★ FIX — Cardio row: icon 🏃, hint "Min", default 30 dqa2iq
-     *         Normal row: icon 🏋, hint "Sets", default 3
-     */
     private void addExerciseRowWithData(String name, int sets, int duration, boolean isCardio) {
         LayoutInflater inflater = LayoutInflater.from(this);
         View row = inflater.inflate(R.layout.item_exercise_row, exercisesContainer, false);
@@ -447,7 +482,6 @@ public class GymSetupActivity extends AppCompatActivity {
         String   key   = orderedSelectedKeys.get(currentDayIndex);
         DayEntry entry = selectedDays.get(key);
 
-        // Rest Day — makaynch validation
         if (entry.bodyPart != null && entry.bodyPart.equals("Rest Day")) {
             return true;
         }
@@ -495,8 +529,6 @@ public class GymSetupActivity extends AppCompatActivity {
         return true;
     }
 
-    // ─── Helper — wach had nhar cardio? ──────────────────────────────────────
-
     private boolean isDayCardio(String bodyPart) {
         return bodyPart != null && bodyPart.contains("Cardio");
     }
@@ -513,11 +545,10 @@ public class GymSetupActivity extends AppCompatActivity {
             plan.dayOfWeek     = dayEntry.dayKey;
             plan.weekStartDate = weekStart;
             plan.bodyPart      = dayEntry.bodyPart;
-            plan.startTime     = "";
+            plan.startTime     = dayEntry.startTime;  // ★ khzen time dyal user
             plan.isSynced      = false;
 
             viewModel.addGymPlan(plan, planId -> {
-                // Rest Day — khawi, mashi exercises
                 for (ExerciseEntry ex : dayEntry.exercises) {
                     PlannedExercise exercise = new PlannedExercise();
                     exercise.planId          = planId;

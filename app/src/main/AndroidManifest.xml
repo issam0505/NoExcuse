@@ -53,6 +53,9 @@
         <activity
             android:name=".GymSetupActivity"
             android:exported="false" />
+        <activity
+            android:name=".GymDetailActivity"
+            android:exported="false" />
 
     </application>
 

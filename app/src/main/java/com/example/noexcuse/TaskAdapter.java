@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.noexcuse.database.DailyTask;
 import com.example.noexcuse.database.EducationTask;
+import com.example.noexcuse.database.GymPlan;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -39,7 +40,10 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
 
     @Override
     public int getItemViewType(int position) {
-        return items.get(position).type == TaskItem.Type.DAILY ? 0 : 1;
+        TaskItem.Type type = items.get(position).type;
+        if (type == TaskItem.Type.DAILY)     return 0;
+        if (type == TaskItem.Type.EDUCATION) return 1;
+        return 2; // GYM
     }
 
     @NonNull
@@ -55,7 +59,34 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         TaskItem item = items.get(position);
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.getDefault());
 
-        if (item.type == TaskItem.Type.EDUCATION) {
+        if (item.type == TaskItem.Type.GYM) {
+            // ─── GYM — orange card ─────────────────────────────────────────────
+            GymPlan plan = item.gymPlan;
+
+            holder.tvTitle.setText(plan.bodyPart != null ? plan.bodyPart : "Gym");
+            holder.tvTaskLabel.setText("GYM");
+
+            if (plan.startTime != null && !plan.startTime.isEmpty()) {
+                holder.tvTime.setText(plan.startTime);
+            } else {
+                holder.tvTime.setText("--:--");
+            }
+
+            applyPendingStyle(holder, "#FF6D00");
+
+            // ★ Click → GymDetailActivity (pass plan info)
+            holder.itemView.setOnClickListener(v -> {
+                Context ctx = v.getContext();
+                Intent intent = new Intent(ctx, GymDetailActivity.class);
+                intent.putExtra("PLAN_ID",         plan.id);
+                intent.putExtra("PLAN_DAY",        plan.dayOfWeek);
+                intent.putExtra("PLAN_BODY_PART",  plan.bodyPart);
+                intent.putExtra("PLAN_START_TIME", plan.startTime);
+                ctx.startActivity(intent);
+            });
+
+        } else if (item.type == TaskItem.Type.EDUCATION) {
+            // ─── EDUCATION ─────────────────────────────────────────────────────
             EducationTask edu  = item.eduTask;
             boolean verified   = verifiedIds.contains("EDU_" + edu.id);
 
@@ -81,6 +112,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
             });
 
         } else {
+            // ─── DAILY TASK ────────────────────────────────────────────────────
             DailyTask task   = item.dailyTask;
             boolean verified = verifiedIds.contains("DAILY_" + task.id);
 
@@ -111,7 +143,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         }
     }
 
-    /** Pending — accent color dyal type, title white, no done badge */
     private void applyPendingStyle(TaskViewHolder h, String accentHex) {
         h.accentBar.setBackgroundColor(Color.parseColor(accentHex));
         h.tvTaskLabel.setTextColor(Color.parseColor(accentHex));
@@ -124,7 +155,6 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
         h.cardRoot.setStrokeColor(Color.parseColor("#2A2A2A"));
     }
 
-    /** Verified (just done this session) — green card + border, strikethrough, bright ✓ Done */
     private void applyVerifiedStyle(TaskViewHolder h) {
         h.accentBar.setBackgroundColor(Color.parseColor("#4CAF50"));
         h.tvTaskLabel.setTextColor(Color.parseColor("#4CAF50"));

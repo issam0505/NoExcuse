@@ -23,6 +23,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.noexcuse.database.AppViewModel;
 import com.example.noexcuse.database.DailyTask;
 import com.example.noexcuse.database.EducationTask;
+import com.example.noexcuse.database.GymPlan;
+import com.example.noexcuse.database.WeekUtils;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
@@ -61,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
 
     private List<DailyTask>     cachedDailyTasks = new ArrayList<>();
     private List<EducationTask> cachedEduTasks   = new ArrayList<>();
+    private List<GymPlan>       cachedGymPlans   = new ArrayList<>(); // ← zidna
 
     public final Set<String> verifiedIds = new HashSet<>();
 
@@ -101,6 +104,13 @@ public class MainActivity extends AppCompatActivity {
             refreshAdapter();
         });
 
+        // ★ GYM — observe plans dyal semana had semana
+        String currentWeek = WeekUtils.getCurrentWeekStart();
+        viewModel.getPlansForWeek(currentWeek).observe(this, plans -> {
+            cachedGymPlans = plans != null ? plans : new ArrayList<>();
+            refreshAdapter();
+        });
+
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
         tvDate.setText(sdf.format(new Date()));
 
@@ -123,19 +133,38 @@ public class MainActivity extends AppCompatActivity {
     /**
      * كنعرضوا كل tasks (pending + done) ديما — مكنمسحوهمش من الـ list.
      * isDone=true  → green style (strikethrough + Done badge) + تتنزل لـ bottom
-     * isDone=false → pending style (purple/blue accent) + فوق
+     * isDone=false → pending style (purple/blue/orange accent) + فوق
+     *
+     * ★ GYM — kangher gha plan dyal had nhar (dayOfWeek == today)
+     *         machi mn DB delete, gha mkaynch f merged list
      */
     private void refreshAdapter() {
         List<TaskItem> merged = new ArrayList<>();
         verifiedIds.clear();
 
+        // ─── Daily tasks ───────────────────────────────────────────────
         for (DailyTask t : cachedDailyTasks) {
             merged.add(new TaskItem(t));
             if (t.isDone) verifiedIds.add("DAILY_" + t.id);
         }
+
+        // ─── Education tasks ───────────────────────────────────────────
         for (EducationTask e : cachedEduTasks) {
             merged.add(new TaskItem(e));
             if (e.isDone) verifiedIds.add("EDU_" + e.id);
+        }
+
+        // ─── GYM — gha plan dyal had nhar ─────────────────────────────
+        // WeekUtils.getTodayDayOfWeek() → "MONDAY", "WEDNESDAY", etc.
+        String todayKey = WeekUtils.getTodayDayOfWeek();
+        for (GymPlan plan : cachedGymPlans) {
+            if (todayKey.equals(plan.dayOfWeek)) {
+                // "Rest Day" mkaynsh affichage
+                if (plan.bodyPart != null && !plan.bodyPart.equals("Rest Day")) {
+                    merged.add(new TaskItem(plan));
+                }
+                break; // wahd plan f nhar
+            }
         }
 
         // pending فوق (sorted by time) — done تحت (sorted by time)
@@ -152,6 +181,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private boolean isDoneItem(TaskItem item) {
+        if (item.type == TaskItem.Type.GYM) return false; // gym mkaynsh done state daba
         return item.type == TaskItem.Type.DAILY
                 ? item.dailyTask.isDone
                 : item.eduTask.isDone;
