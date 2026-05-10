@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  card_swing_in.xml
+  Animation unique: swing rotation from left edge — kima door katfet7
+  Pivot 3la left edge (pivotX=0%), rotate from -25° → 0°
+  Duration: 480ms
+-->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:interpolator="@android:anim/overshoot_interpolator">
+
+    <!-- Swing: pivot left edge, rotate from -25° to 0° -->
+    <rotate
+        android:fromDegrees="-25"
+        android:toDegrees="0"
+        android:pivotX="0%"
+        android:pivotY="0%"
+        android:duration="480" />
+
+    <!-- Slight scale from 0.92 → 1.0 for depth feel -->
+    <scale
+        android:fromXScale="0.92"
+        android:toXScale="1.0"
+        android:fromYScale="0.92"
+        android:toYScale="1.0"
+        android:pivotX="50%"
+        android:pivotY="50%"
+        android:duration="480" />
+
+    <!-- Fade in -->
+    <alpha
+        android:fromAlpha="0.0"
+        android:toAlpha="1.0"
+        android:duration="280" />
+
+</set>

@@ -143,6 +143,17 @@
                 android:textStyle="bold"
                 android:textAllCaps="false"
                 android:backgroundTint="#2D2D2D"
+                android:layout_marginBottom="14dp"/>
+
+            <Button
+                android:id="@+id/btnPlanGym"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:text="Plan Gym"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textAllCaps="false"
+                android:backgroundTint="#363636"
                 android:layout_marginBottom="35dp"/>
 
             <!-- MODES -->

@@ -56,6 +56,9 @@
         <activity
             android:name=".GymDetailActivity"
             android:exported="false" />
+        <activity
+            android:name=".WeekPlanActivity"
+            android:exported="false" />
 
     </application>
 

@@ -53,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
     private DrawerLayout         drawerLayout;
     private ImageView            btnMenu;
     private Button               btnDash, btnSettings, btnAI;
+    private com.google.android.material.button.MaterialButton btnPlanGym;
     private Switch               swGym, swEdu;
     private TaskAdapter          taskAdapter;
 
@@ -81,6 +82,7 @@ public class MainActivity extends AppCompatActivity {
         btnDash      = findViewById(R.id.btnDash);
         btnSettings  = findViewById(R.id.btnSettings);
         btnAI        = findViewById(R.id.btnAI);
+        btnPlanGym   = findViewById(R.id.btnPlanGym);
         swGym        = findViewById(R.id.swGym);
         swEdu        = findViewById(R.id.swEdu);
 
@@ -123,6 +125,10 @@ public class MainActivity extends AppCompatActivity {
         btnDash.setOnClickListener(v -> drawerLayout.closeDrawer(GravityCompat.END));
         btnSettings.setOnClickListener(v -> drawerLayout.closeDrawer(GravityCompat.END));
         btnAI.setOnClickListener(v -> drawerLayout.closeDrawer(GravityCompat.END));
+        btnPlanGym.setOnClickListener(v -> {
+            drawerLayout.closeDrawer(GravityCompat.END);
+            startActivity(new Intent(this, WeekPlanActivity.class));
+        });
 
         swGym.setOnCheckedChangeListener((btn, checked) -> isGymModeEnabled = checked);
         swEdu.setOnCheckedChangeListener((btn, checked) -> isEducationModeEnabled = checked);

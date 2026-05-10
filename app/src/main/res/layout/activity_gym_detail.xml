@@ -258,6 +258,25 @@
                 app:iconGravity="textStart"
                 app:cornerRadius="8dp"/>
 
+            <!-- ★ NEW — Week Plan -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnWeekPlan"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:text="Week Plan"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textAllCaps="false"
+                android:layout_marginBottom="14dp"
+                app:backgroundTint="#1A0D00"
+                app:icon="@drawable/ic_calendar"
+                app:iconTint="#FF6D00"
+                app:iconPadding="10dp"
+                app:iconGravity="textStart"
+                app:cornerRadius="8dp"
+                app:strokeColor="#FF6D00"
+                app:strokeWidth="1dp"/>
+
         </LinearLayout>
 
     </com.google.android.material.navigation.NavigationView>

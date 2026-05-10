@@ -24,15 +24,16 @@ public class GymDetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_gym_detail);
 
         // ── Views ────────────────────────────────────────────────────────────────
-        FrameLayout    btnBack     = findViewById(R.id.btnBack);
-        TextView       tvBodyPart  = findViewById(R.id.tvBodyPart);
-        TextView       tvStartTime = findViewById(R.id.tvStartTime);
-        TextView       tvStatus    = findViewById(R.id.tvStatus);
-        TextView       tvExCount   = findViewById(R.id.tvExCount);
-        MaterialButton btnLetsGo   = findViewById(R.id.btnLetsGo);
+        FrameLayout    btnBack      = findViewById(R.id.btnBack);
+        TextView       tvBodyPart   = findViewById(R.id.tvBodyPart);
+        TextView       tvStartTime  = findViewById(R.id.tvStartTime);
+        TextView       tvStatus     = findViewById(R.id.tvStatus);
+        TextView       tvExCount    = findViewById(R.id.tvExCount);
+        MaterialButton btnLetsGo    = findViewById(R.id.btnLetsGo);
         DrawerLayout   drawerLayout = findViewById(R.id.drawer_layout);
-        ImageView      btnMenu     = findViewById(R.id.btnMenu);
-        MaterialButton btnEditPlan = findViewById(R.id.btnEditPlan);
+        ImageView      btnMenu      = findViewById(R.id.btnMenu);
+        MaterialButton btnEditPlan  = findViewById(R.id.btnEditPlan);
+        MaterialButton btnWeekPlan  = findViewById(R.id.btnWeekPlan); // ← ZIDNA
 
         viewModel = new ViewModelProvider(this).get(AppViewModel.class);
 
@@ -69,6 +70,12 @@ public class GymDetailActivity extends AppCompatActivity {
                     .edit().remove("gym_plan_week").apply();
             startActivity(new Intent(this, GymSetupActivity.class));
             finish();
+        });
+
+        // ── Week Plan (drawer) ── ★ ZIDNA ────────────────────────────────────────
+        btnWeekPlan.setOnClickListener(v -> {
+            drawerLayout.closeDrawer(GravityCompat.END);
+            startActivity(new Intent(this, WeekPlanActivity.class));
         });
     }
 }
