@@ -2,6 +2,7 @@ package com.example.noexcuse;
 
 import android.app.TimePickerDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
@@ -47,6 +48,11 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQ_TASK = 101;
     private static final int REQ_EDU  = 102;
 
+    // ── SharedPreferences keys ────────────────────────────────────────────
+    private static final String PREFS_NAME   = "noexcuse_prefs";
+    private static final String KEY_GYM_MODE = "gym_mode_enabled";
+    private static final String KEY_EDU_MODE = "edu_mode_enabled";
+
     private FloatingActionButton fabAdd;
     private RecyclerView         recyclerView;
     private TextView             tvDate, tvMotivation;
@@ -60,11 +66,12 @@ public class MainActivity extends AppCompatActivity {
     public boolean isGymModeEnabled       = false;
     public boolean isEducationModeEnabled = false;
 
-    private AppViewModel viewModel;
+    private SharedPreferences prefs;
+    private AppViewModel      viewModel;
 
     private List<DailyTask>     cachedDailyTasks = new ArrayList<>();
     private List<EducationTask> cachedEduTasks   = new ArrayList<>();
-    private List<GymPlan>       cachedGymPlans   = new ArrayList<>(); // ← zidna
+    private List<GymPlan>       cachedGymPlans   = new ArrayList<>();
 
     public final Set<String> verifiedIds = new HashSet<>();
 
@@ -86,6 +93,27 @@ public class MainActivity extends AppCompatActivity {
         swGym        = findViewById(R.id.swGym);
         swEdu        = findViewById(R.id.swEdu);
 
+        // ── FIX 1: Load saved switch states mn SharedPreferences ──────────
+        prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        isGymModeEnabled       = prefs.getBoolean(KEY_GYM_MODE, false);
+        isEducationModeEnabled = prefs.getBoolean(KEY_EDU_MODE, false);
+
+        // Set switch UI 9bal ma nzid listener — bach mayfire-ch 3la frag
+        swGym.setOnCheckedChangeListener(null);
+        swEdu.setOnCheckedChangeListener(null);
+        swGym.setChecked(isGymModeEnabled);
+        swEdu.setChecked(isEducationModeEnabled);
+
+        // ── FIX 1: Save kol ma tbdel ─────────────────────────────────────
+        swGym.setOnCheckedChangeListener((btn, checked) -> {
+            isGymModeEnabled = checked;
+            prefs.edit().putBoolean(KEY_GYM_MODE, checked).apply();
+        });
+        swEdu.setOnCheckedChangeListener((btn, checked) -> {
+            isEducationModeEnabled = checked;
+            prefs.edit().putBoolean(KEY_EDU_MODE, checked).apply();
+        });
+
         viewModel = new ViewModelProvider(this).get(AppViewModel.class);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -106,8 +134,21 @@ public class MainActivity extends AppCompatActivity {
             refreshAdapter();
         });
 
+        // ── AUTO-COPY: semana jdida → copy plans + exercises mn semana li fazat ──
+        String currentWeek  = WeekUtils.getCurrentWeekStart();
+        String previousWeek = WeekUtils.getPreviousWeekStart();
+
+        viewModel.copyPlansIfNewWeek(currentWeek, previousWeek, copied -> {
+            if (copied) {
+                runOnUiThread(() ->
+                        Toast.makeText(this,
+                                "Plan dyal had semana t-copy mn semana li fazat ✅",
+                                Toast.LENGTH_SHORT).show()
+                );
+            }
+        });
+
         // ★ GYM — observe plans dyal semana had semana
-        String currentWeek = WeekUtils.getCurrentWeekStart();
         viewModel.getPlansForWeek(currentWeek).observe(this, plans -> {
             cachedGymPlans = plans != null ? plans : new ArrayList<>();
             refreshAdapter();
@@ -130,46 +171,38 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(this, WeekPlanActivity.class));
         });
 
-        swGym.setOnCheckedChangeListener((btn, checked) -> isGymModeEnabled = checked);
-        swEdu.setOnCheckedChangeListener((btn, checked) -> isEducationModeEnabled = checked);
-
         fabAdd.setOnClickListener(v -> openSmartAddMenu());
     }
 
     /**
-     * كنعرضوا كل tasks (pending + done) ديما — مكنمسحوهمش من الـ list.
-     * isDone=true  → green style (strikethrough + Done badge) + تتنزل لـ bottom
-     * isDone=false → pending style (purple/blue/orange accent) + فوق
-     *
-     * ★ GYM — kangher gha plan dyal had nhar (dayOfWeek == today)
-     *         machi mn DB delete, gha mkaynch f merged list
+     * ── FIX 2: Tasks dyal gym + education katl3o DIMA ────────────────────
+     * Switch gha kat-control FAB menu wach itle3 option gym/edu,
+     * MACHI visibility f liste — tasks kaytl3o dima switch wla la.
      */
     private void refreshAdapter() {
         List<TaskItem> merged = new ArrayList<>();
         verifiedIds.clear();
 
-        // ─── Daily tasks ───────────────────────────────────────────────
+        // ─── Daily tasks — dima ────────────────────────────────────────
         for (DailyTask t : cachedDailyTasks) {
             merged.add(new TaskItem(t));
             if (t.isDone) verifiedIds.add("DAILY_" + t.id);
         }
 
-        // ─── Education tasks ───────────────────────────────────────────
+        // ─── Education tasks — DIMA (machi conditional 3la switch) ────
         for (EducationTask e : cachedEduTasks) {
             merged.add(new TaskItem(e));
             if (e.isDone) verifiedIds.add("EDU_" + e.id);
         }
 
-        // ─── GYM — gha plan dyal had nhar ─────────────────────────────
-        // WeekUtils.getTodayDayOfWeek() → "MONDAY", "WEDNESDAY", etc.
+        // ─── GYM — gha plan dyal had nhar — DIMA ──────────────────────
         String todayKey = WeekUtils.getTodayDayOfWeek();
         for (GymPlan plan : cachedGymPlans) {
             if (todayKey.equals(plan.dayOfWeek)) {
-                // "Rest Day" mkaynsh affichage
                 if (plan.bodyPart != null && !plan.bodyPart.equals("Rest Day")) {
                     merged.add(new TaskItem(plan));
                 }
-                break; // wahd plan f nhar
+                break;
             }
         }
 
@@ -187,7 +220,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private boolean isDoneItem(TaskItem item) {
-        if (item.type == TaskItem.Type.GYM) return false; // gym mkaynsh done state daba
+        if (item.type == TaskItem.Type.GYM) return false;
         return item.type == TaskItem.Type.DAILY
                 ? item.dailyTask.isDone
                 : item.eduTask.isDone;
@@ -199,6 +232,10 @@ public class MainActivity extends AppCompatActivity {
         // LiveData كتحدث لوحدها — refreshAdapter كتتسمى أوتوماتيك
     }
 
+    /**
+     * Switch gha kat-control wach itle3 option gym/edu f had menu.
+     * Ila off les 2 → directly openDailyTaskDialog.
+     */
     private void openSmartAddMenu() {
         if (!isGymModeEnabled && !isEducationModeEnabled) {
             openDailyTaskDialog();

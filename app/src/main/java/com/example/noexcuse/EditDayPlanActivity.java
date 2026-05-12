@@ -2,6 +2,8 @@ package com.example.noexcuse;
 
 import android.app.AlertDialog;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.*;
@@ -35,16 +37,16 @@ public class EditDayPlanActivity extends AppCompatActivity {
     };
 
     // Colors — kullshi gris, gher selected orange
-    private static final int COLOR_CHIP_DEFAULT    = 0xFF1F1F1F; // bg gris foncé — kol chip
-    private static final int COLOR_CHIP_SELECTED   = 0xFFFF6D00; // bg orange — selected chip only
-    private static final int COLOR_CHIP_OCCUPIED   = 0xFF1F1F1F; // même bg que default
-    private static final int COLOR_CHIP_REST       = 0xFF1F1F1F; // même bg que default
-    private static final int COLOR_CHIP_CONFLICT   = 0xFF2A1500; // légèrement amber — swap only
-    private static final int COLOR_TEXT_DEFAULT    = 0xFF6B7280; // gris — kol chip
-    private static final int COLOR_TEXT_SELECTED   = 0xFF111111; // noir — selected chip (sur bg orange)
-    private static final int COLOR_TEXT_OCCUPIED   = 0xFF6B7280; // même gris que default
-    private static final int COLOR_TEXT_REST       = 0xFF6B7280; // même gris que default
-    private static final int COLOR_TEXT_CONFLICT   = 0xFFFFAB40; // amber — swap warning chips
+    private static final int COLOR_CHIP_DEFAULT    = 0xFF1F1F1F;
+    private static final int COLOR_CHIP_SELECTED   = 0xFFFF6D00;
+    private static final int COLOR_CHIP_OCCUPIED   = 0xFF1F1F1F;
+    private static final int COLOR_CHIP_REST       = 0xFF1F1F1F;
+    private static final int COLOR_CHIP_CONFLICT   = 0xFF2A1500;
+    private static final int COLOR_TEXT_DEFAULT    = 0xFF6B7280;
+    private static final int COLOR_TEXT_SELECTED   = 0xFF111111;
+    private static final int COLOR_TEXT_OCCUPIED   = 0xFF6B7280;
+    private static final int COLOR_TEXT_REST       = 0xFF6B7280;
+    private static final int COLOR_TEXT_CONFLICT   = 0xFFFFAB40;
 
     private TextView              tvTitle;
     private ChipGroup             chipGroupDays;
@@ -66,15 +68,13 @@ public class EditDayPlanActivity extends AppCompatActivity {
     private ExerciseEditAdapter adapter;
     private final List<PlannedExercise> exerciseList = new ArrayList<>();
 
-    // Map: dayKey → GymPlan (lil days li 3andhom plans f had semana)
     private final Map<String, GymPlan> occupiedDays = new HashMap<>();
-    private final Map<String, GymPlan> restDays     = new HashMap<>(); // rest day plans (bodyPart null/"Rest Day")
+    private final Map<String, GymPlan> restDays     = new HashMap<>();
     private GymPlan conflictingPlan = null;
 
-    // Chips map pour update couleurs facilement
     private final Map<String, Chip> chipMap = new HashMap<>();
 
-    private boolean isRestDay = false;  // true ida bodyPart null wla "Rest Day"
+    private boolean isRestDay = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,7 +98,6 @@ public class EditDayPlanActivity extends AppCompatActivity {
         currentPlan.bodyPart      = getIntent().getStringExtra("PLAN_BODY_PART");
         currentPlan.startTime     = getIntent().getStringExtra("PLAN_START_TIME");
 
-        // Detect rest day at load time — but we re-check dynamically on save
         isRestDay = (currentPlan.bodyPart == null || currentPlan.bodyPart.equals("Rest Day"));
 
         viewModel = new ViewModelProvider(this).get(AppViewModel.class);
@@ -107,7 +106,9 @@ public class EditDayPlanActivity extends AppCompatActivity {
         setupRecyclerView();
         loadPlanData();
 
-        // D'abord charger les plans de la semaine pour savoir les jours occupés
+        // ── FIX: hide/show fabAddExercise based on isRestDay on initial load ──
+        updateFabVisibility();
+
         loadWeekPlansAndSetupChips();
 
         btnBack.setOnClickListener(v -> handleBack());
@@ -127,6 +128,17 @@ public class EditDayPlanActivity extends AppCompatActivity {
     }
 
     // ─────────────────────────────────────────────────────────────────────
+    //  FIX: Update fab visibility based on current bodyPart field value
+    // ─────────────────────────────────────────────────────────────────────
+
+    private void updateFabVisibility() {
+        String bodyPart = etBodyPart.getText() != null
+                ? etBodyPart.getText().toString().trim() : "";
+        boolean isCurrentlyRest = bodyPart.isEmpty() || bodyPart.equalsIgnoreCase("Rest Day");
+        fabAddExercise.setVisibility(isCurrentlyRest ? View.GONE : View.VISIBLE);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
     //  LOAD WEEK PLANS → build chips avec couleurs
     // ─────────────────────────────────────────────────────────────────────
 
@@ -141,7 +153,7 @@ public class EditDayPlanActivity extends AppCompatActivity {
                         if (!planIsRest) {
                             occupiedDays.put(p.dayOfWeek, p);
                         } else {
-                            restDays.put(p.dayOfWeek, p); // track rest days separately
+                            restDays.put(p.dayOfWeek, p);
                         }
                     }
                 }
@@ -169,24 +181,18 @@ public class EditDayPlanActivity extends AppCompatActivity {
             chip.setCheckedIconVisible(false);
             chip.setRippleColorResource(android.R.color.transparent);
 
-            // Determiner l'état du chip
             boolean isCurrentDay  = dayKey.equals(originalDay);
             boolean isOccupied    = occupiedDays.containsKey(dayKey);
 
-            // Check if this day has a rest plan (plan exists but bodyPart = "Rest Day" or null)
             boolean isRestDayChip = false;
             if (isCurrentDay) {
                 isRestDayChip = isRestDay;
             } else {
-                // Check plans for rest days too (we need all plans, not just non-rest)
-                // occupiedDays only has non-rest plans, so if not occupied + not empty → might be rest
-                // We track rest days separately via restDays map (added below)
                 isRestDayChip = restDays.containsKey(dayKey);
             }
 
             String chipText = dayLabel;
             if (isOccupied && !isCurrentDay) {
-                // Afficher le body part en subtitle — ex: "Tue\nLegs"
                 GymPlan occupiedPlan = occupiedDays.get(dayKey);
                 String bodyPart = (occupiedPlan != null && occupiedPlan.bodyPart != null)
                         ? occupiedPlan.bodyPart : "";
@@ -201,11 +207,6 @@ public class EditDayPlanActivity extends AppCompatActivity {
             }
             chip.setText(chipText);
 
-            // Couleur initiale:
-            // - selectedDay → toujours orange vif
-            // - occupied (non-selected) → dark orange bg
-            // - rest day (non-selected) → dark blue-grey discret
-            // - empty → gris foncé
             if (dayKey.equals(selectedDay)) {
                 applyChipStyle(chip, COLOR_CHIP_SELECTED, COLOR_TEXT_SELECTED);
             } else if (isOccupied) {
@@ -233,7 +234,6 @@ public class EditDayPlanActivity extends AppCompatActivity {
                 android.content.res.ColorStateList.valueOf(bgColor));
         chip.setTextColor(textColor);
         chip.setChipStrokeWidth(1.5f);
-        // Selected → orange stroke, everything else → subtle grey
         int strokeColor = (bgColor == COLOR_CHIP_SELECTED) ? 0xFFFF6D00 : 0xFF333333;
         chip.setChipStrokeColor(
                 android.content.res.ColorStateList.valueOf(strokeColor));
@@ -245,19 +245,16 @@ public class EditDayPlanActivity extends AppCompatActivity {
 
     private void onDaySelected(String newDay) {
         if (newDay.equals(selectedDay)) return;
-        // Proceed directly — no warning dialog for rest days
         proceedDaySelection(newDay);
     }
 
     private void proceedDaySelection(String newDay) {
-        // Reset the previously selected chip to its natural color
         resetChipColor(selectedDay);
 
         selectedDay     = newDay;
         conflictingPlan = null;
         tvSwapWarning.setVisibility(View.GONE);
 
-        // Paint the newly selected chip bright orange
         Chip newChip = chipMap.get(newDay);
         if (newChip != null) {
             applyChipStyle(newChip, COLOR_CHIP_SELECTED, COLOR_TEXT_SELECTED);
@@ -268,10 +265,8 @@ public class EditDayPlanActivity extends AppCompatActivity {
                 boolean planIsRest = plan != null
                         && (plan.bodyPart == null || plan.bodyPart.equals("Rest Day"));
                 if (plan != null && plan.id != planId && !planIsRest) {
-                    // CONFLICT — swap va se passer (rest days machi conflict)
                     conflictingPlan = plan;
 
-                    // Both chips → amber to signal swap (machi rouge, 7san)
                     if (newChip != null) {
                         applyChipStyle(newChip, COLOR_CHIP_CONFLICT, COLOR_TEXT_CONFLICT);
                     }
@@ -293,12 +288,11 @@ public class EditDayPlanActivity extends AppCompatActivity {
                             + "   " + toDayLabel(newDay)      + "  →  " + currentBodyPart;
 
                     tvSwapWarning.setText(msg);
-                    tvSwapWarning.setBackgroundColor(0xFF2A1500); // dark amber bg (machi rouge)
-                    tvSwapWarning.setTextColor(0xFFFFAB40);       // amber text
+                    tvSwapWarning.setBackgroundColor(0xFF2A1500);
+                    tvSwapWarning.setTextColor(0xFFFFAB40);
                     tvSwapWarning.setVisibility(View.VISIBLE);
 
                 } else {
-                    // Empty day — simple move, no swap
                     tvSwapWarning.setVisibility(View.GONE);
                 }
             });
@@ -306,7 +300,7 @@ public class EditDayPlanActivity extends AppCompatActivity {
     }
 
     /**
-     * Reset a chip back to its natural color (occupied dark-orange or empty dark-grey).
+     * Reset a chip back to its natural color.
      * Called when the user moves selection away from this chip.
      */
     private void resetChipColor(String dayKey) {
@@ -316,8 +310,6 @@ public class EditDayPlanActivity extends AppCompatActivity {
         if (occupiedDays.containsKey(dayKey)) {
             applyChipStyle(chip, COLOR_CHIP_OCCUPIED, COLOR_TEXT_OCCUPIED);
         } else if (restDays.containsKey(dayKey)) {
-            // Rest day — rj3 l style discret bhal kima kan
-            GymPlan rp = restDays.get(dayKey);
             String restLabel = toDayLabel(dayKey) + "\nRest";
             chip.setText(restLabel);
             applyChipStyle(chip, COLOR_CHIP_REST, COLOR_TEXT_REST);
@@ -325,11 +317,9 @@ public class EditDayPlanActivity extends AppCompatActivity {
             applyChipStyle(chip, COLOR_CHIP_DEFAULT, COLOR_TEXT_DEFAULT);
         }
 
-        // If we had also painted originalDay amber (conflict state), reset it too
         if (!dayKey.equals(originalDay)) {
             Chip origChip = chipMap.get(originalDay);
             if (origChip != null && !originalDay.equals(selectedDay)) {
-                // originalDay is always occupied (it has a plan)
                 applyChipStyle(origChip, COLOR_CHIP_OCCUPIED, COLOR_TEXT_OCCUPIED);
             }
         }
@@ -369,6 +359,15 @@ public class EditDayPlanActivity extends AppCompatActivity {
     private void loadPlanData() {
         if (currentPlan.bodyPart != null) etBodyPart.setText(currentPlan.bodyPart);
         tvTitle.setText("Edit  " + toDayLabel(originalDay));
+
+        // ── FIX: TextWatcher — update fab visibility kol ma user kaybdel bodyPart ──
+        etBodyPart.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
+            @Override public void onTextChanged(CharSequence s, int st, int b, int c) {}
+            @Override public void afterTextChanged(Editable s) {
+                updateFabVisibility();
+            }
+        });
 
         viewModel.getExercisesForPlan(planId).observe(this, exercises -> {
             exerciseList.clear();
@@ -503,22 +502,18 @@ public class EditDayPlanActivity extends AppCompatActivity {
         boolean dayChanged = !selectedDay.equals(originalDay);
 
         if (conflictingPlan != null) {
-            // SWAP: planA (currentPlan) → selectedDay, planB (conflictingPlan) → originalDay
             conflictingPlan.dayOfWeek = originalDay;
-            // swapPlans: delete les 2 + insert les 2 — zero unique constraint crash
             viewModel.swapPlans(currentPlan, conflictingPlan);
             Toast.makeText(this,
                     "Swapped ✅  " + toDayLabel(originalDay) + " ↔ " + toDayLabel(selectedDay),
                     Toast.LENGTH_LONG).show();
 
         } else if (dayChanged) {
-            // Move l nhar jdid bla swap — delete + insert
             viewModel.movePlanToDay(currentPlan);
             Toast.makeText(this, "Moved ✅  → " + toDayLabel(selectedDay),
                     Toast.LENGTH_SHORT).show();
 
         } else {
-            // Gher bodyPart tbdel, nhar b7alu — safe UPDATE bssah
             viewModel.updateGymPlanBodyAndTime(currentPlan);
             Toast.makeText(this, "Saved ✅", Toast.LENGTH_SHORT).show();
         }
@@ -531,21 +526,13 @@ public class EditDayPlanActivity extends AppCompatActivity {
     //  BACK / UNSAVED CHANGES
     // ─────────────────────────────────────────────────────────────────────
 
-    /**
-     * Returns true if user changed something that wasn't saved yet.
-     * Rest days are excluded — they have no plan data worth protecting.
-     */
     private boolean hasUnsavedChanges() {
-        // Bug 3 fix: check current bodyPart text, not cached isRestDay flag
         String currentText = etBodyPart.getText() != null
                 ? etBodyPart.getText().toString().trim() : "";
         String originalBodyPart = getIntent().getStringExtra("PLAN_BODY_PART");
         if (originalBodyPart == null) originalBodyPart = "";
 
-        // Day changed?
         if (!selectedDay.equals(originalDay)) return true;
-
-        // Body part changed?
         if (!currentText.equals(originalBodyPart)) return true;
 
         return false;
