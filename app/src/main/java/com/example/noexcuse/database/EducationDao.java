@@ -21,6 +21,14 @@ public interface EducationDao {
     @Delete
     void deleteEducation(EducationTask educationTask);
 
+    /**
+     * Hiyyed kol sessions li fat endTime dyalhom.
+     * endTime < now → fat we9t lend, titmsha automatiquement.
+     * Par exemple: session 01:00 → 14:00 de gheda — ila jat 14:01 de gheda, titmsha.
+     */
+    @Query("DELETE FROM education_tasks WHERE endTime < :now")
+    void deleteSessionsBefore(long now);
+
     // Rj3 kol sessions (pending + done) — sorting kaydir f MainActivity
     @Query("SELECT * FROM education_tasks ORDER BY startTime ASC")
     LiveData<List<EducationTask>> getPendingEducationLive();

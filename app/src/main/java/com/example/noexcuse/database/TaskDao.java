@@ -23,4 +23,11 @@ public interface TaskDao {
 
     @Delete
     void deleteTask(DailyTask task);
+
+    /**
+     * Hiyyed kol tasks li fat nharha — taskTime < startOfToday (minuit)
+     * Par exemple: task d5lat 17:00 — ila jat gheda 00:00, titmsha
+     */
+    @Query("DELETE FROM daily_tasks WHERE taskTime < :startOfToday")
+    void deleteTasksBefore(long startOfToday);
 }

@@ -26,6 +26,12 @@ public class AppViewModel extends AndroidViewModel {
     public void updateTask(DailyTask task) { repository.updateTask(task); }
     public void deleteTask(DailyTask task) { repository.deleteTask(task); }
 
+    /** Hiyyed kol tasks u sessions li fat we9thom — call f onResume dyal MainActivity */
+    public void deleteExpiredTasks() {
+        repository.deleteExpiredDailyTasks();
+        repository.deleteExpiredEducationSessions();
+    }
+
     // ─── EDUCATION ────────────────────────────────────────────────────────
 
     public void addEducation(EducationTask task)    { repository.insertEducation(task); }
@@ -43,55 +49,39 @@ public class AppViewModel extends AndroidViewModel {
     }
 
     public void updateGymPlan(GymPlan plan) { repository.updateGymPlan(plan); }
+    public void deleteGymPlan(GymPlan plan) { repository.deleteGymPlan(plan); }
 
+    /** Update bodyPart + startTime bssah — safe, makaynch unique risk. */
     public void updateGymPlanBodyAndTime(GymPlan plan) {
         repository.updateGymPlanBodyAndTime(plan);
     }
 
+    /** Move plan l nhar jdid — delete+insert, zero unique constraint crash. */
     public void movePlanToDay(GymPlan plan) {
         repository.movePlanToDay(plan);
     }
 
+    /** Swap dayOfWeek bين planA u planB — delete les 2 + insert les 2. */
     public void swapPlans(GymPlan planA, GymPlan planB) {
         repository.swapPlans(planA, planB);
     }
 
-    @Deprecated
-    public void updateGymPlanFields(GymPlan plan) { repository.updateGymPlanFields(plan); }
-
-    public void deleteGymPlan(GymPlan plan) { repository.deleteGymPlan(plan); }
-
+    // Kol plans
     public LiveData<List<GymPlan>> getAllGymPlans() {
         return repository.getAllGymPlans();
     }
 
+    // Plans dyal semana m3ayyana
+    // weekStart = "2025-05-05" (lundi dyal had semana)
     public LiveData<List<GymPlan>> getPlansForWeek(String weekStart) {
         return repository.getPlansForWeek(weekStart);
     }
 
+    // Jib plan dyal nhar + semana
+    // exemple: getGymPlanForDayAndWeek("MONDAY", "2025-05-05", callback)
     public void getGymPlanForDayAndWeek(String day, String weekStart,
                                         AppRepository.OnPlanLoadedCallback callback) {
         repository.getGymPlanForDayAndWeek(day, weekStart, callback);
-    }
-
-    // ─── AUTO-COPY: semana jdida → copy plans mn semana li fazat ──────────
-
-    /**
-     * Ila had semana makanch fiha plans → katcopy plans + exercises mn semana li fazat.
-     * GymPerformance mkatcopy-ch (hiya tarikh, tbqa bhal kima hiya).
-     *
-     * Exemple f MainActivity:
-     *   viewModel.copyPlansIfNewWeek(
-     *       WeekUtils.getCurrentWeekStart(),
-     *       WeekUtils.getPreviousWeekStart(),
-     *       copied -> runOnUiThread(() -> {
-     *           if (copied) Toast.makeText(this, "Plan t-copy ✅", Toast.LENGTH_SHORT).show();
-     *       })
-     *   );
-     */
-    public void copyPlansIfNewWeek(String currentWeek, String previousWeek,
-                                   AppRepository.OnCopyDoneCallback callback) {
-        repository.copyPlansIfNewWeek(currentWeek, previousWeek, callback);
     }
 
     // ─── PLANNED EXERCISE ─────────────────────────────────────────────────
@@ -115,6 +105,16 @@ public class AppViewModel extends AndroidViewModel {
 
     // ─── GYM PERFORMANCE ──────────────────────────────────────────────────
 
+    // ⭐ MUHIM — dima set exerciseNameSnapshot 9bel ma tsift performance!
+    // exemple:
+    //   GymPerformance perf = new GymPerformance();
+    //   perf.plannedExerciseId   = exercise.id;
+    //   perf.exerciseNameSnapshot = exercise.exerciseName;  ← dima!
+    //   perf.setNumber           = currentSet;
+    //   perf.weight              = weightEntered;
+    //   perf.reps                = repsEntered;
+    //   perf.timestamp           = System.currentTimeMillis();
+    //   viewModel.addPerformance(perf);
     public void addPerformance(GymPerformance performance) {
         repository.insertPerformance(performance);
     }
