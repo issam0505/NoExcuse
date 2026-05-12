@@ -43,6 +43,26 @@ public class AppViewModel extends AndroidViewModel {
     }
 
     public void updateGymPlan(GymPlan plan) { repository.updateGymPlan(plan); }
+
+    /** Update bodyPart + startTime bssah — safe, makaynch unique risk. */
+    public void updateGymPlanBodyAndTime(GymPlan plan) {
+        repository.updateGymPlanBodyAndTime(plan);
+    }
+
+    /** Move plan l nhar jdid — delete+insert, zero unique constraint crash. */
+    public void movePlanToDay(GymPlan plan) {
+        repository.movePlanToDay(plan);
+    }
+
+    /** Swap dayOfWeek bين planA u planB — delete les 2 + insert les 2. */
+    public void swapPlans(GymPlan planA, GymPlan planB) {
+        repository.swapPlans(planA, planB);
+    }
+
+    /** @deprecated Stamo movePlanToDay wla updateGymPlanBodyAndTime. */
+    @Deprecated
+    public void updateGymPlanFields(GymPlan plan) { repository.updateGymPlanFields(plan); }
+
     public void deleteGymPlan(GymPlan plan) { repository.deleteGymPlan(plan); }
 
     // Kol plans

@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  activity_edit_day_plan.xml
+  Screen dyal EditDayPlanActivity
+  Dark theme — matches WeekPlanActivity
+-->
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#111111"
+    android:fitsSystemWindows="true">
+
+    <!-- ── TOP BAR ──────────────────────────────────────────── -->
+    <RelativeLayout
+        android:id="@+id/topBar"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:background="#111111"
+        android:paddingStart="8dp"
+        android:paddingEnd="16dp">
+
+        <!-- Back button -->
+        <FrameLayout
+            android:id="@+id/btnBack"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_arrow_back"
+                android:contentDescription="Back"
+                app:tint="#F9FAFB"/>
+        </FrameLayout>
+
+        <!-- Title -->
+        <TextView
+            android:id="@+id/tvEditTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="Edit Day Plan"
+            android:textColor="#F9FAFB"
+            android:textSize="17sp"
+            android:textStyle="bold"/>
+
+    </RelativeLayout>
+
+    <!-- Divider -->
+    <View
+        android:id="@+id/dividerTop"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1F1F1F"
+        android:layout_below="@id/topBar"/>
+
+    <!-- ── MAIN SCROLL CONTENT ──────────────────────────────── -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="61dp"
+        android:layout_marginBottom="80dp"
+        android:clipToPadding="false"
+        android:paddingBottom="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- ── SECTION: DAY SELECTION ──────────────────── -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DAY"
+                android:textColor="#6B7280"
+                android:textSize="11sp"
+                android:letterSpacing="0.12"
+                android:textStyle="bold"
+                android:layout_marginBottom="10dp"/>
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupDays"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="6dp"
+                app:singleSelection="true"/>
+
+            <!-- Swap warning -->
+            <TextView
+                android:id="@+id/tvSwapWarning"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="#1A0D00"
+                android:padding="12dp"
+                android:textColor="#FF6D00"
+                android:textSize="12sp"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@id/chipGroupDays"/>
+
+            <!-- ── SECTION: WORKOUT NAME ────────────────────── -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="10dp"
+                android:letterSpacing="0.12"
+                android:text="WORKOUT NAME"
+                android:textColor="#6B7280"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                app:boxBackgroundColor="#1A1A1A"
+                app:boxStrokeColor="#FF6D00"
+                app:boxStrokeWidth="1dp"
+                app:hintTextColor="#6B7280"
+                android:hint="e.g. Chest &amp; Triceps">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etBodyPart"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="#F9FAFB"
+                    android:textSize="15sp"
+                    android:inputType="textCapWords"/>
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- ── SECTION: EXERCISES ───────────────────────── -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="10dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="EXERCISES"
+                    android:textColor="#6B7280"
+                    android:textSize="11sp"
+                    android:letterSpacing="0.12"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="swipe left to delete"
+                    android:textColor="#374151"
+                    android:textSize="11sp"/>
+
+            </LinearLayout>
+
+            <!-- Exercise list -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvExercises"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                android:clipToPadding="false"/>
+
+            <!-- Empty state -->
+            <TextView
+                android:id="@+id/tvNoExercises"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="No exercises yet — tap + to add"
+                android:textColor="#374151"
+                android:textSize="13sp"
+                android:gravity="center"
+                android:padding="24dp"
+                android:visibility="gone"/>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- ── BOTTOM BAR (Save button) ─────────────────────────── -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:layout_gravity="bottom"
+        android:background="#111111"
+        android:padding="12dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSaveChanges"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="Save Changes"
+            android:textColor="#111111"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            app:backgroundTint="#FF6D00"
+            app:cornerRadius="12dp"
+            app:icon="@drawable/outline_check_small_24"
+            app:iconGravity="textStart"/>
+
+    </LinearLayout>
+
+    <!-- ── FAB: Add Exercise ─────────────────────────────────── -->
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/fabAddExercise"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="88dp"
+        android:text="Add Exercise"
+        android:textColor="#111111"
+        app:backgroundTint="#FF6D00"
+        app:icon="@drawable/add_24px"
+        app:iconTint="#111111"/>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -23,6 +23,18 @@ public interface GymDao {
     @Update
     void updatePlan(GymPlan plan);
 
+    // Step 1: delete l row b id (f swap transaction)
+    @androidx.room.Query("DELETE FROM gym_plans WHERE id=:id")
+    void deletePlanById(int id);
+
+    // Step 2: insert b nafs l id (REPLACE ila kayn conflict)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertPlanWithId(GymPlan plan);
+
+    // Update bodyPart u startTime BSSAH (bla ma tbdel dayOfWeek — safe, no unique risk)
+    @androidx.room.Query("UPDATE gym_plans SET bodyPart=:bodyPart, startTime=:startTime WHERE id=:id")
+    void updatePlanBodyAndTime(int id, String bodyPart, String startTime);
+
     @Delete
     void deletePlan(GymPlan plan);
 

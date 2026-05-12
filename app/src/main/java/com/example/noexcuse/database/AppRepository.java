@@ -82,6 +82,57 @@ public class AppRepository {
         executor.execute(() -> gymDao.updatePlan(plan));
     }
 
+    /**
+     * Update bodyPart + startTime bssah — mabdelnach dayOfWeek.
+     * Safe 100% — makaynch unique constraint risk.
+     */
+    public void updateGymPlanBodyAndTime(GymPlan plan) {
+        executor.execute(() -> gymDao.updatePlanBodyAndTime(
+                plan.id,
+                plan.bodyPart,
+                plan.startTime));
+    }
+
+    /**
+     * Move plan l nhar jdid — delete + insert f nafs l executor thread (sequential).
+     * Hada lhaqiqi lli kayhal unique constraint: ndirou delete l row l9dima,
+     * insert b nafs l id u dayOfWeek jdid — SQLite makayshufch conflict.
+     */
+    public void movePlanToDay(GymPlan plan) {
+        executor.execute(() -> {
+            gymDao.deletePlanById(plan.id);
+            gymDao.insertPlanWithId(plan);
+        });
+    }
+
+    /**
+     * Swap dayOfWeek bين planA u planB — f nafs l executor thread, sequential.
+     * Delete les 2, insert les 2 b days mqdouba — zero unique constraint risk.
+     */
+    public void swapPlans(GymPlan planA, GymPlan planB) {
+        executor.execute(() -> {
+            // Delete les 2 d'abord
+            gymDao.deletePlanById(planA.id);
+            gymDao.deletePlanById(planB.id);
+            // Insert les 2 b days mqdouba
+            gymDao.insertPlanWithId(planA);
+            gymDao.insertPlanWithId(planB);
+        });
+    }
+
+    /**
+     * @deprecated Stamo movePlanToDay wla updateGymPlanBodyAndTime.
+     * Hadi kadir crash b UNIQUE constraint ila tbdel dayOfWeek.
+     */
+    @Deprecated
+    public void updateGymPlanFields(GymPlan plan) {
+        // Redirect l movePlanToDay ila dayOfWeek tbdel — wla updateBodyAndTime ila mabdelnach
+        executor.execute(() -> {
+            gymDao.deletePlanById(plan.id);
+            gymDao.insertPlanWithId(plan);
+        });
+    }
+
     public void deleteGymPlan(GymPlan plan) {
         executor.execute(() -> gymDao.deletePlan(plan));
     }

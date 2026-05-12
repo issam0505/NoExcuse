@@ -109,6 +109,14 @@ public class WeekPlanActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Room LiveData automatic — makhassnach ndir removeObservers+reobserve.
+        // L observer li setup f observePlans() ghadi ytsna l ay update mn DB automatic.
+        // (l bug l9dim kan: remove+reobserve kaydwez l cache l9dim bla update jdid)
+    }
+
     // ─────────────────────────────────────────────────────────────────────
     //  BIND
     // ─────────────────────────────────────────────────────────────────────
@@ -212,7 +220,7 @@ public class WeekPlanActivity extends AppCompatActivity {
                 if (holder == null) continue;
 
                 if (isRest) {
-                    holder.setRestDay();
+                    holder.setRestDay(plan); // n7fdo plan bash btnEditExercises itsnt3ml
                 } else {
                     holder.setWorkoutDay(plan);
                 }
@@ -337,23 +345,41 @@ public class WeekPlanActivity extends AppCompatActivity {
 
             btnEditExercises.setOnClickListener(v -> {
                 if (currentPlan == null) {
-                    Toast.makeText(WeekPlanActivity.this,
-                            "No workout planned for " + dayLabel, Toast.LENGTH_SHORT).show();
+                    // Rest day bla plan f DB — nbdaw plan jdid (Rest Day) u nfet7ou edit
+                    GymPlan restPlan = new GymPlan();
+                    restPlan.dayOfWeek     = dayKey;
+                    restPlan.weekStartDate = currentWeekStart;
+                    restPlan.bodyPart      = "Rest Day";
+                    restPlan.startTime     = "";
+
+                    viewModel.addGymPlan(restPlan, newId -> runOnUiThread(() -> {
+                        restPlan.id  = newId;
+                        currentPlan  = restPlan;
+
+                        Intent intent = new Intent(WeekPlanActivity.this, EditDayPlanActivity.class);
+                        intent.putExtra("PLAN_ID",         newId);
+                        intent.putExtra("PLAN_DAY",        dayKey);
+                        intent.putExtra("PLAN_BODY_PART",  "Rest Day");
+                        intent.putExtra("PLAN_START_TIME", "");
+                        intent.putExtra("WEEK_START",      currentWeekStart);
+                        startActivity(intent);
+                    }));
                     return;
                 }
-                Intent intent = new Intent(WeekPlanActivity.this, GymDetailActivity.class);
+                Intent intent = new Intent(WeekPlanActivity.this, EditDayPlanActivity.class);
                 intent.putExtra("PLAN_ID",         currentPlan.id);
                 intent.putExtra("PLAN_DAY",        currentPlan.dayOfWeek);
                 intent.putExtra("PLAN_BODY_PART",  currentPlan.bodyPart);
-                intent.putExtra("PLAN_START_TIME", currentPlan.startTime);
-                intent.putExtra("EDIT_MODE",       true);
+                intent.putExtra("PLAN_START_TIME", currentPlan.startTime != null ? currentPlan.startTime : "");
+                intent.putExtra("WEEK_START",      currentWeekStart);
                 startActivity(intent);
             });
         }
 
         void setRestDay() {
-            isRestDay   = true;
-            currentPlan = null;
+            isRestDay = true;
+            // currentPlan mabdlnach hna — kayban setRestDay(GymPlan) wla setRestDay()
+            // ila currentPlan null → rest day bla plan f DB (machi created ba3d)
 
             tvBodyPart.setText("Rest Day");
             tvBodyPart.setTextColor(0xFF6B7280);
@@ -364,6 +390,12 @@ public class WeekPlanActivity extends AppCompatActivity {
             layoutExercises.setVisibility(View.GONE);
             rowStats.setVisibility(View.GONE);
             ivExpand.setVisibility(View.GONE);
+        }
+
+        // Overload — ila rest day 3ndu plan f DB, n7fdou bash nfet7ou EditDayPlanActivity
+        void setRestDay(GymPlan plan) {
+            currentPlan = plan;
+            setRestDay();
         }
 
         void setWorkoutDay(GymPlan plan) {
@@ -421,7 +453,14 @@ public class WeekPlanActivity extends AppCompatActivity {
         }
 
         void setEditMode(boolean active) {
-            rowEditActions.setVisibility(active && !isRestDay ? View.VISIBLE : View.GONE);
+            if (!active) {
+                rowEditActions.setVisibility(View.GONE);
+                return;
+            }
+            rowEditActions.setVisibility(View.VISIBLE);
+            // Rest Day: gher btnEditExercises (li kayfet7 EditDayPlanActivity bash ibddel l plan)
+            // machi btnEditTime (rest day ma3ndouch startTime)
+            btnEditTime.setVisibility(isRestDay ? View.GONE : View.VISIBLE);
         }
 
         private void showTimePickerForPlan() {

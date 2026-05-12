@@ -59,6 +59,9 @@
         <activity
             android:name=".WeekPlanActivity"
             android:exported="false" />
+        <activity
+            android:name=".EditDayPlanActivity"
+            android:exported="false" />
 
     </application>
 
