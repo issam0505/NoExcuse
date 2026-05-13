@@ -1,6 +1,7 @@
 package com.example.noexcuse;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -16,33 +17,36 @@ import com.google.android.material.button.MaterialButton;
 
 public class GymDetailActivity extends AppCompatActivity {
 
+    private static final int REQ_WORKOUT = 200;
+
     private AppViewModel viewModel;
+    private TextView     tvStatus;
+    private int          planId;
+    private String       bodyPart;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gym_detail);
 
-        // ── Views ────────────────────────────────────────────────────────────────
         FrameLayout    btnBack      = findViewById(R.id.btnBack);
         TextView       tvBodyPart   = findViewById(R.id.tvBodyPart);
         TextView       tvStartTime  = findViewById(R.id.tvStartTime);
-        TextView       tvStatus     = findViewById(R.id.tvStatus);
+        tvStatus                    = findViewById(R.id.tvStatus);
         TextView       tvExCount    = findViewById(R.id.tvExCount);
         MaterialButton btnLetsGo    = findViewById(R.id.btnLetsGo);
         DrawerLayout   drawerLayout = findViewById(R.id.drawer_layout);
         ImageView      btnMenu      = findViewById(R.id.btnMenu);
         MaterialButton btnEditPlan  = findViewById(R.id.btnEditPlan);
-        MaterialButton btnWeekPlan  = findViewById(R.id.btnWeekPlan); // ← ZIDNA
+        MaterialButton btnWeekPlan  = findViewById(R.id.btnWeekPlan);
 
         viewModel = new ViewModelProvider(this).get(AppViewModel.class);
 
         btnBack.setOnClickListener(v -> finish());
         btnMenu.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.END));
 
-        // ── Intent data ──────────────────────────────────────────────────────────
-        int    planId    = getIntent().getIntExtra("PLAN_ID", -1);
-        String bodyPart  = getIntent().getStringExtra("PLAN_BODY_PART");
+        planId   = getIntent().getIntExtra("PLAN_ID", -1);
+        bodyPart = getIntent().getStringExtra("PLAN_BODY_PART");
         String startTime = getIntent().getStringExtra("PLAN_START_TIME");
 
         if (planId == -1) { finish(); return; }
@@ -51,19 +55,19 @@ public class GymDetailActivity extends AppCompatActivity {
         tvStartTime.setText(startTime != null && !startTime.isEmpty() ? startTime : "--:--");
         tvStatus.setText("Pending");
 
-        // ── Nbr exercises via LiveData ───────────────────────────────────────────
         viewModel.getExercisesForPlan(planId).observe(this, exercises -> {
             int count = exercises != null ? exercises.size() : 0;
             tvExCount.setText(count + " exercise" + (count > 1 ? "s" : ""));
         });
 
-        // ── Let's Go ─────────────────────────────────────────────────────────────
+        // Let's Go — IBQA F GymDetail, matrja3ch l main
         btnLetsGo.setOnClickListener(v -> {
-            // TODO: ouvre ActiveWorkoutActivity f lmostagbal
-            finish();
+            Intent intent = new Intent(this, ActiveWorkoutActivity.class);
+            intent.putExtra("PLAN_ID",        planId);
+            intent.putExtra("PLAN_BODY_PART", bodyPart);
+            startActivityForResult(intent, REQ_WORKOUT);
         });
 
-        // ── Edit Plan (drawer) ───────────────────────────────────────────────────
         btnEditPlan.setOnClickListener(v -> {
             drawerLayout.closeDrawer(GravityCompat.END);
             getSharedPreferences("gym_prefs", MODE_PRIVATE)
@@ -72,10 +76,20 @@ public class GymDetailActivity extends AppCompatActivity {
             finish();
         });
 
-        // ── Week Plan (drawer) ── ★ ZIDNA ────────────────────────────────────────
         btnWeekPlan.setOnClickListener(v -> {
             drawerLayout.closeDrawer(GravityCompat.END);
             startActivity(new Intent(this, WeekPlanActivity.class));
         });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQ_WORKOUT && resultCode == RESULT_OK) {
+            // Workout kml — ibqa hna f GymDetail, update status gha
+            tvStatus.setText("Done ✓");
+            tvStatus.setTextColor(Color.parseColor("#4CAF50"));
+            tvStatus.setBackgroundResource(R.drawable.bg_status_done);
+        }
     }
 }

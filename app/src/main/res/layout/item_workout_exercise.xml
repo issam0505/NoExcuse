@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="16dp"
+    app:cardBackgroundColor="#111111"
+    app:strokeColor="#1E1E1E"
+    app:strokeWidth="1dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- ── Header: Nom + Unit toggle ── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="14dp">
+
+            <TextView
+                android:id="@+id/tvExerciseName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#F9FAFB"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:text="Exercise"/>
+
+            <!-- kg / lbs toggle -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnUnitToggle"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:text="kg"
+                android:textColor="#FF6D00"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                app:backgroundTint="#1A1A1A"
+                app:strokeColor="#FF6D00"
+                app:strokeWidth="1dp"
+                app:cornerRadius="16dp"/>
+
+        </LinearLayout>
+
+        <!-- ── Column headers ── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="6dp"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp">
+
+            <TextView
+                android:layout_width="32dp"
+                android:layout_height="wrap_content"
+                android:text="Set"
+                android:textColor="#4B5563"
+                android:textSize="11sp"
+                android:gravity="center"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Weight"
+                android:textColor="#4B5563"
+                android:textSize="11sp"
+                android:gravity="center"
+                android:layout_marginStart="10dp"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Reps"
+                android:textColor="#4B5563"
+                android:textSize="11sp"
+                android:gravity="center"
+                android:layout_marginStart="8dp"/>
+
+        </LinearLayout>
+
+        <!-- ── Set rows injected here ── -->
+        <LinearLayout
+            android:id="@+id/setsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"/>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

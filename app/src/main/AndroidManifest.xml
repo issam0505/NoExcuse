@@ -62,6 +62,12 @@
         <activity
             android:name=".EditDayPlanActivity"
             android:exported="false" />
+        <activity
+            android:name=".ActiveWorkoutActivity"
+            android:exported="false" />
+        <activity
+            android:name=".CardioWorkoutActivity"
+            android:exported="false" />
 
     </application>
 

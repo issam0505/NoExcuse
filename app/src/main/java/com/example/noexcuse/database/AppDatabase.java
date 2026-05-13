@@ -15,7 +15,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase;
         GymPerformance.class,
         EducationTask.class,
         SleepSettings.class,
-}, version = 8)
+}, version = 9)   // ← 8 → 9
 public abstract class AppDatabase extends RoomDatabase {
 
     public abstract TaskDao      taskDao();
@@ -27,8 +27,7 @@ public abstract class AppDatabase extends RoomDatabase {
 
     // 5→6
     static final Migration MIGRATION_5_6 = new Migration(5, 6) {
-        @Override
-        public void migrate(@NonNull SupportSQLiteDatabase db) {
+        @Override public void migrate(@NonNull SupportSQLiteDatabase db) {
             db.execSQL("ALTER TABLE gym_plans ADD COLUMN weekStartDate TEXT");
             db.execSQL("ALTER TABLE gym_performance ADD COLUMN exerciseNameSnapshot TEXT");
             db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_gym_plans_dayOfWeek_weekStartDate " +
@@ -38,9 +37,7 @@ public abstract class AppDatabase extends RoomDatabase {
 
     // 6→7
     static final Migration MIGRATION_6_7 = new Migration(6, 7) {
-        @Override
-        public void migrate(@NonNull SupportSQLiteDatabase db) {
-
+        @Override public void migrate(@NonNull SupportSQLiteDatabase db) {
             db.execSQL("CREATE TABLE planned_exercises_new (" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," +
                     "planId INTEGER NOT NULL," +
@@ -67,12 +64,18 @@ public abstract class AppDatabase extends RoomDatabase {
         }
     };
 
-    // 7→8 : zid isCardio + durationMinutes f planned_exercises
+    // 7→8
     static final Migration MIGRATION_7_8 = new Migration(7, 8) {
-        @Override
-        public void migrate(@NonNull SupportSQLiteDatabase db) {
+        @Override public void migrate(@NonNull SupportSQLiteDatabase db) {
             db.execSQL("ALTER TABLE planned_exercises ADD COLUMN durationMinutes INTEGER NOT NULL DEFAULT 0");
             db.execSQL("ALTER TABLE planned_exercises ADD COLUMN isCardio INTEGER NOT NULL DEFAULT 0");
+        }
+    };
+
+    // 8→9 : zid date f gym_performance
+    static final Migration MIGRATION_8_9 = new Migration(8, 9) {
+        @Override public void migrate(@NonNull SupportSQLiteDatabase db) {
+            db.execSQL("ALTER TABLE gym_performance ADD COLUMN date INTEGER NOT NULL DEFAULT 0");
         }
     };
 
@@ -84,7 +87,7 @@ public abstract class AppDatabase extends RoomDatabase {
                                     context.getApplicationContext(),
                                     AppDatabase.class,
                                     "no_excuse_db")
-                            .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+                            .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
                             .build();
                 }
             }

@@ -12,6 +12,10 @@ public class GymPerformance {
     public String exerciseNameSnapshot;   // smiya dyal exercise nhar el tsejil
 
     public int   setNumber;   // 1, 2, 3...
-    public float weight;      // poids f kg li hza f had set
-    public int   reps;        // reps li dar f had set
+    public float weight;      // poids f kg
+    public int   reps;        // reps
+
+    // ⭐ Date dyal tsejil (timestamp f milliseconds) — bach nfilter b semana
+    // exemple: System.currentTimeMillis()
+    public long date;
 }
