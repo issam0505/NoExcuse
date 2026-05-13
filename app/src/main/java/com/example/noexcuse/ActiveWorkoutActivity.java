@@ -11,7 +11,11 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.noexcuse.database.AppViewModel;
@@ -26,13 +30,11 @@ import java.util.List;
 
 public class ActiveWorkoutActivity extends AppCompatActivity {
 
-    // ─── Data ─────────────────────────────────────────────────────────────
     private AppViewModel          viewModel;
     private int                   planId;
     private String                bodyPart;
     private List<PlannedExercise> exercises = new ArrayList<>();
 
-    // ─── Views ────────────────────────────────────────────────────────────
     private FrameLayout        warmupOverlay;
     private LinearLayout       workoutContent;
     private LinearLayout       exercisesContainer;
@@ -41,20 +43,11 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
     private CircularTimerView  circularTimer;
     private MaterialButton     btnAction;
 
-    // ─── State ────────────────────────────────────────────────────────────
     private CountDownTimer restCountdown;
     private int currentExIndex = 0;
     private View currentCard   = null;
-
-    // ⭐ KEY CHANGE: unit tracked PER EXERCISE (not global)
-    // currentExUnitIsKg = unit selected by user for the CURRENT exercise card
-    // This resets to true (kg) each time a new exercise card is shown,
-    // but the user can toggle it independently for every exercise.
-    // When collectCurrentExercise() runs, it reads THIS flag to know which unit
-    // the user entered weights in — and converts to kg before saving if needed.
     private boolean currentExUnitIsKg = true;
 
-    // ─── PENDING PERFORMANCES ─────────────────────────────────────────────
     private final List<GymPerformance> pendingPerformances = new ArrayList<>();
 
     private enum BtnState { START, NEXT, SAVE }
@@ -63,12 +56,21 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
     private static final int REST_DURATION_MS = 2 * 60 * 1000;
     private static final int REQ_CARDIO       = 300;
 
-    // ─────────────────────────────────────────────────────────────────────
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_active_workout);
+
+        // FIX: Handle status bar overlapping
+        View mainView = findViewById(R.id.main);
+        if (mainView != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(mainView, (v, insets) -> {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+                return insets;
+            });
+        }
 
         viewModel = new ViewModelProvider(this).get(AppViewModel.class);
 
@@ -86,7 +88,6 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
 
         tvWorkoutBodyPart.setText(bodyPart != null ? bodyPart : "Workout");
 
-        // ── Warmup top bar ────────────────────────────────────────────────
         TextView tvWarmupBodyPart = findViewById(R.id.tvWarmupBodyPart);
         tvWarmupBodyPart.setText(bodyPart != null ? bodyPart : "Workout");
 
@@ -109,8 +110,6 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
             exercises = list;
         });
     }
-
-    // ─── Style helpers ───────────────────────────────────────────────────
 
     private void applyStartStyle() {
         btnState = BtnState.START;
@@ -152,8 +151,6 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
         return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 
-    // ─── Warm-up → workout ───────────────────────────────────────────────
-
     private void showWorkout() {
         warmupOverlay.animate()
                 .alpha(0f).setDuration(350)
@@ -164,8 +161,6 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
                     workoutContent.animate().alpha(1f).setDuration(300).start();
                 }).start();
     }
-
-    // ─── Action button ────────────────────────────────────────────────────
 
     private void onActionPressed() {
         switch (btnState) {
@@ -183,8 +178,6 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
                 break;
         }
     }
-
-    // ─── Show exercise card ───────────────────────────────────────────────
 
     private void showExerciseAt(int index) {
         if (index >= exercises.size()) { finishWorkout(); return; }
@@ -204,13 +197,9 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
         tvName.setText((ex.exerciseName != null ? ex.exerciseName : "—")
                 + "\n" + (index + 1) + " / " + exercises.size());
 
-        // ⭐ Reset unit to kg for each new exercise card
         currentExUnitIsKg = true;
         btnUnit.setText("kg");
 
-        // ⭐ Toggle updates currentExUnitIsKg (scoped to this exercise)
-        // The button label always reflects the current unit for this exercise.
-        // Changing unit on exercise 2 does NOT affect exercise 1's saved data.
         btnUnit.setOnClickListener(v -> {
             currentExUnitIsKg = !currentExUnitIsKg;
             btnUnit.setText(currentExUnitIsKg ? "kg" : "lbs");
@@ -228,8 +217,6 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
         if (isLast) applySaveStyle(); else applyNextStyle();
     }
 
-    // ─── Add set row ──────────────────────────────────────────────────────
-
     private void addSetRow(LinearLayout setsContainer, int setNumber) {
         View row = LayoutInflater.from(this)
                 .inflate(R.layout.item_workout_set_row, setsContainer, false);
@@ -237,16 +224,6 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
         tvSetNum.setText(String.valueOf(setNumber));
         setsContainer.addView(row);
     }
-
-    // ─── Collect current exercise → pending ───────────────────────────────
-    //
-    // ⭐ UNIT LOGIC:
-    //   - user enters weight in whichever unit they picked (kg or lbs)
-    //   - we ALWAYS store in kg in the database (standard)
-    //   - if user picked lbs → multiply by 0.453592 before saving
-    //   - the unit toggle is per-exercise: exercise A can be lbs,
-    //     exercise B can be kg — each is handled independently here
-    //     because currentExUnitIsKg is read at collect-time (not at save-time)
 
     private void collectCurrentExercise() {
         if (currentCard == null || currentExIndex >= exercises.size()) return;
@@ -256,7 +233,6 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
         int             rowCount      = setsContainer.getChildCount();
         long            now           = System.currentTimeMillis();
 
-        // ⭐ Capture the unit for THIS exercise at collect-time
         boolean thisExIsKg = currentExUnitIsKg;
 
         for (int s = 0; s < rowCount; s++) {
@@ -274,25 +250,21 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
             try { weight = Float.parseFloat(wStr); } catch (NumberFormatException ignored) {}
             try { reps   = Integer.parseInt(rStr);  } catch (NumberFormatException ignored) {}
 
-            // ⭐ Convert lbs → kg if this exercise's unit was lbs
             if (!thisExIsKg) weight = weight * 0.453592f;
 
             GymPerformance perf       = new GymPerformance();
             perf.plannedExerciseId    = ex.id;
             perf.exerciseNameSnapshot = ex.exerciseName;
             perf.setNumber            = s + 1;
-            perf.weight               = weight;   // always stored in kg
+            perf.weight               = weight;
             perf.reps                 = reps;
             perf.date                 = now;
 
             pendingPerformances.add(perf);
         }
 
-        // Advance index after collecting
         currentExIndex++;
     }
-
-    // ─── Save ALL pending to database ─────────────────────────────────────
 
     private void saveAllPendingToDatabase() {
         if (pendingPerformances.isEmpty()) return;
@@ -304,8 +276,6 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
                 Toast.LENGTH_SHORT).show();
         pendingPerformances.clear();
     }
-
-    // ─── Rest timer ───────────────────────────────────────────────────────
 
     private void startRestThenShowNext() {
         exercisesContainer.setVisibility(View.GONE);
@@ -337,15 +307,11 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
                 }).start();
     }
 
-    // ─── Finish workout ───────────────────────────────────────────────────
-
     private void finishWorkout() {
         Toast.makeText(this, "Workout done! 🏆", Toast.LENGTH_LONG).show();
         setResult(RESULT_OK);
         finish();
     }
-
-    // ─── Cardio redirect ──────────────────────────────────────────────────
 
     private void openCardioActivity() {
         Intent intent = new Intent(this, CardioWorkoutActivity.class);

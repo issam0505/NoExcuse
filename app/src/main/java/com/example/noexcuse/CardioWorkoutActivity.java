@@ -9,7 +9,11 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.noexcuse.database.AppViewModel;
@@ -27,8 +31,16 @@ public class CardioWorkoutActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cardio_workout);
+
+        // Handle Status Bar / Insets
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
 
         viewModel = new ViewModelProvider(this).get(AppViewModel.class);
 
@@ -56,8 +68,6 @@ public class CardioWorkoutActivity extends AppCompatActivity {
         viewModel.getExercisesForPlan(planId).observe(this, this::buildCardioCards);
     }
 
-    // ─── Build one card per cardio exercise ──────────────────────────────────
-
     private void buildCardioCards(List<PlannedExercise> list) {
         if (list == null || list.isEmpty()) return;
         exercisesContainer.removeAllViews();
@@ -74,7 +84,6 @@ public class CardioWorkoutActivity extends AppCompatActivity {
             tvName.setText(ex.exerciseName != null ? ex.exerciseName : "—");
             tvDuration.setText(ex.durationMinutes > 0 ? ex.durationMinutes + " min" : "—");
 
-            // Tap card → toggle done
             card.setOnClickListener(v -> {
                 boolean isDone = tvCheck.getVisibility() == View.VISIBLE;
                 tvCheck.setVisibility(isDone ? View.GONE : View.VISIBLE);

@@ -2,6 +2,7 @@
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000000">
@@ -19,7 +20,7 @@
             android:layout_height="wrap_content"
             android:paddingStart="24dp"
             android:paddingEnd="24dp"
-            android:paddingTop="52dp"
+            android:paddingTop="16dp"
             android:paddingBottom="20dp">
 
             <FrameLayout
@@ -119,22 +120,19 @@
             android:gravity="center">
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnStartWorkout"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
+                android:layout_width="160dp"
+                android:layout_height="56dp"
                 android:layout_gravity="center"
-                android:text="&#9654;"
+                android:text="▶  START"
                 android:textColor="#FFFFFF"
-                android:textSize="28sp"
+                android:textSize="18sp"
                 app:backgroundTint="#22C55E"
-                app:cornerRadius="40dp"
-                app:strokeColor="#16A34A"
-                app:strokeWidth="2dp"/>
+                app:cornerRadius="28dp"/>
         </FrameLayout>
 
     </LinearLayout>
 
-    <!-- ═══════════════════════ WARM-UP OVERLAY
-         FrameLayout root = warmup (zad l'akhir) tayban fo9 tomatiquement -->
+    <!-- ═══════════════════════ WARM-UP OVERLAY -->
     <FrameLayout
         android:id="@+id/warmupOverlay"
         android:layout_width="match_parent"
@@ -142,14 +140,13 @@
         android:background="#000000"
         android:visibility="visible">
 
-        <!-- TOP BAR — position absolue fo9 -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="top"
             android:paddingStart="24dp"
             android:paddingEnd="24dp"
-            android:paddingTop="52dp"
+            android:paddingTop="16dp"
             android:paddingBottom="20dp">
 
             <FrameLayout
@@ -192,7 +189,6 @@
                 app:tint="#FFFFFF"/>
         </RelativeLayout>
 
-        <!-- WARMUP CONTENT — center f screen -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -250,9 +246,6 @@
                 app:cornerRadius="24dp"
                 app:strokeColor="#2A2A2A"
                 app:strokeWidth="1dp"/>
-
         </LinearLayout>
-
     </FrameLayout>
-
 </FrameLayout>
