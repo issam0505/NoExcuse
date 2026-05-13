@@ -15,7 +15,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase;
         GymPerformance.class,
         EducationTask.class,
         SleepSettings.class,
-}, version = 9)   // ← 8 → 9
+}, version = 10)   // ← 9 → 10
 public abstract class AppDatabase extends RoomDatabase {
 
     public abstract TaskDao      taskDao();
@@ -72,10 +72,17 @@ public abstract class AppDatabase extends RoomDatabase {
         }
     };
 
-    // 8→9 : zid date f gym_performance
+    // 8→9: add date column to gym_performance
     static final Migration MIGRATION_8_9 = new Migration(8, 9) {
         @Override public void migrate(@NonNull SupportSQLiteDatabase db) {
             db.execSQL("ALTER TABLE gym_performance ADD COLUMN date INTEGER NOT NULL DEFAULT 0");
+        }
+    };
+
+    // 9→10: add durationRecordedSeconds for cardio tracking
+    static final Migration MIGRATION_9_10 = new Migration(9, 10) {
+        @Override public void migrate(@NonNull SupportSQLiteDatabase db) {
+            db.execSQL("ALTER TABLE gym_performance ADD COLUMN durationRecordedSeconds INTEGER NOT NULL DEFAULT 0");
         }
     };
 
@@ -87,7 +94,12 @@ public abstract class AppDatabase extends RoomDatabase {
                                     context.getApplicationContext(),
                                     AppDatabase.class,
                                     "no_excuse_db")
-                            .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
+                            .addMigrations(
+                                    MIGRATION_5_6,
+                                    MIGRATION_6_7,
+                                    MIGRATION_7_8,
+                                    MIGRATION_8_9,
+                                    MIGRATION_9_10)
                             .build();
                 }
             }
