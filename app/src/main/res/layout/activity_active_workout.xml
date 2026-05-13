@@ -146,11 +146,9 @@
             android:paddingBottom="24dp"
             android:clipToPadding="false">
 
-            <!-- Rest Timer Overlay — covers content zone during rest -->
-            <!-- Elevation 5 bach ikon fo9 l-exercises -->
-            <FrameLayout
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="wrap_content">
 
                 <!-- Exercise cards injected here -->
                 <LinearLayout
@@ -159,67 +157,55 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical"/>
 
-            </FrameLayout>
+            </LinearLayout>
 
         </androidx.core.widget.NestedScrollView>
 
-        <!-- ── REST TIMER — byan during rest ─────────────────── -->
+        <!-- ── REST TIMER OVERLAY — modern circular, no skip button ──── -->
+        <!--
+            Visibility = gone par défaut.
+            Java katbyan/tkhibi had overlay.
+            CircularTimerView (custom view) katrasm l-cercle progressif.
+        -->
         <FrameLayout
             android:id="@+id/restTimerOverlay"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:background="#000000"
             android:visibility="gone"
             android:alpha="0"
             android:gravity="center"
-            android:layout_marginStart="24dp"
-            android:layout_marginEnd="24dp">
+            android:background="#000000">
 
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:orientation="vertical"
                 android:gravity="center">
 
+                <!-- Label "REST" -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="REST"
                     android:textColor="#4B5563"
-                    android:textSize="13sp"
-                    android:letterSpacing="0.25"
-                    android:layout_marginBottom="8dp"/>
+                    android:textSize="12sp"
+                    android:letterSpacing="0.3"
+                    android:layout_marginBottom="20dp"/>
 
-                <TextView
-                    android:id="@+id/tvRestCountdown"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="2:00"
-                    android:textColor="#FF6D00"
-                    android:textSize="72sp"
-                    android:textStyle="bold"
-                    android:fontFamily="monospace"
-                    android:layout_marginBottom="32dp"/>
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSkipRest"
-                    android:layout_width="160dp"
-                    android:layout_height="44dp"
-                    android:text="Skip Rest"
-                    android:textColor="#9CA3AF"
-                    android:textSize="14sp"
-                    app:backgroundTint="#1A1A1A"
-                    app:cornerRadius="22dp"
-                    app:strokeColor="#2A2A2A"
-                    app:strokeWidth="1dp"/>
+                <!-- CircularTimerView: cercle progressif + chiffres f lwst -->
+                <!-- Size: 220dp x 220dp — programmé f Java -->
+                <com.example.noexcuse.widget.CircularTimerView
+                    android:id="@+id/circularTimer"
+                    android:layout_width="220dp"
+                    android:layout_height="220dp"/>
 
             </LinearLayout>
 
         </FrameLayout>
 
-        <!-- ── ACTION BUTTON (Start / Save / Next / Finish) ─── -->
+        <!-- ── ACTION BUTTON (Start / Next / Save) ─── -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
