@@ -25,35 +25,43 @@ import java.util.List;
 
 public class ActiveWorkoutActivity extends AppCompatActivity {
 
-    // ─── Data ─────────────────────────────────────────────────────────────────
+    // ─── Data ─────────────────────────────────────────────────────────────
     private AppViewModel          viewModel;
     private int                   planId;
     private String                bodyPart;
     private List<PlannedExercise> exercises = new ArrayList<>();
 
-    // ─── Views ────────────────────────────────────────────────────────────────
+    // ─── Views ────────────────────────────────────────────────────────────
     private FrameLayout  warmupOverlay;
     private LinearLayout workoutContent;
     private LinearLayout exercisesContainer;
     private TextView     tvWorkoutBodyPart;
-
-    // Rest timer views (inside workoutContent)
-    private FrameLayout  restTimerOverlay;   // covers screen with crono
+    private FrameLayout  restTimerOverlay;
     private TextView     tvRestCountdown;
-    private CountDownTimer restCountdown;
-
-    // Action button (Start → Save → Next → Finish)
     private MaterialButton btnAction;
 
-    // ─── State ────────────────────────────────────────────────────────────────
-    private int     currentExIndex = 0;   // l-exercise li banayin daba
-    private boolean unitIsKg       = true;
-    private View    currentCard    = null; // l-card li bana daba
+    // ─── State ────────────────────────────────────────────────────────────
+    private CountDownTimer restCountdown;
 
-    private static final int REST_DURATION_MS = 2 * 60 * 1000; // 2 dqa2iq
+    // index dyal exercise li banayin daba (0 = luwla)
+    private int currentExIndex = 0;
+
+    // hadi hiya l-card li banayin (katsejel men b3d f Save)
+    private View currentCard = null;
+
+    private boolean unitIsKg = true;
+
+    // STATE MACHINE dyal btnAction:
+    // START  → user ma-dar-sh start bada
+    // NEXT   → user dar start, ikan ynavancer bين exercises
+    // SAVE   → user wesel l-exercise la5ra, ighdi isejel
+    private enum BtnState { START, NEXT, SAVE }
+    private BtnState btnState = BtnState.START;
+
+    private static final int REST_DURATION_MS = 2 * 60 * 1000; // 2 min
     private static final int REQ_CARDIO       = 300;
 
-    // ─────────────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,7 +74,7 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
         bodyPart = getIntent().getStringExtra("PLAN_BODY_PART");
         if (planId == -1) { finish(); return; }
 
-        // Views
+        // ── Bind views ───────────────────────────────────────────────────
         warmupOverlay      = findViewById(R.id.warmupOverlay);
         workoutContent     = findViewById(R.id.workoutContent);
         exercisesContainer = findViewById(R.id.exercisesWorkoutContainer);
@@ -77,33 +85,74 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
 
         tvWorkoutBodyPart.setText(bodyPart != null ? bodyPart : "Workout");
 
-        // ── Warm-up overlay ──────────────────────────────────────────────────
+        // ── Warm-up overlay ──────────────────────────────────────────────
         MaterialButton btnWarmupLetsGo = findViewById(R.id.btnWarmupLetsGo);
         MaterialButton btnWarmupSkip   = findViewById(R.id.btnWarmupSkip);
         btnWarmupLetsGo.setOnClickListener(v -> showWorkout());
         btnWarmupSkip.setOnClickListener(v   -> showWorkout());
 
-        // ── Back button ──────────────────────────────────────────────────────
+        // ── Back button ──────────────────────────────────────────────────
         FrameLayout btnBack = findViewById(R.id.btnBack);
         btnBack.setOnClickListener(v -> finish());
 
-        // ── Skip rest timer ──────────────────────────────────────────────────
+        // ── Skip rest ────────────────────────────────────────────────────
         MaterialButton btnSkipRest = findViewById(R.id.btnSkipRest);
         btnSkipRest.setOnClickListener(v -> skipRest());
 
-        // ── Action button (Start / Save / Next / Finish) ─────────────────────
-        // L-start: gha Start visible, exercices hidden
-        btnAction.setText("▶");
+        // ── Action button — START state (kbir, vert) ─────────────────────
+        applyStartStyle();
         btnAction.setOnClickListener(v -> onActionPressed());
 
-        // ── Load exercises from DB ───────────────────────────────────────────
+        // ── Load exercises ───────────────────────────────────────────────
         viewModel.getExercisesForPlan(planId).observe(this, list -> {
             if (list == null || list.isEmpty()) return;
             exercises = list;
         });
     }
 
-    // ─── Warm-up → workout transition ────────────────────────────────────────
+    // ─── Style helpers lil btn ───────────────────────────────────────────
+
+    private void applyStartStyle() {
+        btnState = BtnState.START;
+        btnAction.setText("▶  START");
+        btnAction.setTextSize(18f);
+        btnAction.getLayoutParams().width  = dpToPx(160);
+        btnAction.getLayoutParams().height = dpToPx(56);
+        btnAction.requestLayout();
+        btnAction.setBackgroundTintList(
+                android.content.res.ColorStateList.valueOf(
+                        android.graphics.Color.parseColor("#22C55E")));
+    }
+
+    private void applyNextStyle() {
+        btnState = BtnState.NEXT;
+        btnAction.setText("Next  →");
+        btnAction.setTextSize(16f);
+        btnAction.getLayoutParams().width  = dpToPx(160);
+        btnAction.getLayoutParams().height = dpToPx(52);
+        btnAction.requestLayout();
+        btnAction.setBackgroundTintList(
+                android.content.res.ColorStateList.valueOf(
+                        android.graphics.Color.parseColor("#1D4ED8")));
+    }
+
+    private void applySaveStyle() {
+        btnState = BtnState.SAVE;
+        btnAction.setText("💾  Save");
+        btnAction.setTextSize(16f);
+        btnAction.getLayoutParams().width  = dpToPx(160);
+        btnAction.getLayoutParams().height = dpToPx(52);
+        btnAction.requestLayout();
+        btnAction.setBackgroundTintList(
+                android.content.res.ColorStateList.valueOf(
+                        android.graphics.Color.parseColor("#FF6D00")));
+    }
+
+    private int dpToPx(int dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
+    }
+
+    // ─── Warm-up → workout transition ────────────────────────────────────
 
     private void showWorkout() {
         warmupOverlay.animate()
@@ -114,57 +163,70 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
                     workoutContent.setVisibility(View.VISIBLE);
                     workoutContent.setAlpha(0f);
                     workoutContent.animate().alpha(1f).setDuration(300).start();
-                    // Hna gha btnAction b Start, ma-ka-yban-sh ga3 shi card
+                    // btnAction bqa f START state — user ghaydir click bach ibda
                 })
                 .start();
     }
 
-    // ─── Action button pressed ────────────────────────────────────────────────
+    // ─── Action button pressed ────────────────────────────────────────────
 
     private void onActionPressed() {
-        String label = btnAction.getText().toString();
+        switch (btnState) {
 
-        if (label.equals("▶") || label.equals("Next →")) {
-            // Show l-exercise li jadiya (ou luwla)
-            showExerciseAt(currentExIndex);
+            case START:
+                // L-click luwla: byan exercise 0 u ibdal l btn l NEXT wla SAVE
+                showExerciseAt(0);
+                break;
 
-        } else if (label.equals("Save")) {
-            // Save + start rest timer
-            saveCurrentExercise();
-            currentExIndex++;
-            startRestTimer();
+            case NEXT:
+                // Navancer l-exercise li ba3dha (bla save)
+                currentExIndex++;
+                showExerciseAt(currentExIndex);
+                break;
+
+            case SAVE:
+                // L-exercise la5ra: sawi save u fermwork
+                saveCurrentExercise();
+                finishWorkout();
+                break;
         }
     }
 
-    // ─── Show exercise card at index ──────────────────────────────────────────
+    // ─── Show exercise card at index ──────────────────────────────────────
 
     private void showExerciseAt(int index) {
         if (index >= exercises.size()) {
-            // Kmlu exercises kolhom
             finishWorkout();
             return;
         }
 
         PlannedExercise ex = exercises.get(index);
 
-        // Cardio day
+        // Cardio → fout l CardioWorkoutActivity
         if (ex.isCardio) {
             openCardioActivity();
             return;
         }
 
+        // Byan l-card b animation
         exercisesContainer.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(this);
         View card = inflater.inflate(R.layout.item_workout_exercise, exercisesContainer, false);
         card.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
 
-        TextView     tvName        = card.findViewById(R.id.tvExerciseName);
-        LinearLayout setsContainer = card.findViewById(R.id.setsContainer);
-        MaterialButton btnUnit     = card.findViewById(R.id.btnUnitToggle);
+        TextView       tvName        = card.findViewById(R.id.tvExerciseName);
+        LinearLayout   setsContainer = card.findViewById(R.id.setsContainer);
+        MaterialButton btnUnit       = card.findViewById(R.id.btnUnitToggle);
 
         tvName.setText(ex.exerciseName != null ? ex.exerciseName : "—");
 
+        // Byan numero d'exercice: "Exercise 2 / 5"
+        tvName.setText((ex.exerciseName != null ? ex.exerciseName : "—")
+                + "\n"
+                + (index + 1) + " / " + exercises.size());
+
         unitIsKg = true;
+        btnUnit.setText("kg");
         btnUnit.setOnClickListener(v -> {
             unitIsKg = !unitIsKg;
             btnUnit.setText(unitIsKg ? "kg" : "lbs");
@@ -178,13 +240,17 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
         exercisesContainer.addView(card);
         currentCard = card;
 
-        // Update bouton: Save
-        btnAction.setText("Save");
-        btnAction.setBackgroundTintList(
-                android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#FF6D00")));
+        // ── Update btn state ──────────────────────────────────────────────
+        // Ila hada huwa l-exercise la5er → SAVE, sinon → NEXT
+        boolean isLast = (index == exercises.size() - 1);
+        if (isLast) {
+            applySaveStyle();
+        } else {
+            applyNextStyle();
+        }
     }
 
-    // ─── Add set row ──────────────────────────────────────────────────────────
+    // ─── Add set row ──────────────────────────────────────────────────────
 
     private void addSetRow(LinearLayout setsContainer, int setNumber) {
         View row = LayoutInflater.from(this)
@@ -194,18 +260,21 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
         setsContainer.addView(row);
     }
 
-    // ─── Save current exercise's sets ─────────────────────────────────────────
+    // ─── Save l-exercise la5ra ────────────────────────────────────────────
+    // MUHIM: gha kattsejel daba f Save (l-exercise la5ra) — machi kol exercise
 
     private void saveCurrentExercise() {
         if (currentCard == null || currentExIndex >= exercises.size()) return;
 
-        PlannedExercise ex         = exercises.get(currentExIndex);
+        PlannedExercise ex            = exercises.get(currentExIndex);
         LinearLayout    setsContainer = currentCard.findViewById(R.id.setsContainer);
-        int             rowCount   = setsContainer.getChildCount();
-        long            now        = System.currentTimeMillis();
+        int             rowCount      = setsContainer.getChildCount();
+        long            now           = System.currentTimeMillis();
+
+        int savedCount = 0;
 
         for (int s = 0; s < rowCount; s++) {
-            View             row      = setsContainer.getChildAt(s);
+            View              row      = setsContainer.getChildAt(s);
             TextInputEditText etWeight = row.findViewById(R.id.etWeight);
             TextInputEditText etReps   = row.findViewById(R.id.etReps);
 
@@ -219,37 +288,43 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
             try { weight = Float.parseFloat(wStr); } catch (NumberFormatException ignored) {}
             try { reps   = Integer.parseInt(rStr);  } catch (NumberFormatException ignored) {}
 
+            // Convert lbs → kg ila user khtar lbs
             if (!unitIsKg) weight = weight * 0.453592f;
 
-            GymPerformance perf         = new GymPerformance();
-            perf.plannedExerciseId      = ex.id;
-            perf.exerciseNameSnapshot   = ex.exerciseName;
-            perf.setNumber              = s + 1;
-            perf.weight                 = weight;
-            perf.reps                   = reps;
-            perf.date                   = now;   // ⭐ date dyal tsejil
+            GymPerformance perf       = new GymPerformance();
+            perf.plannedExerciseId    = ex.id;
+            perf.exerciseNameSnapshot = ex.exerciseName;
+            perf.setNumber            = s + 1;
+            perf.weight               = weight;
+            perf.reps                 = reps;
+            perf.date                 = now;
 
             viewModel.addPerformance(perf);
+            savedCount++;
         }
 
-        Toast.makeText(this, "Set saved 💪", Toast.LENGTH_SHORT).show();
+        if (savedCount > 0) {
+            Toast.makeText(this, "Performance saved 💪", Toast.LENGTH_SHORT).show();
+        }
     }
 
-    // ─── Rest timer (2 min) ───────────────────────────────────────────────────
+    // ─── Rest timer (2 min) ───────────────────────────────────────────────
+    // IMPORTANT: had l-fonction mabqatch tattsama automatiquement
+    // User ighdi ydir Next manually — rest kayn gha ila user bga ytsena
 
+    @SuppressWarnings("unused")
     private void startRestTimer() {
         restTimerOverlay.setVisibility(View.VISIBLE);
         restTimerOverlay.animate().alpha(1f).setDuration(300).start();
 
-        // Hide exercise card + action button during rest
         exercisesContainer.setVisibility(View.GONE);
         btnAction.setVisibility(View.GONE);
 
         restCountdown = new CountDownTimer(REST_DURATION_MS, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
-                long secs  = millisUntilFinished / 1000;
-                long mins  = secs / 60;
+                long secs   = millisUntilFinished / 1000;
+                long mins   = secs / 60;
                 long secRem = secs % 60;
                 tvRestCountdown.setText(
                         String.format(java.util.Locale.getDefault(), "%d:%02d", mins, secRem));
@@ -274,24 +349,22 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
             btnAction.setVisibility(View.VISIBLE);
 
             if (currentExIndex >= exercises.size()) {
-                // Mabqach shi exercise
                 finishWorkout();
             } else {
-                // Byan l-exercise li jadiya direct (bla ma ytsenna dabs)
                 showExerciseAt(currentExIndex);
             }
         }).start();
     }
 
-    // ─── Finish workout ───────────────────────────────────────────────────────
+    // ─── Finish workout ───────────────────────────────────────────────────
 
     private void finishWorkout() {
-        Toast.makeText(this, "Workout done! 🏆", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Workout done! 🏆", Toast.LENGTH_LONG).show();
         setResult(RESULT_OK);
         finish();
     }
 
-    // ─── Cardio redirect ──────────────────────────────────────────────────────
+    // ─── Cardio redirect ──────────────────────────────────────────────────
 
     private void openCardioActivity() {
         Intent intent = new Intent(this, CardioWorkoutActivity.class);

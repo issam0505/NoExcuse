@@ -17,6 +17,8 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -68,9 +70,14 @@ public class MainActivity extends AppCompatActivity {
 
     private List<DailyTask>     cachedDailyTasks = new ArrayList<>();
     private List<EducationTask> cachedEduTasks   = new ArrayList<>();
-    private List<GymPlan>       cachedGymPlans   = new ArrayList<>(); // ← zidna
+    private List<GymPlan>       cachedGymPlans   = new ArrayList<>();
 
     public final Set<String> verifiedIds = new HashSet<>();
+
+    // ─── Fix: gym observer fields ─────────────────────────────────────────
+    private String                   observedWeek  = null;
+    private Observer<List<GymPlan>>  gymObserver   = null;
+    private LiveData<List<GymPlan>>  gymLiveData   = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,13 +117,6 @@ public class MainActivity extends AppCompatActivity {
             refreshAdapter();
         });
 
-        // ★ GYM — observe plans dyal semana had semana
-        String currentWeek = WeekUtils.getCurrentWeekStart();
-        viewModel.getPlansForWeek(currentWeek).observe(this, plans -> {
-            cachedGymPlans = plans != null ? plans : new ArrayList<>();
-            refreshAdapter();
-        });
-
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
         tvDate.setText(sdf.format(new Date()));
 
@@ -134,14 +134,17 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(this, WeekPlanActivity.class));
         });
 
-        // ─── Restore persisted switch states ──────────────────────────────────
+        // ─── Restore persisted switch states — BEFORE listeners ───────────
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         isGymModeEnabled       = prefs.getBoolean(KEY_GYM, false);
         isEducationModeEnabled = prefs.getBoolean(KEY_EDU, false);
+
+        swGym.setOnCheckedChangeListener(null);
+        swEdu.setOnCheckedChangeListener(null);
         swGym.setChecked(isGymModeEnabled);
         swEdu.setChecked(isEducationModeEnabled);
 
-        // ─── Persist on every toggle + refresh list immediately ───────────────
+        // ─── Listeners — ba3d ma restore l states ─────────────────────────
         swGym.setOnCheckedChangeListener((btn, checked) -> {
             isGymModeEnabled = checked;
             getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
@@ -161,18 +164,29 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Auto-delete: hiyyed tasks u sessions li fat we9thom
-        // DailyTask  → titmsha ila fat minuit dyal nharha (startOfToday)
-        // EduSession → titmsha ila fat endTime dyalha (past now)
-        // LiveData katupdate lwahadha ba3d l delete — refreshAdapter katji automatic
         viewModel.deleteExpiredTasks();
+
+        String currentWeek = WeekUtils.getCurrentWeekStart();
+
+        // ─── FIX: remove observer l9dim dima u re-observe ─────────────────
+        // Haka kol mara nrj3u (men WeekPlanActivity wla ay activity)
+        // katjib les plans frach men DB — machi cached l9dim.
+        if (gymLiveData != null && gymObserver != null) {
+            gymLiveData.removeObserver(gymObserver);
+        }
+
+        observedWeek = currentWeek;
+
+        gymObserver = plans -> {
+            cachedGymPlans = plans != null ? plans : new ArrayList<>();
+            refreshAdapter();
+        };
+
+        gymLiveData = viewModel.getPlansForWeek(currentWeek);
+        gymLiveData.observe(this, gymObserver);
     }
 
     /**
-     * كنعرضوا كل tasks (pending + done) ديما — مكنمسحوهمش من الـ list.
-     * isDone=true  → green style (strikethrough + Done badge) + تتنزل لـ bottom
-     * isDone=false → pending style (purple/blue/orange accent) + فوق
-     *
      * ★ GYM — kangher gha plan dyal had nhar (dayOfWeek == today)
      *         machi mn DB delete, gha mkaynch f merged list
      */
@@ -180,13 +194,13 @@ public class MainActivity extends AppCompatActivity {
         List<TaskItem> merged = new ArrayList<>();
         verifiedIds.clear();
 
-        // ─── Daily tasks ───────────────────────────────────────────────
+        // ─── Daily tasks ───────────────────────────────────────────────────
         for (DailyTask t : cachedDailyTasks) {
             merged.add(new TaskItem(t));
             if (t.isDone) verifiedIds.add("DAILY_" + t.id);
         }
 
-        // ─── Education tasks (gha ila education mode ON) ───────────────
+        // ─── Education tasks (gha ila education mode ON) ───────────────────
         if (isEducationModeEnabled) {
             for (EducationTask e : cachedEduTasks) {
                 merged.add(new TaskItem(e));
@@ -194,7 +208,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        // ─── GYM — gha plan dyal had nhar + ila gym mode ON ───────────
+        // ─── GYM — gha plan dyal had nhar + ila gym mode ON ───────────────
         if (isGymModeEnabled) {
             String todayKey = WeekUtils.getTodayDayOfWeek();
             for (GymPlan plan : cachedGymPlans) {
@@ -207,7 +221,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        // pending فوق (sorted by time) — done تحت (sorted by time)
+        // pending faw9 (sorted by time) — done ta7t (sorted by time)
         Collections.sort(merged, (a, b) -> {
             boolean aDone = isDoneItem(a);
             boolean bDone = isDoneItem(b);
@@ -221,7 +235,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private boolean isDoneItem(TaskItem item) {
-        if (item.type == TaskItem.Type.GYM) return false; // gym mkaynsh done state daba
+        if (item.type == TaskItem.Type.GYM) return false;
         return item.type == TaskItem.Type.DAILY
                 ? item.dailyTask.isDone
                 : item.eduTask.isDone;
@@ -230,7 +244,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        // LiveData كتحدث لوحدها — refreshAdapter كتتسمى أوتوماتيك
+        // LiveData kathdath lwahdha — refreshAdapter kattsama automatiquement
     }
 
     private void openSmartAddMenu() {
@@ -309,6 +323,11 @@ public class MainActivity extends AppCompatActivity {
             edu.moduleName  = moduleName;
             edu.studyPlan   = studyPlan;
             edu.startTime   = calStart.getTimeInMillis();
+
+            // Fix: ila endTime <= startTime → session 3abrat minuit
+            if (calEnd.getTimeInMillis() <= calStart.getTimeInMillis()) {
+                calEnd.add(Calendar.DAY_OF_MONTH, 1);
+            }
             edu.endTime     = calEnd.getTimeInMillis();
             edu.isFocusMode = false;
             edu.isDone      = false;

@@ -15,6 +15,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.noexcuse.database.AppViewModel;
@@ -60,20 +61,14 @@ public class WeekPlanActivity extends AppCompatActivity {
     private AppViewModel viewModel;
     private String       currentWeekStart;
 
-    private final Map<String, GymPlan> workoutPlanMap = new HashMap<>();
-    private final Map<Integer, Integer> planExCountMap = new HashMap<>();
+    private final Map<String, GymPlan>  workoutPlanMap  = new HashMap<>();
+    private final Map<Integer, Integer> planExCountMap  = new HashMap<>();
+
+    // ─── FIX: cache exercise LiveData bach manzidouch observers f kol update ──
+    private final Map<Integer, LiveData<List<PlannedExercise>>> exerciseLiveDataMap = new HashMap<>();
 
     private boolean editModeActive = false;
 
-    // ─── Animation IDs — kol card b animation m5talfa ────────────────────
-    // index 0..6 = Mon..Sun
-    // 0 MONDAY    → card_flip_in      (flip from right)
-    // 1 TUESDAY   → card_zoom_spring  (bounce zoom)
-    // 2 WEDNESDAY → card_swing_in     (swing door)
-    // 3 THURSDAY  → card_flip_in      (flip)
-    // 4 FRIDAY    → card_zoom_spring  (zoom spring)
-    // 5 SATURDAY  → card_swing_in     (swing)
-    // 6 SUNDAY    → card_zoom_spring  (zoom spring — last card special)
     private static final int[] CARD_ANIM_RES = {
             R.anim.card_flip_in,
             R.anim.card_zoom_spring,
@@ -84,7 +79,6 @@ public class WeekPlanActivity extends AppCompatActivity {
             R.anim.card_zoom_spring
     };
 
-    // Stagger delay bين kol card w li bhdha (ms)
     private static final long CARD_STAGGER_DELAY_MS = 80;
 
     @Override
@@ -109,13 +103,7 @@ public class WeekPlanActivity extends AppCompatActivity {
         });
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // Room LiveData automatic — makhassnach ndir removeObservers+reobserve.
-        // L observer li setup f observePlans() ghadi ytsna l ay update mn DB automatic.
-        // (l bug l9dim kan: remove+reobserve kaydwez l cache l9dim bla update jdid)
-    }
+    // onResume — Room LiveData automatic, makhassnach ndir ay haja hna
 
     // ─────────────────────────────────────────────────────────────────────
     //  BIND
@@ -153,7 +141,7 @@ public class WeekPlanActivity extends AppCompatActivity {
     }
 
     // ─────────────────────────────────────────────────────────────────────
-    //  SETUP 7 CARDS + TRIGGER STAGGERED ANIMATIONS
+    //  SETUP 7 CARDS
     // ─────────────────────────────────────────────────────────────────────
 
     private void setupCardHolders() {
@@ -165,16 +153,13 @@ public class WeekPlanActivity extends AppCompatActivity {
 
         for (int i = 0; i < 7; i++) {
             MaterialCardView card = findViewById(cardResIds[i]);
-
-            // Start invisible — animation katjib lihom visibility
             card.setAlpha(0f);
 
             DayCardHolder holder = new DayCardHolder(card, DAYS[i], DAY_LABELS[i]);
             cardMap.put(DAYS[i], holder);
             holder.setRestDay();
 
-            // Schedule animation with stagger delay
-            final int index = i;
+            final int index   = i;
             final int animRes = CARD_ANIM_RES[i];
             card.postDelayed(() -> {
                 card.setAlpha(1f);
@@ -194,6 +179,8 @@ public class WeekPlanActivity extends AppCompatActivity {
 
             workoutPlanMap.clear();
             planExCountMap.clear();
+            // ─── FIX: clear exercise LiveData cache f kol plans update ────
+            exerciseLiveDataMap.clear();
 
             for (String day : DAYS) {
                 DayCardHolder h = cardMap.get(day);
@@ -220,7 +207,7 @@ public class WeekPlanActivity extends AppCompatActivity {
                 if (holder == null) continue;
 
                 if (isRest) {
-                    holder.setRestDay(plan); // n7fdo plan bash btnEditExercises itsnt3ml
+                    holder.setRestDay(plan);
                 } else {
                     holder.setWorkoutDay(plan);
                 }
@@ -230,13 +217,20 @@ public class WeekPlanActivity extends AppCompatActivity {
                 }
 
                 if (!isRest) {
-                    viewModel.getExercisesForPlan(plan.id).observe(this, exercises -> {
-                        if (exercises == null) return;
-                        holder.bindExercises(exercises);
-                        holder.setStats(exercises.size());
-                        planExCountMap.put(plan.id, exercises.size());
-                        refreshGlobalStats();
-                    });
+                    // ─── FIX: observe marra wahda gher — manzidouch observers ────
+                    if (!exerciseLiveDataMap.containsKey(plan.id)) {
+                        LiveData<List<PlannedExercise>> exLiveData =
+                                viewModel.getExercisesForPlan(plan.id);
+                        exerciseLiveDataMap.put(plan.id, exLiveData);
+
+                        exLiveData.observe(this, exercises -> {
+                            if (exercises == null) return;
+                            holder.bindExercises(exercises);
+                            holder.setStats(exercises.size());
+                            planExCountMap.put(plan.id, exercises.size());
+                            refreshGlobalStats();
+                        });
+                    }
                 }
             }
 
@@ -345,7 +339,6 @@ public class WeekPlanActivity extends AppCompatActivity {
 
             btnEditExercises.setOnClickListener(v -> {
                 if (currentPlan == null) {
-                    // Rest day bla plan f DB — nbdaw plan jdid (Rest Day) u nfet7ou edit
                     GymPlan restPlan = new GymPlan();
                     restPlan.dayOfWeek     = dayKey;
                     restPlan.weekStartDate = currentWeekStart;
@@ -378,21 +371,16 @@ public class WeekPlanActivity extends AppCompatActivity {
 
         void setRestDay() {
             isRestDay = true;
-            // currentPlan mabdlnach hna — kayban setRestDay(GymPlan) wla setRestDay()
-            // ila currentPlan null → rest day bla plan f DB (machi created ba3d)
-
             tvBodyPart.setText("Rest Day");
             tvBodyPart.setTextColor(0xFF6B7280);
             tvStartTime.setText("—");
             accentBar.setBackgroundColor(0xFF2A2A2A);
             card.setStrokeColor(0xFF2A2A2A);
-
             layoutExercises.setVisibility(View.GONE);
             rowStats.setVisibility(View.GONE);
             ivExpand.setVisibility(View.GONE);
         }
 
-        // Overload — ila rest day 3ndu plan f DB, n7fdou bash nfet7ou EditDayPlanActivity
         void setRestDay(GymPlan plan) {
             currentPlan = plan;
             setRestDay();
@@ -458,8 +446,6 @@ public class WeekPlanActivity extends AppCompatActivity {
                 return;
             }
             rowEditActions.setVisibility(View.VISIBLE);
-            // Rest Day: gher btnEditExercises (li kayfet7 EditDayPlanActivity bash ibddel l plan)
-            // machi btnEditTime (rest day ma3ndouch startTime)
             btnEditTime.setVisibility(isRestDay ? View.GONE : View.VISIBLE);
         }
 
