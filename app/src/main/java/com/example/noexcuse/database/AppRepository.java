@@ -43,10 +43,6 @@ public class AppRepository {
         executor.execute(() -> taskDao.deleteTask(task));
     }
 
-    /**
-     * Auto-delete daily tasks ila fat minuit dyal nhar li d5lo fiha.
-     * taskTime < startOfToday (00:00) → fat nharha, titmsha.
-     */
     public void deleteExpiredDailyTasks() {
         executor.execute(() -> {
             long startOfToday = WeekUtils.getStartOfToday();
@@ -54,10 +50,6 @@ public class AppRepository {
         });
     }
 
-    /**
-     * Auto-delete education sessions ila fat endTime dyalhom.
-     * endTime < now → fat we9t lend, titmsha.
-     */
     public void deleteExpiredEducationSessions() {
         executor.execute(() -> {
             long now = System.currentTimeMillis();
@@ -108,10 +100,6 @@ public class AppRepository {
         executor.execute(() -> gymDao.deletePlan(plan));
     }
 
-    /**
-     * Update bodyPart + startTime bssah — mabdelnach dayOfWeek.
-     * Safe 100% — makaynch unique constraint risk.
-     */
     public void updateGymPlanBodyAndTime(GymPlan plan) {
         executor.execute(() -> gymDao.updatePlanBodyAndTime(
                 plan.id,
@@ -119,10 +107,6 @@ public class AppRepository {
                 plan.startTime));
     }
 
-    /**
-     * Move plan l nhar jdid — delete + insert f nafs l executor thread.
-     * Kayhal unique constraint: delete l row l9dima, insert b nafs l id u dayOfWeek jdid.
-     */
     public void movePlanToDay(GymPlan plan) {
         executor.execute(() -> {
             gymDao.deletePlanById(plan.id);
@@ -130,10 +114,6 @@ public class AppRepository {
         });
     }
 
-    /**
-     * Swap dayOfWeek bين planA u planB — delete les 2, insert les 2 b days mqdouba.
-     * Zero unique constraint crash.
-     */
     public void swapPlans(GymPlan planA, GymPlan planB) {
         executor.execute(() -> {
             gymDao.deletePlanById(planA.id);
@@ -143,19 +123,14 @@ public class AppRepository {
         });
     }
 
-    // Kol plans (sans filtre semana)
     public LiveData<List<GymPlan>> getAllGymPlans() {
         return gymDao.getAllPlansLive();
     }
 
-    // Plans dyal semana m3ayyana — utilisé pour afficher la semaine courante
-    // weekStart = "2025-05-05" (lundi dyal had semana)
     public LiveData<List<GymPlan>> getPlansForWeek(String weekStart) {
         return gymDao.getPlansForWeekLive(weekStart);
     }
 
-    // Jib plan dyal nhar + semana (synchrone — lil background)
-    // day = "MONDAY", weekStart = "2025-05-05"
     public void getGymPlanForDayAndWeek(String day, String weekStart, OnPlanLoadedCallback callback) {
         executor.execute(() -> {
             GymPlan plan = gymDao.getPlanForDayAndWeek(day, weekStart);
@@ -190,14 +165,19 @@ public class AppRepository {
     //  GYM PERFORMANCE
     // ─────────────────────────────────────────────────────────────────────
 
-    // ⭐ Zid performance — MUHIM: dima set exerciseNameSnapshot 9bel ma tsift!
-    // GymPerformance perf = new GymPerformance();
-    // perf.exerciseNameSnapshot = exercise.exerciseName;  ← dima!
     public void insertPerformance(GymPerformance performance) {
         executor.execute(() -> gymDao.insertPerformance(performance));
     }
 
-
+    // ⭐ Jib kol performances dyal liste dyal exercise IDs — f background thread
+    // callback.onLoaded() kay3awwed f UI thread
+    public void getPerformancesForExercises(List<Integer> exerciseIds,
+                                            OnPerformanceLoadedCallback callback) {
+        executor.execute(() -> {
+            List<GymPerformance> perfs = gymDao.getPerformancesForExercises(exerciseIds);
+            if (callback != null) callback.onLoaded(perfs);
+        });
+    }
 
     // ─────────────────────────────────────────────────────────────────────
     //  CALLBACKS

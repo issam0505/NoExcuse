@@ -68,6 +68,9 @@
         <activity
             android:name=".CardioWorkoutActivity"
             android:exported="false" />
+        <activity
+            android:name=".WorkoutHistoryActivity"
+            android:exported="false" />
 
     </application>
 

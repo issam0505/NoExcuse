@@ -35,6 +35,7 @@ public class GymDetailActivity extends AppCompatActivity {
         tvStatus                    = findViewById(R.id.tvStatus);
         TextView       tvExCount    = findViewById(R.id.tvExCount);
         MaterialButton btnLetsGo    = findViewById(R.id.btnLetsGo);
+        MaterialButton btnHistory   = findViewById(R.id.btnHistory);   // ⭐ boutton jdid
         DrawerLayout   drawerLayout = findViewById(R.id.drawer_layout);
         ImageView      btnMenu      = findViewById(R.id.btnMenu);
         MaterialButton btnEditPlan  = findViewById(R.id.btnEditPlan);
@@ -60,7 +61,7 @@ public class GymDetailActivity extends AppCompatActivity {
             tvExCount.setText(count + " exercise" + (count > 1 ? "s" : ""));
         });
 
-        // Let's Go — IBQA F GymDetail, matrja3ch l main
+        // ── Let's Go ──────────────────────────────────────────────────────
         btnLetsGo.setOnClickListener(v -> {
             Intent intent = new Intent(this, ActiveWorkoutActivity.class);
             intent.putExtra("PLAN_ID",        planId);
@@ -68,6 +69,15 @@ public class GymDetailActivity extends AppCompatActivity {
             startActivityForResult(intent, REQ_WORKOUT);
         });
 
+        // ── View History ──────────────────────────────────────────────────
+        btnHistory.setOnClickListener(v -> {
+            Intent intent = new Intent(this, WorkoutHistoryActivity.class);
+            intent.putExtra("PLAN_ID",        planId);
+            intent.putExtra("PLAN_BODY_PART", bodyPart);
+            startActivity(intent);
+        });
+
+        // ── Drawer buttons ────────────────────────────────────────────────
         btnEditPlan.setOnClickListener(v -> {
             drawerLayout.closeDrawer(GravityCompat.END);
             getSharedPreferences("gym_prefs", MODE_PRIVATE)
@@ -86,7 +96,6 @@ public class GymDetailActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQ_WORKOUT && resultCode == RESULT_OK) {
-            // Workout kml — ibqa hna f GymDetail, update status gha
             tvStatus.setText("Done ✓");
             tvStatus.setTextColor(Color.parseColor("#4CAF50"));
             tvStatus.setBackgroundResource(R.drawable.bg_status_done);

@@ -78,5 +78,8 @@ public interface GymDao {
 
     @Insert
     void insertPerformance(GymPerformance performance);
-
+    // ⭐ Jib kol performances dyal liste dyal exercise IDs
+    // utilisé f WorkoutHistoryActivity bach t9ra l history dyal plan
+    @Query("SELECT * FROM gym_performance WHERE plannedExerciseId IN (:exerciseIds) ORDER BY date DESC")
+    List<GymPerformance> getPerformancesForExercises(List<Integer> exerciseIds);
 }
