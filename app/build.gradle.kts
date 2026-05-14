@@ -52,4 +52,5 @@ dependencies {
     // Room
     implementation(libs.androidx.room.runtime)
     annotationProcessor(libs.androidx.room.compiler)
+    implementation("androidx.work:work-runtime:2.9.0")
 }

@@ -1,0 +1,32 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Left outer weight plate -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M2,10h2v4H2z"/>
+
+    <!-- Left inner collar -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M4,9h2v6H4z"/>
+
+    <!-- Bar (center) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M6,11h12v2H6z"/>
+
+    <!-- Right inner collar -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M18,9h2v6h-2z"/>
+
+    <!-- Right outer weight plate -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M20,10h2v4h-2z"/>
+
+</vector>

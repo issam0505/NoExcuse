@@ -1,9 +1,12 @@
 package com.example.noexcuse;
 
+import android.Manifest;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.animation.AnimationUtils;
@@ -14,7 +17,10 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.lifecycle.LiveData;
@@ -28,6 +34,8 @@ import com.example.noexcuse.database.DailyTask;
 import com.example.noexcuse.database.EducationTask;
 import com.example.noexcuse.database.GymPlan;
 import com.example.noexcuse.database.WeekUtils;
+import com.example.noexcuse.utils.NotificationHelper;
+import com.example.noexcuse.utils.NotifScheduler;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
@@ -52,6 +60,10 @@ public class MainActivity extends AppCompatActivity {
     private static final String PREFS_NAME = "noexcuse_prefs";
     private static final String KEY_GYM    = "gym_mode_enabled";
     private static final String KEY_EDU    = "edu_mode_enabled";
+    private static final String KEY_NOTIF_ASKED = "notif_permission_asked";
+
+    // ─── Notification permission launcher (Android 13+) ───────────────────
+    private ActivityResultLauncher<String> notifPermissionLauncher;
 
     private FloatingActionButton fabAdd;
     private RecyclerView         recyclerView;
@@ -83,6 +95,24 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // ─── Create notification channels (required before any notif) ──────
+        NotificationHelper.createChannels(this);
+
+        // ─── Register notification permission launcher ─────────────────────
+        notifPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(),
+                isGranted -> {
+                    // Save that we already asked — ma nsewloch mra taniya
+                    getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                            .edit().putBoolean(KEY_NOTIF_ASKED, true).apply();
+                    if (isGranted) {
+                        Toast.makeText(this, "Notifications enabled ✅", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(this, "Notifications disabled ❌", Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
 
         drawerLayout = findViewById(R.id.drawer_layout);
         btnMenu      = findViewById(R.id.btnMenu);
@@ -159,6 +189,9 @@ public class MainActivity extends AppCompatActivity {
         });
 
         fabAdd.setOnClickListener(v -> openSmartAddMenu());
+
+        // ─── Awel mera user idkhel → tsewlo autorisation notification ─────
+        askNotificationPermissionIfNeeded();
     }
 
     @Override
@@ -215,6 +248,20 @@ public class MainActivity extends AppCompatActivity {
                 if (todayKey.equals(plan.dayOfWeek)) {
                     if (plan.bodyPart != null && !plan.bodyPart.equals("Rest Day")) {
                         merged.add(new TaskItem(plan));
+
+                        // ─── Schedule GYM notification (parse "HH:mm" → millis) ──
+                        if (plan.startTime != null && !plan.startTime.isEmpty()) {
+                            try {
+                                String[] parts = plan.startTime.split(":");
+                                Calendar gymCal = Calendar.getInstance();
+                                gymCal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(parts[0]));
+                                gymCal.set(Calendar.MINUTE,      Integer.parseInt(parts[1]));
+                                gymCal.set(Calendar.SECOND, 0);
+                                long gymMillis = gymCal.getTimeInMillis();
+                                NotifScheduler.schedule(this, "GYM", plan.id, plan.bodyPart,
+                                        gymMillis, plan.startTime);
+                            } catch (Exception ignored) { /* bad format → skip */ }
+                        }
                     }
                     break;
                 }
@@ -245,6 +292,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         // LiveData kathdath lwahdha — refreshAdapter kattsama automatiquement
+        // ⚠️ Reminder: f delete task → NotifScheduler.cancel(ctx, "TASK", task.id)
+        //               f delete edu  → NotifScheduler.cancel(ctx, "EDU",  edu.id)
+        //               f delete gym  → NotifScheduler.cancel(ctx, "GYM",  plan.id)
     }
 
     private void openSmartAddMenu() {
@@ -333,6 +383,11 @@ public class MainActivity extends AppCompatActivity {
             edu.isDone      = false;
             viewModel.addEducation(edu);
 
+            // ─── Schedule notifications: -1h + on-time ────────────────────
+            SimpleDateFormat sdfE = new SimpleDateFormat("HH:mm", Locale.getDefault());
+            NotifScheduler.schedule(this, "EDU", edu.id, edu.moduleName,
+                    edu.startTime, sdfE.format(new Date(edu.startTime)));
+
             Toast.makeText(this, "Study Session Saved! 📘", Toast.LENGTH_SHORT).show();
             sheet.dismiss();
         });
@@ -379,11 +434,36 @@ public class MainActivity extends AppCompatActivity {
             task.isDone      = false;
             viewModel.addTask(task);
 
+            // ─── Schedule notifications: -1h + on-time ────────────────────
+            SimpleDateFormat sdfT = new SimpleDateFormat("HH:mm", Locale.getDefault());
+            NotifScheduler.schedule(this, "TASK", task.id, task.title,
+                    task.taskTime, sdfT.format(new Date(task.taskTime)));
+
             Toast.makeText(this, "Task Added! 🔥", Toast.LENGTH_SHORT).show();
             sheet.dismiss();
         });
 
         sheet.show();
+    }
+
+    // ─── Notification permission — gha Android 13+ u awel mera ──────────
+    private void askNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return; // Android < 13 machi khasso
+
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        boolean alreadyAsked = prefs.getBoolean(KEY_NOTIF_ASKED, false);
+        if (alreadyAsked) return; // Sbelna tselna 3liha
+
+        boolean alreadyGranted = ContextCompat.checkSelfPermission(
+                this, Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED;
+
+        if (!alreadyGranted) {
+            notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+        } else {
+            // Permission kayna already — save bash ma nsewloch mra taniya
+            prefs.edit().putBoolean(KEY_NOTIF_ASKED, true).apply();
+        }
     }
 
     private void styleBottomSheet(BottomSheetDialog sheet, View view) {
