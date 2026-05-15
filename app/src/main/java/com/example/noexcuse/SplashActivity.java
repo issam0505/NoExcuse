@@ -12,32 +12,38 @@ import java.util.Locale;
 public class SplashActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // 1. طبق اللغة قبل ما يبان حتى شي حاجة
-        SharedPreferences langPrefs = getSharedPreferences("MyApp", MODE_PRIVATE);
-        String lang = langPrefs.getString("lang", "en"); // "en"// هي الديفولت
+
+        SharedPreferences langPrefs    = getSharedPreferences("MyApp", MODE_PRIVATE);
         SharedPreferences welcomePrefs = getSharedPreferences("welcomPrefs", MODE_PRIVATE);
-        setLocale(lang);
+
+        // ✅ اقرا lang بـ null كـ default — باش نعرفو واش المستخدم خيار لغة ولا لا
+        String savedLang = langPrefs.getString("lang", null);
+
+        // طبق اللغة — ولو null كنستعملو "en" كـ fallback فغير setLocale
+        setLocale(savedLang != null ? savedLang : "en");
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
-        // 2. التوجيه (Routing)
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
 
-            SharedPreferences userPrefs = getSharedPreferences("UserPrefs", MODE_PRIVATE);
-            String uid = userPrefs.getString("uid", null);
+            SharedPreferences userPrefs  = getSharedPreferences("UserPrefs", MODE_PRIVATE);
+            String uid          = userPrefs.getString("uid", null);
             boolean welcomeShown = welcomePrefs.getBoolean("shown", false);
+
             Intent intent;
 
-            if (langPrefs.getString("lang", null) == null) {
+            if (savedLang == null) {
+                // 1️⃣ مخيارش لغة بعد → LanguageActivity
                 intent = new Intent(SplashActivity.this, LanguageActivity.class);
             } else if (uid == null) {
+                // 2️⃣ مسجلش → RegisterActivity
                 intent = new Intent(SplashActivity.this, RegisterActivity.class);
-            }
-            else if (!welcomeShown) {
-                // يلا مازال ماشافش الترحيب، صيفطو لـ WelcomeActivity
+            } else if (!welcomeShown) {
+                // 3️⃣ مازال ماشافش Welcome → WelcomeActivity
                 intent = new Intent(SplashActivity.this, WelcomeActivity.class);
-            }else {
+            } else {
+                // 4️⃣ كل شي تمام → MainActivity
                 intent = new Intent(SplashActivity.this, MainActivity.class);
             }
 
@@ -46,6 +52,7 @@ public class SplashActivity extends AppCompatActivity {
 
         }, 2000);
     }
+
     private void setLocale(String lang) {
         Locale locale = new Locale(lang);
         Locale.setDefault(locale);

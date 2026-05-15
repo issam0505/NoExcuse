@@ -30,12 +30,12 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="20dp" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSaveAlarm"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Save Alarm"
-        android:backgroundTint="@color/accent_green"
+        app:backgroundTint="@color/accent_green"
         android:textColor="@color/white"
         app:layout_constraintBottom_toBottomOf="parent"
         android:layout_marginBottom="20dp"/>

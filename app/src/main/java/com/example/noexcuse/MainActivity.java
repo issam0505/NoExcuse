@@ -62,14 +62,13 @@ public class MainActivity extends AppCompatActivity {
     private static final String KEY_EDU    = "edu_mode_enabled";
     private static final String KEY_NOTIF_ASKED = "notif_permission_asked";
 
-    // ─── Notification permission launcher (Android 13+) ───────────────────
     private ActivityResultLauncher<String> notifPermissionLauncher;
 
     private FloatingActionButton fabAdd;
     private RecyclerView         recyclerView;
     private TextView             tvDate, tvMotivation;
     private DrawerLayout         drawerLayout;
-    private ImageView            btnMenu;
+    private ImageView            btnMenu, iconClock;
     private Button               btnDash, btnSettings, btnAI;
     private com.google.android.material.button.MaterialButton btnPlanGym;
     private Switch               swGym, swEdu;
@@ -86,7 +85,6 @@ public class MainActivity extends AppCompatActivity {
 
     public final Set<String> verifiedIds = new HashSet<>();
 
-    // ─── Fix: gym observer fields ─────────────────────────────────────────
     private String                   observedWeek  = null;
     private Observer<List<GymPlan>>  gymObserver   = null;
     private LiveData<List<GymPlan>>  gymLiveData   = null;
@@ -96,14 +94,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // ─── Create notification channels (required before any notif) ──────
         NotificationHelper.createChannels(this);
 
-        // ─── Register notification permission launcher ─────────────────────
         notifPermissionLauncher = registerForActivityResult(
                 new ActivityResultContracts.RequestPermission(),
                 isGranted -> {
-                    // Save that we already asked — ma nsewloch mra taniya
                     getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
                             .edit().putBoolean(KEY_NOTIF_ASKED, true).apply();
                     if (isGranted) {
@@ -116,6 +111,7 @@ public class MainActivity extends AppCompatActivity {
 
         drawerLayout = findViewById(R.id.drawer_layout);
         btnMenu      = findViewById(R.id.btnMenu);
+        iconClock    = findViewById(R.id.iconClock);
         fabAdd       = findViewById(R.id.fabAdd);
         recyclerView = findViewById(R.id.recyclerView);
         tvDate       = findViewById(R.id.tvDate);
@@ -156,6 +152,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         btnMenu.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.END));
+        
+        // ─── Launch AlarmActivity from iconClock ──────────────────────────
+        iconClock.setOnClickListener(v -> {
+            startActivity(new Intent(this, AlarmActivity.class));
+        });
+
         btnDash.setOnClickListener(v -> drawerLayout.closeDrawer(GravityCompat.END));
         btnSettings.setOnClickListener(v -> drawerLayout.closeDrawer(GravityCompat.END));
         btnAI.setOnClickListener(v -> drawerLayout.closeDrawer(GravityCompat.END));
@@ -164,7 +166,6 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(this, WeekPlanActivity.class));
         });
 
-        // ─── Restore persisted switch states — BEFORE listeners ───────────
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         isGymModeEnabled       = prefs.getBoolean(KEY_GYM, false);
         isEducationModeEnabled = prefs.getBoolean(KEY_EDU, false);
@@ -174,7 +175,6 @@ public class MainActivity extends AppCompatActivity {
         swGym.setChecked(isGymModeEnabled);
         swEdu.setChecked(isEducationModeEnabled);
 
-        // ─── Listeners — ba3d ma restore l states ─────────────────────────
         swGym.setOnCheckedChangeListener((btn, checked) -> {
             isGymModeEnabled = checked;
             getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
@@ -190,7 +190,6 @@ public class MainActivity extends AppCompatActivity {
 
         fabAdd.setOnClickListener(v -> openSmartAddMenu());
 
-        // ─── Awel mera user idkhel → tsewlo autorisation notification ─────
         askNotificationPermissionIfNeeded();
     }
 
@@ -201,9 +200,6 @@ public class MainActivity extends AppCompatActivity {
 
         String currentWeek = WeekUtils.getCurrentWeekStart();
 
-        // ─── FIX: remove observer l9dim dima u re-observe ─────────────────
-        // Haka kol mara nrj3u (men WeekPlanActivity wla ay activity)
-        // katjib les plans frach men DB — machi cached l9dim.
         if (gymLiveData != null && gymObserver != null) {
             gymLiveData.removeObserver(gymObserver);
         }
@@ -219,21 +215,15 @@ public class MainActivity extends AppCompatActivity {
         gymLiveData.observe(this, gymObserver);
     }
 
-    /**
-     * ★ GYM — kangher gha plan dyal had nhar (dayOfWeek == today)
-     *         machi mn DB delete, gha mkaynch f merged list
-     */
     private void refreshAdapter() {
         List<TaskItem> merged = new ArrayList<>();
         verifiedIds.clear();
 
-        // ─── Daily tasks ───────────────────────────────────────────────────
         for (DailyTask t : cachedDailyTasks) {
             merged.add(new TaskItem(t));
             if (t.isDone) verifiedIds.add("DAILY_" + t.id);
         }
 
-        // ─── Education tasks (gha ila education mode ON) ───────────────────
         if (isEducationModeEnabled) {
             for (EducationTask e : cachedEduTasks) {
                 merged.add(new TaskItem(e));
@@ -241,7 +231,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        // ─── GYM — gha plan dyal had nhar + ila gym mode ON ───────────────
         if (isGymModeEnabled) {
             String todayKey = WeekUtils.getTodayDayOfWeek();
             for (GymPlan plan : cachedGymPlans) {
@@ -249,7 +238,6 @@ public class MainActivity extends AppCompatActivity {
                     if (plan.bodyPart != null && !plan.bodyPart.equals("Rest Day")) {
                         merged.add(new TaskItem(plan));
 
-                        // ─── Schedule GYM notification (parse "HH:mm" → millis) ──
                         if (plan.startTime != null && !plan.startTime.isEmpty()) {
                             try {
                                 String[] parts = plan.startTime.split(":");
@@ -260,7 +248,7 @@ public class MainActivity extends AppCompatActivity {
                                 long gymMillis = gymCal.getTimeInMillis();
                                 NotifScheduler.schedule(this, "GYM", plan.id, plan.bodyPart,
                                         gymMillis, plan.startTime);
-                            } catch (Exception ignored) { /* bad format → skip */ }
+                            } catch (Exception ignored) { }
                         }
                     }
                     break;
@@ -268,7 +256,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        // pending faw9 (sorted by time) — done ta7t (sorted by time)
         Collections.sort(merged, (a, b) -> {
             boolean aDone = isDoneItem(a);
             boolean bDone = isDoneItem(b);
@@ -291,10 +278,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        // LiveData kathdath lwahdha — refreshAdapter kattsama automatiquement
-        // ⚠️ Reminder: f delete task → NotifScheduler.cancel(ctx, "TASK", task.id)
-        //               f delete edu  → NotifScheduler.cancel(ctx, "EDU",  edu.id)
-        //               f delete gym  → NotifScheduler.cancel(ctx, "GYM",  plan.id)
     }
 
     private void openSmartAddMenu() {
@@ -374,7 +357,6 @@ public class MainActivity extends AppCompatActivity {
             edu.studyPlan   = studyPlan;
             edu.startTime   = calStart.getTimeInMillis();
 
-            // Fix: ila endTime <= startTime → session 3abrat minuit
             if (calEnd.getTimeInMillis() <= calStart.getTimeInMillis()) {
                 calEnd.add(Calendar.DAY_OF_MONTH, 1);
             }
@@ -383,7 +365,6 @@ public class MainActivity extends AppCompatActivity {
             edu.isDone      = false;
             viewModel.addEducation(edu);
 
-            // ─── Schedule notifications: -1h + on-time ────────────────────
             SimpleDateFormat sdfE = new SimpleDateFormat("HH:mm", Locale.getDefault());
             NotifScheduler.schedule(this, "EDU", edu.id, edu.moduleName,
                     edu.startTime, sdfE.format(new Date(edu.startTime)));
@@ -434,7 +415,6 @@ public class MainActivity extends AppCompatActivity {
             task.isDone      = false;
             viewModel.addTask(task);
 
-            // ─── Schedule notifications: -1h + on-time ────────────────────
             SimpleDateFormat sdfT = new SimpleDateFormat("HH:mm", Locale.getDefault());
             NotifScheduler.schedule(this, "TASK", task.id, task.title,
                     task.taskTime, sdfT.format(new Date(task.taskTime)));
@@ -446,13 +426,12 @@ public class MainActivity extends AppCompatActivity {
         sheet.show();
     }
 
-    // ─── Notification permission — gha Android 13+ u awel mera ──────────
     private void askNotificationPermissionIfNeeded() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return; // Android < 13 machi khasso
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return;
 
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         boolean alreadyAsked = prefs.getBoolean(KEY_NOTIF_ASKED, false);
-        if (alreadyAsked) return; // Sbelna tselna 3liha
+        if (alreadyAsked) return;
 
         boolean alreadyGranted = ContextCompat.checkSelfPermission(
                 this, Manifest.permission.POST_NOTIFICATIONS
@@ -461,7 +440,6 @@ public class MainActivity extends AppCompatActivity {
         if (!alreadyGranted) {
             notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
         } else {
-            // Permission kayna already — save bash ma nsewloch mra taniya
             prefs.edit().putBoolean(KEY_NOTIF_ASKED, true).apply();
         }
     }
