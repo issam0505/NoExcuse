@@ -1,6 +1,7 @@
 package com.example.noexcuse;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.widget.Toast;
@@ -17,23 +18,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/**
- * QrScanActivity
- * ──────────────────────────────────────────────────────────────────
- * Opens the camera and scans for the special app QR code.
- * If the correct QR is found → finish (alarm dismissed ✅).
- * If camera permission is denied → go back to MainActivity.
- *
- * The QR payload must match: "NOEXCUSE_AWAKE_QR_v1"
- * (This is what the app generates when showing the QR sticker setup screen)
- *
- * Uses CameraX + ML Kit Barcode Scanning.
- * Add these to build.gradle:
- *   implementation "androidx.camera:camera-camera2:1.3.1"
- *   implementation "androidx.camera:camera-lifecycle:1.3.1"
- *   implementation "androidx.camera:camera-view:1.3.1"
- *   implementation "com.google.mlkit:barcode-scanning:17.2.0"
- */
 public class QrScanActivity extends AppCompatActivity {
 
     public static final String QR_PAYLOAD       = "NOEXCUSE_AWAKE_QR_v1";
@@ -61,13 +45,10 @@ public class QrScanActivity extends AppCompatActivity {
     }
 
     private void startCamera() {
-        ListenableFuture<ProcessCameraProvider> future =
-                ProcessCameraProvider.getInstance(this);
-
+        ListenableFuture<ProcessCameraProvider> future = ProcessCameraProvider.getInstance(this);
         future.addListener(() -> {
             try {
                 ProcessCameraProvider provider = future.get();
-
                 Preview preview = new Preview.Builder().build();
                 preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
@@ -76,8 +57,6 @@ public class QrScanActivity extends AppCompatActivity {
                         .build();
 
                 imageAnalysis.setAnalyzer(cameraExecutor, imageProxy -> {
-                    // ML Kit barcode scanning
-                    @SuppressWarnings("UnnecessaryLocalVariable")
                     android.media.Image mediaImage = imageProxy.getImage();
                     if (mediaImage != null && !dismissed) {
                         com.google.mlkit.vision.common.InputImage inputImage =
@@ -89,8 +68,7 @@ public class QrScanActivity extends AppCompatActivity {
                                 .process(inputImage)
                                 .addOnSuccessListener(barcodes -> {
                                     for (com.google.mlkit.vision.barcode.common.Barcode barcode : barcodes) {
-                                        String value = barcode.getRawValue();
-                                        if (QR_PAYLOAD.equals(value)) {
+                                        if (QR_PAYLOAD.equals(barcode.getRawValue())) {
                                             onQrSuccess();
                                         }
                                     }
@@ -102,13 +80,8 @@ public class QrScanActivity extends AppCompatActivity {
                 });
 
                 provider.unbindAll();
-                provider.bindToLifecycle(this,
-                        CameraSelector.DEFAULT_BACK_CAMERA,
-                        preview, imageAnalysis);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+                provider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview, imageAnalysis);
+            } catch (Exception e) { e.printStackTrace(); }
         }, ContextCompat.getMainExecutor(this));
     }
 
@@ -116,32 +89,26 @@ public class QrScanActivity extends AppCompatActivity {
         if (dismissed) return;
         dismissed = true;
         runOnUiThread(() -> {
-            Toast.makeText(this, "✅ QR verified — Good morning!", Toast.LENGTH_SHORT).show();
-            // Stop alarm confirmation loop — user is truly awake
-            sendBroadcast(new android.content.Intent(this, AlarmConfirmReceiver.class)
+            Toast.makeText(this, "✅ QR verified — Sound stopped!", Toast.LENGTH_SHORT).show();
+            
+            // ✅ المشكلة 3: إيقاف المنبه (الصوت) هنا فقط بعد نجاح المسح
+            stopService(new Intent(this, AlarmService.class));
+            
+            // إبلاغ مستقبل التأكيد بأن المستخدم استيقظ فعلاً
+            sendBroadcast(new Intent(this, AlarmConfirmReceiver.class)
                     .setAction(AlarmConfirmReceiver.ACTION_YES));
+            
             finish();
         });
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == CAMERA_REQ_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                startCamera();
-            } else {
-                Toast.makeText(this,
-                        "Camera permission needed to scan QR. Going back to main screen.",
-                        Toast.LENGTH_LONG).show();
-                // Go to MainActivity (which will re-ask permission next alarm interaction)
-                android.content.Intent intent = new android.content.Intent(this, MainActivity.class);
-                intent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(intent);
-                finish();
-            }
+        if (requestCode == CAMERA_REQ_CODE && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            startCamera();
+        } else {
+            finish();
         }
     }
 

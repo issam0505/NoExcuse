@@ -10,6 +10,15 @@
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Permissions for Foreground Service -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+
+    <!-- Permission to allow drawing over other apps -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <uses-feature
         android:name="android.hardware.camera"
@@ -26,13 +35,19 @@
         android:theme="@style/Theme.NoExcuse"
         android:usesCleartextTraffic="true">
 
+        <service
+            android:name=".AlarmService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
+
         <receiver
             android:name=".utils.NotifReceiver"
-            android:exported="false" />
+            android:exported="true" />
 
         <receiver
             android:name=".WakeUpAlarmReceiver"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="com.example.noexcuse.ACTION_WAKE_ALARM" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -41,7 +56,13 @@
 
         <receiver
             android:name=".AlarmConfirmReceiver"
-            android:exported="false" />
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.example.noexcuse.ACTION_CONFIRM_AWAKE" />
+                <action android:name="com.example.noexcuse.ACTION_YES_AWAKE" />
+                <action android:name="com.example.noexcuse.ACTION_QR_ALARM" />
+            </intent-filter>
+        </receiver>
 
         <activity
             android:name=".SplashActivity"
@@ -52,30 +73,14 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".LanguageActivity"
-            android:exported="false" />
+        <activity android:name=".LanguageActivity"   android:exported="false" />
+        <activity android:name=".RegisterActivity"   android:exported="false" />
+        <activity android:name=".LoginActivity"      android:exported="false" />
+        <activity android:name=".MainActivity"       android:exported="false" />
+        <activity android:name=".WelcomeActivity"    android:exported="false" />
+        <activity android:name=".AlarmActivity"      android:exported="false" />
 
-        <activity
-            android:name=".RegisterActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".LoginActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".MainActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".WelcomeActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".AlarmActivity"
-            android:exported="false" />
-
+        <!-- ✅ تم التحديث: إضافة configChanges و windowSoftInputMode لضمان استقرار الشاشة -->
         <activity
             android:name=".WakeUpAlarmActivity"
             android:exported="false"
@@ -83,47 +88,20 @@
             android:showOnLockScreen="true"
             android:showWhenLocked="true"
             android:turnScreenOn="true"
+            android:excludeFromRecents="true"
+            android:configChanges="orientation|screenSize|keyboardHidden"
             tools:targetApi="o_mr1" />
 
-        <activity
-            android:name=".QrScanActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".TaskDetailActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".EducationDetailActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".GymSetupActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".GymDetailActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".WeekPlanActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".EditDayPlanActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".ActiveWorkoutActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".CardioWorkoutActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".WorkoutHistoryActivity"
-            android:exported="false" />
+        <activity android:name=".QrScanActivity"          android:exported="false" />
+        <activity android:name=".TaskDetailActivity"       android:exported="false" />
+        <activity android:name=".EducationDetailActivity"  android:exported="false" />
+        <activity android:name=".GymSetupActivity"         android:exported="false" />
+        <activity android:name=".GymDetailActivity"        android:exported="false" />
+        <activity android:name=".WeekPlanActivity"         android:exported="false" />
+        <activity android:name=".EditDayPlanActivity"      android:exported="false" />
+        <activity android:name=".ActiveWorkoutActivity"    android:exported="false" />
+        <activity android:name=".CardioWorkoutActivity"    android:exported="false" />
+        <activity android:name=".WorkoutHistoryActivity"   android:exported="false" />
 
     </application>
 
