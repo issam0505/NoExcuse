@@ -15,16 +15,22 @@ import androidx.core.app.NotificationCompat;
 /**
  * AlarmConfirmReceiver
  * ──────────────────────────────────────────────────────────────────
- * هذا المستقبل يعالج مرحلتين:
- * 1. ACTION_CONFIRM: يظهر إشعار "هل أنت مستيقظ" ويجدول منبه الـ QR بعد 5 دقائق.
- * 2. ACTION_QR_ALARM: يشغل منبه الـ QR إذا لم يضغط المستخدم على YES.
+ * Phase 1 — ACTION_CONFIRM  (5 min after STOP):
+ *   Shows "Are you awake?" notification with YES button.
+ *   Schedules QR alarm fallback after 5 more minutes.
+ *
+ * Phase 2 — ACTION_QR_ALARM (5 min after confirm, no YES pressed):
+ *   Cancels notification → starts AlarmService (sound + screen directly, NO notification).
+ *
+ * ACTION_YES: user confirmed — cancel everything.
  */
 public class AlarmConfirmReceiver extends BroadcastReceiver {
 
     private static final String TAG = "AlarmConfirmReceiver";
-    public static final String ACTION_CONFIRM = "com.example.noexcuse.ACTION_CONFIRM_AWAKE";
-    public static final String ACTION_YES     = "com.example.noexcuse.ACTION_YES_AWAKE";
-    public static final String ACTION_QR_ALARM= "com.example.noexcuse.ACTION_QR_ALARM";
+
+    public static final String ACTION_CONFIRM  = "com.example.noexcuse.ACTION_CONFIRM_AWAKE";
+    public static final String ACTION_YES      = "com.example.noexcuse.ACTION_YES_AWAKE";
+    public static final String ACTION_QR_ALARM = "com.example.noexcuse.ACTION_QR_ALARM";
 
     public static final int REQUEST_CODE_CONFIRM = 9001;
     public static final int REQUEST_CODE_YES     = 9002;
@@ -37,30 +43,31 @@ public class AlarmConfirmReceiver extends BroadcastReceiver {
     public void onReceive(Context ctx, Intent intent) {
         String action = intent.getAction();
         if (action == null) return;
-
         Log.d(TAG, "onReceive: " + action);
 
         switch (action) {
             case ACTION_CONFIRM:
-                // هذه المرحلة تأتي بعد 5 دقائق من ضغط STOP
+                // 5 min after STOP → show "Are you awake?" notification
                 showConfirmNotification(ctx);
-                // جدولة منبه الـ QR بعد 5 دقائق إضافية من الآن
+                // Schedule QR fallback alarm after 5 more minutes
                 scheduleQrFallback(ctx);
                 break;
 
             case ACTION_YES:
-                // المستخدم أكد استيقاظه - نلغي كل شيء
+                // User confirmed — cancel QR fallback + dismiss notification
                 cancelQrFallback(ctx);
                 dismissNotification(ctx);
                 break;
 
             case ACTION_QR_ALARM:
-                // مرت 5 دقائق على الإشعار ولم يتم ضغط YES - تشغيل المنبه الصاخب مع QR
+                // No YES pressed in 5 min → dismiss notification → open alarm screen directly
                 dismissNotification(ctx);
                 launchAlarmServiceWithQr(ctx);
                 break;
         }
     }
+
+    // ── Phase 1: "Are you awake?" notification ─────────────────────────────
 
     private void showConfirmNotification(Context ctx) {
         createChannel(ctx);
@@ -71,24 +78,26 @@ public class AlarmConfirmReceiver extends BroadcastReceiver {
                 ctx, REQUEST_CODE_YES, yesIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-        NotificationCompat.Builder builder =
-                new NotificationCompat.Builder(ctx, CH_CONFIRM)
-                        .setSmallIcon(R.mipmap.ic_launcher)
-                        .setContentTitle("⏰ Are you awake?")
-                        .setContentText("Tap YES to confirm you're up — or the alarm will ring again in 5 mins!")
-                        .setPriority(NotificationCompat.PRIORITY_MAX)
-                        .setCategory(NotificationCompat.CATEGORY_ALARM)
-                        .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                        .setOngoing(true)
-                        .setAutoCancel(false)
-                        .addAction(R.mipmap.ic_launcher, "✅  YES, I'M UP!", yesPi);
+        Notification notif = new NotificationCompat.Builder(ctx, CH_CONFIRM)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("⏰ Are you awake?")
+                .setContentText("Tap YES to confirm — or the alarm rings again in 5 mins!")
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setOngoing(true)
+                .setAutoCancel(false)
+                .addAction(R.mipmap.ic_launcher, "✅  YES, I'M UP!", yesPi)
+                .build();
 
-        NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
-        if (nm != null) nm.notify(NOTIF_ID, builder.build());
+        NotificationManager nm =
+                (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm != null) nm.notify(NOTIF_ID, notif);
     }
 
+    // ── Phase 2 setup: schedule QR alarm fallback ──────────────────────────
+
     private void scheduleQrFallback(Context ctx) {
-        // الانتظار 5 دقائق أخرى قبل تفعيل الـ QR Alarm
         long triggerAt = System.currentTimeMillis() + (5 * 60 * 1000L);
 
         Intent intent = new Intent(ctx, AlarmConfirmReceiver.class);
@@ -120,11 +129,14 @@ public class AlarmConfirmReceiver extends BroadcastReceiver {
         }
     }
 
+    // ── Phase 2 fire: start alarm directly (screen + sound), NO notification ─
+
     private void launchAlarmServiceWithQr(Context ctx) {
         Intent serviceIntent = new Intent(ctx, AlarmService.class);
         serviceIntent.putExtra(WakeUpAlarmActivity.EXTRA_QR_MODE, true);
         serviceIntent.putExtra(WakeUpAlarmActivity.EXTRA_WAKE_TIME, "Wake up!");
 
+        // AlarmService will use fullScreenIntent → opens WakeUpAlarmActivity directly
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             ctx.startForegroundService(serviceIntent);
         } else {
@@ -133,17 +145,18 @@ public class AlarmConfirmReceiver extends BroadcastReceiver {
     }
 
     private void dismissNotification(Context ctx) {
-        NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationManager nm =
+                (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm != null) nm.cancel(NOTIF_ID);
     }
 
     private void createChannel(Context ctx) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+            NotificationManager nm =
+                    (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
             if (nm != null && nm.getNotificationChannel(CH_CONFIRM) == null) {
                 NotificationChannel ch = new NotificationChannel(
-                        CH_CONFIRM,
-                        "Wake-up Confirmation",
+                        CH_CONFIRM, "Wake-up Confirmation",
                         NotificationManager.IMPORTANCE_HIGH);
                 ch.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
                 nm.createNotificationChannel(ch);

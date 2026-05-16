@@ -61,6 +61,31 @@ public class AlarmActivity extends AppCompatActivity {
         }
 
         swAlarm.setChecked(WakeUpScheduler.isEnabled(this));
+
+        // ✅ Request "Display over other apps" permission — required to show alarm screen above lock
+        requestOverlayPermissionIfNeeded();
+    }
+
+    private void requestOverlayPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!Settings.canDrawOverlays(this)) {
+                new AlertDialog.Builder(this)
+                        .setTitle("⚠️ Permission Required")
+                        .setMessage(
+                                "To show the alarm screen instantly — even when your phone is locked or the app is closed — "
+                                        + "please enable \"Display over other apps\" for NoExcuse.\n\n"
+                                        + "How to enable:\n"
+                                        + "Settings → Apps → NoExcuse → Display over other apps → Allow")
+                        .setPositiveButton("Open Settings", (d, w) -> {
+                            Intent i = new Intent(
+                                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                    Uri.parse("package:" + getPackageName()));
+                            startActivity(i);
+                        })
+                        .setNegativeButton("Later", null)
+                        .show();
+            }
+        }
     }
 
     private void pickTime(boolean isWakeUp) {
@@ -84,13 +109,11 @@ public class AlarmActivity extends AppCompatActivity {
         boolean alarmOn = swAlarm.isChecked();
 
         if (alarmOn) {
-            // ✅ FIX: check exact alarm permission (Android 12+)
             if (WakeUpScheduler.needsExactAlarmPermission(this)) {
                 showExactAlarmPermissionDialog();
                 return;
             }
 
-            // Check camera permission for QR
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
                     != PackageManager.PERMISSION_GRANTED) {
                 pendingCameraCheck = true;
@@ -102,9 +125,6 @@ public class AlarmActivity extends AppCompatActivity {
         applyAndSave(alarmOn);
     }
 
-    /**
-     * ✅ FIX: Android 12+ — user khas isma7 exact alarms mn Settings
-     */
     private void showExactAlarmPermissionDialog() {
         new AlertDialog.Builder(this)
                 .setTitle("⏰ Permission Required")
@@ -130,8 +150,12 @@ public class AlarmActivity extends AppCompatActivity {
                     String.format(Locale.getDefault(),
                             "⏰ Alarm set for %02d:%02d", wakeHour, wakeMinute),
                     Toast.LENGTH_SHORT).show();
+
+            // ✅ Schedule sleep reminder notification
+            SleepReminderReceiver.schedule(this, sleepHour, sleepMinute);
         } else {
             WakeUpScheduler.cancel(this);
+            SleepReminderReceiver.cancel(this);
             Toast.makeText(this, "Alarm disabled", Toast.LENGTH_SHORT).show();
         }
 
@@ -142,7 +166,6 @@ public class AlarmActivity extends AppCompatActivity {
             s.isAlarmOn         = alarmOn;
             s.isQRRequired      = true;
             s.lastSleepDuration = 0;
-
             AppDatabase.getInstance(this).sleepDao().insertSleepSettings(s);
         });
 
@@ -208,16 +231,8 @@ public class AlarmActivity extends AppCompatActivity {
         }
     }
 
-    // ✅ FIX: onResume — ila user rja3 mn Settings, n3awdo ncheck o nkamlu
     @Override
     protected void onResume() {
         super.onResume();
-        if (pendingCameraCheck) return; // Machiinach f camera flow
-
-        // Ila user kan 3andu pending alarm o rja3 mn Settings (exact alarm permission)
-        if (swAlarm.isChecked() && !WakeUpScheduler.needsExactAlarmPermission(this)) {
-            // Permission mzyana daba, nkamlu save
-            // (machi forced, user ikml klik Save again)
-        }
     }
 }

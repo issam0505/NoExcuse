@@ -5,14 +5,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.util.Log;
-import androidx.core.content.ContextCompat;
 
 /**
  * WakeUpAlarmReceiver
- * ──────────────────────────────────────────────────────────────────
- * Receives the AlarmManager broadcast.
- * FIXED: Starts AlarmService (Foreground Service) to ensure sound plays
- * and activity is forced to front via fullScreenIntent.
+ * Receives the AlarmManager broadcast → starts AlarmService (foreground).
+ * AlarmService will use fullScreenIntent to force WakeUpAlarmActivity on screen.
+ * NO notification is shown here — the activity opens directly.
  */
 public class WakeUpAlarmReceiver extends BroadcastReceiver {
 
@@ -26,11 +24,12 @@ public class WakeUpAlarmReceiver extends BroadcastReceiver {
 
         if (ACTION_WAKE_ALARM.equals(action)) {
             String wakeTime = intent.getStringExtra(WakeUpAlarmActivity.EXTRA_WAKE_TIME);
+            boolean qrMode  = intent.getBooleanExtra(WakeUpAlarmActivity.EXTRA_QR_MODE, false);
 
             Intent serviceIntent = new Intent(ctx, AlarmService.class);
             serviceIntent.putExtra(WakeUpAlarmActivity.EXTRA_WAKE_TIME, wakeTime);
+            serviceIntent.putExtra(WakeUpAlarmActivity.EXTRA_QR_MODE, qrMode);
 
-            // Start Foreground Service (Required for Android 10+ to launch activity from background)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 ctx.startForegroundService(serviceIntent);
             } else {

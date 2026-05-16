@@ -13,11 +13,8 @@
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-    <!-- Permissions for Foreground Service -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
-
-    <!-- Permission to allow drawing over other apps -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <uses-feature
@@ -64,6 +61,15 @@
             </intent-filter>
         </receiver>
 
+        <!-- ✅ NEW: Sleep reminder notification receiver -->
+        <receiver
+            android:name=".SleepReminderReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.example.noexcuse.ACTION_SLEEP_REMINDER" />
+            </intent-filter>
+        </receiver>
+
         <activity
             android:name=".SplashActivity"
             android:exported="true">
@@ -80,7 +86,6 @@
         <activity android:name=".WelcomeActivity"    android:exported="false" />
         <activity android:name=".AlarmActivity"      android:exported="false" />
 
-        <!-- ✅ تم التحديث: إضافة configChanges و windowSoftInputMode لضمان استقرار الشاشة -->
         <activity
             android:name=".WakeUpAlarmActivity"
             android:exported="false"
