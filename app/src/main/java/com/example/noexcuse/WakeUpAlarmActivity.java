@@ -18,16 +18,13 @@ public class WakeUpAlarmActivity extends AppCompatActivity {
     public static final String EXTRA_WAKE_TIME = "wakeTime";
 
     private boolean qrMode;
-    private String wakeTime;
+    private String  wakeTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // ✅ إعدادات القوة: الظهور فوق القفل واستدعاء الشاشة فوراً
         setupLockScreenFlags();
         super.onCreate(savedInstanceState);
-        
         setContentView(R.layout.activity_wake_up_alarm);
-        
         handleIntent(getIntent());
         setupUI();
     }
@@ -42,7 +39,7 @@ public class WakeUpAlarmActivity extends AppCompatActivity {
 
     private void handleIntent(Intent intent) {
         if (intent != null) {
-            qrMode = intent.getBooleanExtra(EXTRA_QR_MODE, false);
+            qrMode   = intent.getBooleanExtra(EXTRA_QR_MODE, false);
             wakeTime = intent.getStringExtra(EXTRA_WAKE_TIME);
             if (wakeTime == null) wakeTime = "--:--";
         }
@@ -53,36 +50,43 @@ public class WakeUpAlarmActivity extends AppCompatActivity {
         TextView tvLabel = findViewById(R.id.tvAlarmLabel);
         Button   btnStop = findViewById(R.id.btnStopAlarm);
 
-        if (tvTime != null) tvTime.setText(wakeTime);
+        if (tvTime  != null) tvTime.setText(wakeTime);
         if (tvLabel != null) {
-            tvLabel.setText(qrMode ? "Scan QR Code to Stop ⚠️" : "Good morning! Time to wake up 🌅");
+            tvLabel.setText(qrMode
+                    ? "🚽 Go scan the QR code in the bathroom to stop the alarm!"
+                    : "Good morning! Time to wake up 🌅");
         }
 
-        btnStop.setOnClickListener(v -> {
-            if (qrMode) {
-                // ✅ في وضع QR، نفتح الكاميرا ولا نوقف الصوت هنا أبداً
-                openQrScanner();
-            } else {
-                stopAlarmService();
-                scheduleConfirmationNotif();
-                finish();
-            }
-        });
+        if (btnStop != null) {
+            // ✅ In QR mode: button label makes it clear
+            btnStop.setText(qrMode ? "📷 Scan QR to Stop" : "STOP");
+
+            btnStop.setOnClickListener(v -> {
+                if (qrMode) {
+                    // ✅ QR mode: open camera ONLY — sound keeps playing until QR scanned
+                    openQrScanner();
+                } else {
+                    // Normal mode: stop sound + schedule "are you awake?" check
+                    stopAlarmService();
+                    scheduleConfirmationNotif();
+                    finish();
+                }
+            });
+        }
     }
 
     private void setupLockScreenFlags() {
-        // ✅ تفعيل الأعلام اللازمة لتخطي القفل وتشغيل الشاشة بقوة
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true);
             setTurnScreenOn(true);
             KeyguardManager km = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
             if (km != null) km.requestDismissKeyguard(this, null);
         }
-
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-                | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
-                | WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
-                | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
+        getWindow().addFlags(
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+                        | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+                        | WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+                        | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
     }
 
     private void stopAlarmService() {
@@ -90,17 +94,16 @@ public class WakeUpAlarmActivity extends AppCompatActivity {
     }
 
     private void scheduleConfirmationNotif() {
-        // ✅ جدولة إشعار "هل أنت مستيقظ؟" بعد 5 دقائق من إيقاف المنبه الأول
         long triggerAt = System.currentTimeMillis() + (5 * 60 * 1000L);
         AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        
+
         Intent intent = new Intent(this, AlarmConfirmReceiver.class);
         intent.setAction(AlarmConfirmReceiver.ACTION_CONFIRM);
-        
+
         PendingIntent pi = PendingIntent.getBroadcast(
-                this, 
-                AlarmConfirmReceiver.REQUEST_CODE_CONFIRM, 
-                intent, 
+                this,
+                AlarmConfirmReceiver.REQUEST_CODE_CONFIRM,
+                intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         if (am != null) {
@@ -113,13 +116,17 @@ public class WakeUpAlarmActivity extends AppCompatActivity {
     }
 
     private void openQrScanner() {
+        // ✅ Sound is NOT stopped here — AlarmService keeps running
+        // Sound will only stop inside QrScanActivity.onQrSuccess()
         Intent intent = new Intent(this, QrScanActivity.class);
         startActivity(intent);
+        // Do NOT call finish() here — keep this activity in stack
+        // so user can't go back and bypass the QR
         finish();
     }
 
     @Override
     public void onBackPressed() {
-        // منع زر العودة لضمان عدم إغلاق الواجهة إلا عبر STOP أو QR
+        // Block back button — user must scan QR or tap STOP
     }
 }

@@ -12,10 +12,11 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
 
     <uses-feature
         android:name="android.hardware.camera"
@@ -31,6 +32,17 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.NoExcuse"
         android:usesCleartextTraffic="true">
+
+        <!-- ✅ FileProvider — required to share/open saved QR image -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
         <service
             android:name=".AlarmService"
@@ -61,7 +73,6 @@
             </intent-filter>
         </receiver>
 
-        <!-- ✅ NEW: Sleep reminder notification receiver -->
         <receiver
             android:name=".SleepReminderReceiver"
             android:exported="false">
