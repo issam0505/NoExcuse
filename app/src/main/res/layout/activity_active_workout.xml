@@ -15,13 +15,14 @@
         android:orientation="vertical"
         android:visibility="gone">
 
+        <!-- TOP BAR -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingStart="24dp"
             android:paddingEnd="24dp"
             android:paddingTop="16dp"
-            android:paddingBottom="20dp">
+            android:paddingBottom="16dp">
 
             <FrameLayout
                 android:id="@+id/btnBack"
@@ -64,6 +65,42 @@
                 app:tint="#FFFFFF"/>
         </RelativeLayout>
 
+        <!-- ══ EXERCISE NAME + SET COUNTER (shown above the card) ══ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:paddingBottom="8dp">
+
+            <!-- Exercise name  e.g. "Bench Press  ·  Exercise 1 / 3" -->
+            <TextView
+                android:id="@+id/tvCurrentExerciseName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="#F9FAFB"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:visibility="gone"/>
+
+            <!-- Set counter  e.g. "Set 2 / 4" -->
+            <TextView
+                android:id="@+id/tvSetCounter"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="#FF6D00"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.05"
+                android:layout_marginTop="2dp"
+                android:visibility="gone"/>
+
+        </LinearLayout>
+
+        <!-- ══ SCROLLABLE AREA (set card) ══ -->
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -83,6 +120,7 @@
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
 
+        <!-- ══ REST TIMER OVERLAY (inside workoutContent) ══ -->
         <FrameLayout
             android:id="@+id/restTimerOverlay"
             android:layout_width="match_parent"
@@ -113,6 +151,7 @@
             </LinearLayout>
         </FrameLayout>
 
+        <!-- ══ ACTION BUTTON (START / Next Set / Next Exercise / Save) ══ -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

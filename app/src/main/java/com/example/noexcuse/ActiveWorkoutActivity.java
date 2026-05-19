@@ -43,18 +43,34 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
     private CircularTimerView  circularTimer;
     private MaterialButton     btnAction;
 
+    // ── Header: exercise name + set counter ──────────────────────────────
+    // Add these two TextViews to activity_active_workout.xml inside
+    // workoutContent, just ABOVE exercisesWorkoutContainer.
+    //
+    //  <TextView android:id="@+id/tvCurrentExerciseName" ... />
+    //  <TextView android:id="@+id/tvSetCounter" ... />
+    private TextView tvCurrentExerciseName;
+    private TextView tvSetCounter;
+
     private CountDownTimer restCountdown;
-    private int currentExIndex = 0;
-    private View currentCard   = null;
+
+    // ── Navigation state ─────────────────────────────────────────────────
+    private int currentExIndex  = 0;   // which exercise
+    private int currentSetIndex = 0;   // which set within that exercise (0-based)
+    private int totalSets       = 0;   // total sets of current exercise
+
+    private View    currentCard       = null;
     private boolean currentExUnitIsKg = true;
 
     private final List<GymPerformance> pendingPerformances = new ArrayList<>();
 
-    private enum BtnState { START, NEXT, SAVE }
+    private enum BtnState { START, NEXT_SET, NEXT_EXERCISE, SAVE }
     private BtnState btnState = BtnState.START;
 
     private static final int REST_DURATION_MS = 2 * 60 * 1000;
     private static final int REQ_CARDIO       = 300;
+
+    // ─────────────────────────────────────────────────────────────────────
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,7 +78,6 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_active_workout);
 
-        // FIX: Handle status bar overlapping
         View mainView = findViewById(R.id.main);
         if (mainView != null) {
             ViewCompat.setOnApplyWindowInsetsListener(mainView, (v, insets) -> {
@@ -78,13 +93,15 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
         bodyPart = getIntent().getStringExtra("PLAN_BODY_PART");
         if (planId == -1) { finish(); return; }
 
-        warmupOverlay      = findViewById(R.id.warmupOverlay);
-        workoutContent     = findViewById(R.id.workoutContent);
-        exercisesContainer = findViewById(R.id.exercisesWorkoutContainer);
-        tvWorkoutBodyPart  = findViewById(R.id.tvWorkoutBodyPart);
-        restTimerOverlay   = findViewById(R.id.restTimerOverlay);
-        circularTimer      = findViewById(R.id.circularTimer);
-        btnAction          = findViewById(R.id.btnStartWorkout);
+        warmupOverlay          = findViewById(R.id.warmupOverlay);
+        workoutContent         = findViewById(R.id.workoutContent);
+        exercisesContainer     = findViewById(R.id.exercisesWorkoutContainer);
+        tvWorkoutBodyPart      = findViewById(R.id.tvWorkoutBodyPart);
+        restTimerOverlay       = findViewById(R.id.restTimerOverlay);
+        circularTimer          = findViewById(R.id.circularTimer);
+        btnAction              = findViewById(R.id.btnStartWorkout);
+        tvCurrentExerciseName  = findViewById(R.id.tvCurrentExerciseName);
+        tvSetCounter           = findViewById(R.id.tvSetCounter);
 
         tvWorkoutBodyPart.setText(bodyPart != null ? bodyPart : "Workout");
 
@@ -111,45 +128,56 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
         });
     }
 
+    // ── Button styles ─────────────────────────────────────────────────────
+
     private void applyStartStyle() {
         btnState = BtnState.START;
         btnAction.setText("▶  START");
         btnAction.setTextSize(18f);
-        btnAction.getLayoutParams().width  = dpToPx(160);
-        btnAction.getLayoutParams().height = dpToPx(56);
-        btnAction.requestLayout();
-        btnAction.setBackgroundTintList(
-                android.content.res.ColorStateList.valueOf(
-                        android.graphics.Color.parseColor("#22C55E")));
+        setButtonSize(160, 56);
+        btnAction.setBackgroundTintList(colorList("#22C55E"));
     }
 
-    private void applyNextStyle() {
-        btnState = BtnState.NEXT;
-        btnAction.setText("Next  →");
+    private void applyNextSetStyle() {
+        btnState = BtnState.NEXT_SET;
+        btnAction.setText("Next Set  →");
         btnAction.setTextSize(16f);
-        btnAction.getLayoutParams().width  = dpToPx(160);
-        btnAction.getLayoutParams().height = dpToPx(52);
-        btnAction.requestLayout();
-        btnAction.setBackgroundTintList(
-                android.content.res.ColorStateList.valueOf(
-                        android.graphics.Color.parseColor("#1D4ED8")));
+        setButtonSize(170, 52);
+        btnAction.setBackgroundTintList(colorList("#1D4ED8"));
+    }
+
+    private void applyNextExerciseStyle() {
+        btnState = BtnState.NEXT_EXERCISE;
+        btnAction.setText("Next Exercise  →");
+        btnAction.setTextSize(15f);
+        setButtonSize(200, 52);
+        btnAction.setBackgroundTintList(colorList("#7C3AED"));
     }
 
     private void applySaveStyle() {
         btnState = BtnState.SAVE;
         btnAction.setText("💾  Save");
         btnAction.setTextSize(16f);
-        btnAction.getLayoutParams().width  = dpToPx(160);
-        btnAction.getLayoutParams().height = dpToPx(52);
+        setButtonSize(160, 52);
+        btnAction.setBackgroundTintList(colorList("#FF6D00"));
+    }
+
+    private void setButtonSize(int widthDp, int heightDp) {
+        btnAction.getLayoutParams().width  = dpToPx(widthDp);
+        btnAction.getLayoutParams().height = dpToPx(heightDp);
         btnAction.requestLayout();
-        btnAction.setBackgroundTintList(
-                android.content.res.ColorStateList.valueOf(
-                        android.graphics.Color.parseColor("#FF6D00")));
+    }
+
+    private android.content.res.ColorStateList colorList(String hex) {
+        return android.content.res.ColorStateList.valueOf(
+                android.graphics.Color.parseColor(hex));
     }
 
     private int dpToPx(int dp) {
         return Math.round(dp * getResources().getDisplayMetrics().density);
     }
+
+    // ── Warmup → Workout transition ───────────────────────────────────────
 
     private void showWorkout() {
         warmupOverlay.animate()
@@ -162,109 +190,153 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
                 }).start();
     }
 
+    // ── Main action button ────────────────────────────────────────────────
+
     private void onActionPressed() {
         switch (btnState) {
             case START:
-                showExerciseAt(0);
+                currentExIndex  = 0;
+                currentSetIndex = 0;
+                showCurrentSet();
                 break;
-            case NEXT:
-                collectCurrentExercise();
-                startRestThenShowNext();
+
+            case NEXT_SET:
+                // Save this set's data, then rest → same exercise, next set
+                collectCurrentSet();
+                currentSetIndex++;
+                startRestThenResume();
                 break;
+
+            case NEXT_EXERCISE:
+                // Save last set of this exercise, then rest → next exercise, set 1
+                collectCurrentSet();
+                currentExIndex++;
+                currentSetIndex = 0;
+                startRestThenResume();
+                break;
+
             case SAVE:
-                collectCurrentExercise();
+                collectCurrentSet();
                 saveAllPendingToDatabase();
                 finishWorkout();
                 break;
         }
     }
 
-    private void showExerciseAt(int index) {
-        if (index >= exercises.size()) { finishWorkout(); return; }
+    // ── Render the single visible set row ─────────────────────────────────
 
-        PlannedExercise ex = exercises.get(index);
+    private void showCurrentSet() {
+        if (currentExIndex >= exercises.size()) { finishWorkout(); return; }
+
+        PlannedExercise ex = exercises.get(currentExIndex);
+
         if (ex.isCardio) { openCardioActivity(); return; }
 
+        totalSets = ex.setsTarget > 0 ? ex.setsTarget : 3;
+
+        // ── Exercise name header ─────────────────────────────────────────
+        if (tvCurrentExerciseName != null) {
+            tvCurrentExerciseName.setVisibility(View.VISIBLE);
+            String label = (ex.exerciseName != null ? ex.exerciseName : "—")
+                    + "  ·  Exercise " + (currentExIndex + 1) + " / " + exercises.size();
+            tvCurrentExerciseName.setText(label);
+        }
+
+        // ── Set counter ──────────────────────────────────────────────────
+        if (tvSetCounter != null) {
+            tvSetCounter.setVisibility(View.VISIBLE);
+            tvSetCounter.setText("Set " + (currentSetIndex + 1) + " / " + totalSets);
+        }
+
+        // ── Card with ONE set row ────────────────────────────────────────
         exercisesContainer.removeAllViews();
+
         View card = LayoutInflater.from(this)
                 .inflate(R.layout.item_workout_exercise, exercisesContainer, false);
         card.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
 
-        TextView       tvName        = card.findViewById(R.id.tvExerciseName);
-        LinearLayout   setsContainer = card.findViewById(R.id.setsContainer);
-        MaterialButton btnUnit       = card.findViewById(R.id.btnUnitToggle);
+        // Hide the in-card exercise name (we show it in the header above)
+        TextView tvName = card.findViewById(R.id.tvExerciseName);
+        if (tvName != null) tvName.setVisibility(View.GONE);
 
-        tvName.setText((ex.exerciseName != null ? ex.exerciseName : "—")
-                + "\n" + (index + 1) + " / " + exercises.size());
-
-        currentExUnitIsKg = true;
-        btnUnit.setText("kg");
-
-        btnUnit.setOnClickListener(v -> {
-            currentExUnitIsKg = !currentExUnitIsKg;
-            btnUnit.setText(currentExUnitIsKg ? "kg" : "lbs");
-        });
-
-        int setsCount = ex.setsTarget > 0 ? ex.setsTarget : 3;
-        for (int s = 1; s <= setsCount; s++) {
-            addSetRow(setsContainer, s);
+        // Unit toggle
+        MaterialButton btnUnit = card.findViewById(R.id.btnUnitToggle);
+        if (btnUnit != null) {
+            currentExUnitIsKg = true;
+            btnUnit.setText("kg");
+            btnUnit.setOnClickListener(v -> {
+                currentExUnitIsKg = !currentExUnitIsKg;
+                btnUnit.setText(currentExUnitIsKg ? "kg" : "lbs");
+            });
         }
+
+        // Exactly ONE set row
+        LinearLayout setsContainer = card.findViewById(R.id.setsContainer);
+        addSetRow(setsContainer, currentSetIndex + 1);
 
         exercisesContainer.addView(card);
         currentCard = card;
 
-        boolean isLast = (index == exercises.size() - 1);
-        if (isLast) applySaveStyle(); else applyNextStyle();
+        // ── Button state ─────────────────────────────────────────────────
+        boolean isLastSet      = (currentSetIndex == totalSets - 1);
+        boolean isLastExercise = (currentExIndex  == exercises.size() - 1);
+
+        if (!isLastSet) {
+            applyNextSetStyle();
+        } else if (!isLastExercise) {
+            applyNextExerciseStyle();
+        } else {
+            applySaveStyle();
+        }
     }
 
-    private void addSetRow(LinearLayout setsContainer, int setNumber) {
+    private void addSetRow(LinearLayout container, int setNumber) {
         View row = LayoutInflater.from(this)
-                .inflate(R.layout.item_workout_set_row, setsContainer, false);
+                .inflate(R.layout.item_workout_set_row, container, false);
         TextView tvSetNum = row.findViewById(R.id.tvSetNumber);
-        tvSetNum.setText(String.valueOf(setNumber));
-        setsContainer.addView(row);
+        if (tvSetNum != null) tvSetNum.setText(String.valueOf(setNumber));
+        container.addView(row);
     }
 
-    private void collectCurrentExercise() {
+    // ── Collect the single visible set row ────────────────────────────────
+
+    private void collectCurrentSet() {
         if (currentCard == null || currentExIndex >= exercises.size()) return;
 
         PlannedExercise ex            = exercises.get(currentExIndex);
         LinearLayout    setsContainer = currentCard.findViewById(R.id.setsContainer);
-        int             rowCount      = setsContainer.getChildCount();
-        long            now           = System.currentTimeMillis();
+        if (setsContainer == null || setsContainer.getChildCount() == 0) return;
 
-        boolean thisExIsKg = currentExUnitIsKg;
+        View              row      = setsContainer.getChildAt(0);
+        TextInputEditText etWeight = row.findViewById(R.id.etWeight);
+        TextInputEditText etReps   = row.findViewById(R.id.etReps);
 
-        for (int s = 0; s < rowCount; s++) {
-            View              row      = setsContainer.getChildAt(s);
-            TextInputEditText etWeight = row.findViewById(R.id.etWeight);
-            TextInputEditText etReps   = row.findViewById(R.id.etReps);
+        String wStr = etWeight != null && etWeight.getText() != null
+                ? etWeight.getText().toString().trim() : "";
+        String rStr = etReps   != null && etReps.getText()   != null
+                ? etReps.getText().toString().trim()   : "";
 
-            String wStr = etWeight.getText() != null ? etWeight.getText().toString().trim() : "";
-            String rStr = etReps.getText()   != null ? etReps.getText().toString().trim()   : "";
+        if (wStr.isEmpty() && rStr.isEmpty()) return;
 
-            if (wStr.isEmpty() && rStr.isEmpty()) continue;
+        float weight = 0f;
+        int   reps   = 0;
+        try { weight = Float.parseFloat(wStr); } catch (NumberFormatException ignored) {}
+        try { reps   = Integer.parseInt(rStr);  } catch (NumberFormatException ignored) {}
 
-            float weight = 0f;
-            int   reps   = 0;
-            try { weight = Float.parseFloat(wStr); } catch (NumberFormatException ignored) {}
-            try { reps   = Integer.parseInt(rStr);  } catch (NumberFormatException ignored) {}
+        if (!currentExUnitIsKg) weight = weight * 0.453592f;
 
-            if (!thisExIsKg) weight = weight * 0.453592f;
+        GymPerformance perf       = new GymPerformance();
+        perf.plannedExerciseId    = ex.id;
+        perf.exerciseNameSnapshot = ex.exerciseName;
+        perf.setNumber            = currentSetIndex + 1;
+        perf.weight               = weight;
+        perf.reps                 = reps;
+        perf.date                 = System.currentTimeMillis();
 
-            GymPerformance perf       = new GymPerformance();
-            perf.plannedExerciseId    = ex.id;
-            perf.exerciseNameSnapshot = ex.exerciseName;
-            perf.setNumber            = s + 1;
-            perf.weight               = weight;
-            perf.reps                 = reps;
-            perf.date                 = now;
-
-            pendingPerformances.add(perf);
-        }
-
-        currentExIndex++;
+        pendingPerformances.add(perf);
     }
+
+    // ── Save ──────────────────────────────────────────────────────────────
 
     private void saveAllPendingToDatabase() {
         if (pendingPerformances.isEmpty()) return;
@@ -277,9 +349,13 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
         pendingPerformances.clear();
     }
 
-    private void startRestThenShowNext() {
+    // ── Rest timer ────────────────────────────────────────────────────────
+
+    private void startRestThenResume() {
         exercisesContainer.setVisibility(View.GONE);
         btnAction.setVisibility(View.GONE);
+        if (tvCurrentExerciseName != null) tvCurrentExerciseName.setVisibility(View.GONE);
+        if (tvSetCounter != null)          tvSetCounter.setVisibility(View.GONE);
 
         circularTimer.setTotalSeconds(REST_DURATION_MS / 1000);
         restTimerOverlay.setVisibility(View.VISIBLE);
@@ -292,20 +368,22 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
             }
             @Override public void onFinish() {
                 circularTimer.setRemainingSeconds(0);
-                showNextAfterRest();
+                showAfterRest();
             }
         }.start();
     }
 
-    private void showNextAfterRest() {
+    private void showAfterRest() {
         restTimerOverlay.animate().alpha(0f).setDuration(300)
                 .withEndAction(() -> {
                     restTimerOverlay.setVisibility(View.GONE);
                     exercisesContainer.setVisibility(View.VISIBLE);
                     btnAction.setVisibility(View.VISIBLE);
-                    showExerciseAt(currentExIndex);
+                    showCurrentSet();
                 }).start();
     }
+
+    // ── Finish & Cardio ───────────────────────────────────────────────────
 
     private void finishWorkout() {
         Toast.makeText(this, "Workout done! 🏆", Toast.LENGTH_LONG).show();
