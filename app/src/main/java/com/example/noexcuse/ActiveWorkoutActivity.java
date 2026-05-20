@@ -43,21 +43,15 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
     private CircularTimerView  circularTimer;
     private MaterialButton     btnAction;
 
-    // ── Header: exercise name + set counter ──────────────────────────────
-    // Add these two TextViews to activity_active_workout.xml inside
-    // workoutContent, just ABOVE exercisesWorkoutContainer.
-    //
-    //  <TextView android:id="@+id/tvCurrentExerciseName" ... />
-    //  <TextView android:id="@+id/tvSetCounter" ... />
     private TextView tvCurrentExerciseName;
     private TextView tvSetCounter;
 
     private CountDownTimer restCountdown;
 
     // ── Navigation state ─────────────────────────────────────────────────
-    private int currentExIndex  = 0;   // which exercise
-    private int currentSetIndex = 0;   // which set within that exercise (0-based)
-    private int totalSets       = 0;   // total sets of current exercise
+    private int currentExIndex  = 0;
+    private int currentSetIndex = 0;
+    private int totalSets       = 0;
 
     private View    currentCard       = null;
     private boolean currentExUnitIsKg = true;
@@ -108,16 +102,25 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
         TextView tvWarmupBodyPart = findViewById(R.id.tvWarmupBodyPart);
         tvWarmupBodyPart.setText(bodyPart != null ? bodyPart : "Workout");
 
+        // Back buttons
         FrameLayout btnBackWarmup = findViewById(R.id.btnBackWarmup);
         btnBackWarmup.setOnClickListener(v -> finish());
 
-        MaterialButton btnWarmupLetsGo = findViewById(R.id.btnWarmupLetsGo);
-        MaterialButton btnWarmupSkip   = findViewById(R.id.btnWarmupSkip);
-        btnWarmupLetsGo.setOnClickListener(v -> showWorkout());
-        btnWarmupSkip.setOnClickListener(v   -> showWorkout());
-
         FrameLayout btnBack = findViewById(R.id.btnBack);
         btnBack.setOnClickListener(v -> finish());
+
+        // ── Let's Go → open WarmupActivity ──────────────────────────────
+        MaterialButton btnWarmupLetsGo = findViewById(R.id.btnWarmupLetsGo);
+        btnWarmupLetsGo.setOnClickListener(v -> {
+            Intent intent = new Intent(this, WarmupActivity.class);
+            intent.putExtra("PLAN_ID",        planId);
+            intent.putExtra("PLAN_BODY_PART", bodyPart);
+            startActivity(intent);
+        });
+
+        // ── Skip → go directly to workout ───────────────────────────────
+        MaterialButton btnWarmupSkip = findViewById(R.id.btnWarmupSkip);
+        btnWarmupSkip.setOnClickListener(v -> showWorkout());
 
         applyStartStyle();
         btnAction.setOnClickListener(v -> onActionPressed());
@@ -177,7 +180,7 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
         return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 
-    // ── Warmup → Workout transition ───────────────────────────────────────
+    // ── Warmup overlay → Workout transition ──────────────────────────────
 
     private void showWorkout() {
         warmupOverlay.animate()
@@ -201,14 +204,12 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
                 break;
 
             case NEXT_SET:
-                // Save this set's data, then rest → same exercise, next set
                 collectCurrentSet();
                 currentSetIndex++;
                 startRestThenResume();
                 break;
 
             case NEXT_EXERCISE:
-                // Save last set of this exercise, then rest → next exercise, set 1
                 collectCurrentSet();
                 currentExIndex++;
                 currentSetIndex = 0;
@@ -234,7 +235,7 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
 
         totalSets = ex.setsTarget > 0 ? ex.setsTarget : 3;
 
-        // ── Exercise name header ─────────────────────────────────────────
+        // Exercise name header
         if (tvCurrentExerciseName != null) {
             tvCurrentExerciseName.setVisibility(View.VISIBLE);
             String label = (ex.exerciseName != null ? ex.exerciseName : "—")
@@ -242,20 +243,20 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
             tvCurrentExerciseName.setText(label);
         }
 
-        // ── Set counter ──────────────────────────────────────────────────
+        // Set counter
         if (tvSetCounter != null) {
             tvSetCounter.setVisibility(View.VISIBLE);
             tvSetCounter.setText("Set " + (currentSetIndex + 1) + " / " + totalSets);
         }
 
-        // ── Card with ONE set row ────────────────────────────────────────
+        // Card with ONE set row
         exercisesContainer.removeAllViews();
 
         View card = LayoutInflater.from(this)
                 .inflate(R.layout.item_workout_exercise, exercisesContainer, false);
         card.startAnimation(AnimationUtils.loadAnimation(this, android.R.anim.fade_in));
 
-        // Hide the in-card exercise name (we show it in the header above)
+        // Hide in-card exercise name (shown in header above)
         TextView tvName = card.findViewById(R.id.tvExerciseName);
         if (tvName != null) tvName.setVisibility(View.GONE);
 
@@ -277,7 +278,7 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
         exercisesContainer.addView(card);
         currentCard = card;
 
-        // ── Button state ─────────────────────────────────────────────────
+        // Button state
         boolean isLastSet      = (currentSetIndex == totalSets - 1);
         boolean isLastExercise = (currentExIndex  == exercises.size() - 1);
 

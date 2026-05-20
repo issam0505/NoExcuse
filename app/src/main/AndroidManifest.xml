@@ -118,6 +118,7 @@
         <activity android:name=".ActiveWorkoutActivity"    android:exported="false" />
         <activity android:name=".CardioWorkoutActivity"    android:exported="false" />
         <activity android:name=".WorkoutHistoryActivity"   android:exported="false" />
+        <activity android:name=".WarmupActivity"   android:exported="false" />
 
     </application>
 
