@@ -262,6 +262,28 @@ public class ActiveWorkoutActivity extends AppCompatActivity {
 
         // Unit toggle
         MaterialButton btnUnit = card.findViewById(R.id.btnUnitToggle);
+        // ── 👁 Show Exercise button ─────────────────────────────────────────────
+        MaterialButton btnShowEx = card.findViewById(R.id.btnShowExercise);
+        if (btnShowEx != null) {
+            // ex.exerciseName est le nom stocké en DB (ex: "Bench Press")
+            final String exName = (ex.exerciseName != null && !ex.exerciseName.isEmpty())
+                    ? ex.exerciseName
+                    : null;
+
+            if (exName == null) {
+                // Pas de nom → cacher le bouton
+                btnShowEx.setVisibility(android.view.View.GONE);
+            } else {
+                btnShowEx.setVisibility(android.view.View.VISIBLE);
+                btnShowEx.setOnClickListener(v -> {
+                    android.content.Intent previewIntent =
+                            new android.content.Intent(this, ExercisePreviewActivity.class);
+                    previewIntent.putExtra("EXERCISE_NAME", exName);
+                    previewIntent.putExtra("PLAN_BODY_PART", bodyPart);
+                    startActivity(previewIntent);
+                });
+            }
+        }
         if (btnUnit != null) {
             currentExUnitIsKg = true;
             btnUnit.setText("kg");

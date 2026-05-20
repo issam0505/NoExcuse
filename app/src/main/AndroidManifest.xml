@@ -14,9 +14,13 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
+    <!-- Required for FocusMonitorService to read foreground app -->
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
 
     <uses-feature
         android:name="android.hardware.camera"
@@ -33,7 +37,7 @@
         android:theme="@style/Theme.NoExcuse"
         android:usesCleartextTraffic="true">
 
-        <!-- ✅ FileProvider — required to share/open saved QR image -->
+        <!-- FileProvider — required to share/open saved QR image -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
@@ -49,6 +53,12 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
+
+        <!-- Focus Mode background monitor -->
+        <service
+            android:name=".FocusMonitorService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false" />
 
         <receiver
             android:name=".utils.NotifReceiver"
@@ -118,7 +128,8 @@
         <activity android:name=".ActiveWorkoutActivity"    android:exported="false" />
         <activity android:name=".CardioWorkoutActivity"    android:exported="false" />
         <activity android:name=".WorkoutHistoryActivity"   android:exported="false" />
-        <activity android:name=".WarmupActivity"   android:exported="false" />
+        <activity android:name=".WarmupActivity"           android:exported="false" />
+        <activity android:name=".ExercisePreviewActivity"  android:exported="false" />
 
     </application>
 

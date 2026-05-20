@@ -35,16 +35,34 @@ public class WarmupActivity extends AppCompatActivity {
 
     private static final String BASE_URL = "http://192.168.1.11:8000";
 
-    private static final String[][] EXERCISES = {
+    // ── Exercise lists per body part ──────────────────────────────────────
+    private static final String[][] EXERCISES_DEFAULT = {
             { "Band Pull Apart", "Band_Pull_Apart", "Rear Deltoids" },
             { "Arm Circles",     "Arm_Circles",      "Shoulders"    },
             { "Push-Ups",        "Pushups",           "Chest"       }
     };
 
-    private final Bitmap[]   frame0       = new Bitmap[3];
-    private final Bitmap[]   frame1       = new Bitmap[3];
-    private final boolean[]  loaded       = new boolean[3];
-    private final Runnable[] animRunnable = new Runnable[3];
+    private static final String[][] EXERCISES_LEGS = {
+            { "Ankle On The Knee",      "Ankle_On_The_Knee",      "Glutes / Hip Flexors" },
+            { "90/90 Hamstring",        "90_90_Hamstring",         "Hamstrings"           },
+            { "All Fours Quad Stretch", "All_Fours_Quad_Stretch",  "Quadriceps"           },
+            { "Band Hip Adductions",    "Band_Hip_Adductions",     "Inner Thighs"         },
+            { "Band Good Morning",      "Band_Good_Morning",       "Hamstrings / Lower Back" }
+    };
+
+    private static final String[][] EXERCISES_CARDIO = {
+            { "90/90 Hamstring",               "90_90_Hamstring",               "Hamstrings"  },
+            { "Alternate Heel Touchers",        "Alternate_Heel_Touchers",        "Obliques"    },
+            { "Alternate Leg Diagonal Bound",   "Alternate_Leg_Diagonal_Bound",   "Full Body"   }
+    };
+
+    // resolved at runtime
+    private String[][] EXERCISES;
+
+    private Bitmap[]   frame0;
+    private Bitmap[]   frame1;
+    private boolean[]  loaded;
+    private Runnable[] animRunnable;
 
     private final ExecutorService executor    = Executors.newFixedThreadPool(3);
     private final Handler         mainHandler = new Handler(Looper.getMainLooper());
@@ -67,6 +85,22 @@ public class WarmupActivity extends AppCompatActivity {
 
         FrameLayout btnBack = findViewById(R.id.btnBackWarmupActivity);
         if (btnBack != null) btnBack.setOnClickListener(v -> finish());
+
+        // ── Pick exercises based on body part ────────────────────────────
+        String bodyPart = getIntent().getStringExtra("PLAN_BODY_PART");
+        if (bodyPart != null && bodyPart.equalsIgnoreCase("Legs")) {
+            EXERCISES = EXERCISES_LEGS;
+        } else if (bodyPart != null && bodyPart.equalsIgnoreCase("Cardio")) {
+            EXERCISES = EXERCISES_CARDIO;
+        } else {
+            EXERCISES = EXERCISES_DEFAULT;
+        }
+
+        int n        = EXERCISES.length;
+        frame0       = new Bitmap[n];
+        frame1       = new Bitmap[n];
+        loaded       = new boolean[n];
+        animRunnable = new Runnable[n];
 
         exercisesContainer = findViewById(R.id.warmupExercisesContainer);
         buildExerciseCards();

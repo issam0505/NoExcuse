@@ -15,7 +15,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase;
         GymPerformance.class,
         EducationTask.class,
         SleepSettings.class,
-}, version = 10)
+}, version = 11)
 public abstract class AppDatabase extends RoomDatabase {
 
     public abstract TaskDao      taskDao();
@@ -38,8 +38,9 @@ public abstract class AppDatabase extends RoomDatabase {
                                     MIGRATION_6_7,
                                     MIGRATION_7_8,
                                     MIGRATION_8_9,
-                                    MIGRATION_9_10)
-                            .fallbackToDestructiveMigration() // ✅ يضمن إعادة إنشاء الجداول في حال وجود خطأ في المهاجرة (Migration)
+                                    MIGRATION_9_10,
+                                    MIGRATION_10_11)
+                            .fallbackToDestructiveMigration()
                             .build();
                 }
             }
@@ -47,7 +48,6 @@ public abstract class AppDatabase extends RoomDatabase {
         return INSTANCE;
     }
 
-    //Migrations...
     static final Migration MIGRATION_5_6 = new Migration(5, 6) {
         @Override public void migrate(@NonNull SupportSQLiteDatabase db) {
             db.execSQL("ALTER TABLE gym_plans ADD COLUMN weekStartDate TEXT");
@@ -85,6 +85,17 @@ public abstract class AppDatabase extends RoomDatabase {
     static final Migration MIGRATION_9_10 = new Migration(9, 10) {
         @Override public void migrate(@NonNull SupportSQLiteDatabase db) {
             db.execSQL("ALTER TABLE gym_performance ADD COLUMN durationRecordedSeconds INTEGER NOT NULL DEFAULT 0");
+        }
+    };
+
+    // ── FIX: try/catch bch ila kan column existit deja ma ycrachwch ──────
+    static final Migration MIGRATION_10_11 = new Migration(10, 11) {
+        @Override public void migrate(@NonNull SupportSQLiteDatabase db) {
+            try {
+                db.execSQL("ALTER TABLE education_tasks ADD COLUMN isFocusMode INTEGER NOT NULL DEFAULT 0");
+            } catch (android.database.sqlite.SQLiteException e) {
+                // Column isFocusMode deja existit — mashi mochkil, ncontinuiw
+            }
         }
     };
 }
