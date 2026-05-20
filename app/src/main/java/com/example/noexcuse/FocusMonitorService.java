@@ -46,6 +46,9 @@ public class FocusMonitorService extends Service {
     private boolean reminderFired    = false;
     private boolean isPolling        = false;
 
+    // We keep track of the last known foreground app to avoid 'null' drops
+    private String lastDetectedApp = null;
+
     private final Runnable pollRunnable = new Runnable() {
         @Override
         public void run() {
@@ -90,17 +93,22 @@ public class FocusMonitorService extends Service {
 
     private void checkForegroundApp() {
         String currentPkg = getForegroundPackage();
-        
-        // Debug Toast to see what the service sees
+
+        // Fix 1: If system returns null, retain the last known app instead of resetting
         if (currentPkg != null) {
-            Log.d(TAG, "📱 Current App: " + currentPkg);
+            lastDetectedApp = currentPkg;
+            Log.d(TAG, "📱 Current App Detected: " + currentPkg);
         } else {
-            Log.e(TAG, "⚠️ Could not detect app. Permission granted?");
+            Log.w(TAG, "⚠️ App detection returned null. Retaining last known app: " + lastDetectedApp);
         }
 
-        boolean isAllowed = AllowedAppsConfig.isAllowed(currentPkg);
+        // Use the persistent package tracker for analysis
+        boolean isAllowed = AllowedAppsConfig.isAllowed(lastDetectedApp);
 
         if (isAllowed) {
+            if (distractionStart != 0L) {
+                Log.d(TAG, "✅ Returned to allowed app. Resetting distraction timer.");
+            }
             distractionStart = 0L;
             reminderFired    = false;
             cancelReminderNotification();
@@ -108,7 +116,7 @@ public class FocusMonitorService extends Service {
             if (distractionStart == 0L) {
                 distractionStart = System.currentTimeMillis();
                 reminderFired    = false;
-                Log.d(TAG, "🚨 Distraction started: " + currentPkg);
+                Log.d(TAG, "🚨 Distraction started! User is on: " + lastDetectedApp);
             } else {
                 long elapsed = System.currentTimeMillis() - distractionStart;
                 Log.d(TAG, "⏱ Time away: " + (elapsed / 1000) + "s / 120s");
@@ -126,8 +134,8 @@ public class FocusMonitorService extends Service {
         if (usm == null) return null;
 
         long now = System.currentTimeMillis();
-        // Look back 1 minute for events
-        UsageEvents events = usm.queryEvents(now - 60_000, now);
+        // Fix 2: Look back 5 minutes (300,000ms) instead of just 1 minute to ensure events capture
+        UsageEvents events = usm.queryEvents(now - 300_000, now);
         UsageEvents.Event event = new UsageEvents.Event();
         String lastPkg = null;
 
@@ -142,8 +150,8 @@ public class FocusMonitorService extends Service {
 
     private void fireReminderNotification() {
         Intent intent = getPackageManager().getLaunchIntentForPackage(getPackageName());
-        PendingIntent pi = PendingIntent.getActivity(this, 1, 
-                intent != null ? intent : new Intent(), PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent pi = PendingIntent.getActivity(this, 1,
+                intent != null ? intent : new Intent(), PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
 
         Notification notif = new NotificationCompat.Builder(this, CHANNEL_REMINDER)
                 .setSmallIcon(R.drawable.ic_school)
@@ -159,7 +167,6 @@ public class FocusMonitorService extends Service {
         NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm != null) {
             nm.notify(NOTIF_ID_REMINDER, notif);
-            // Extra feedback for testing
             handler.post(() -> Toast.makeText(getApplicationContext(), "⏰ Back to Study!", Toast.LENGTH_LONG).show());
         }
     }
@@ -168,13 +175,15 @@ public class FocusMonitorService extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationManager nm = getSystemService(NotificationManager.class);
             if (nm == null) return;
-            
+
             nm.createNotificationChannel(new NotificationChannel(
                     CHANNEL_FOCUS, "Focus Mode", NotificationManager.IMPORTANCE_LOW));
-            
+
             NotificationChannel reminderCh = new NotificationChannel(
                     CHANNEL_REMINDER, "Focus Reminders", NotificationManager.IMPORTANCE_HIGH);
             reminderCh.enableVibration(true);
+            // Fix 3: Ensure notifications can bypass lockscreen/pop up dynamically
+            reminderCh.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
             nm.createNotificationChannel(reminderCh);
         }
     }

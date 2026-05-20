@@ -12,21 +12,21 @@ import java.util.Set;
  * when the user is inside one of these apps.
  *
  * HOW TO CUSTOMIZE:
- *  • Add any app's package name to ALLOWED_PACKAGES.
- *  • You can find an app's package name on the Play Store URL:
- *    https://play.google.com/store/apps/details?id=<PACKAGE_NAME>
+ * • Add any app's package name to ALLOWED_PACKAGES.
+ * • You can find an app's package name on the Play Store URL:
+ * https://play.google.com/store/apps/details?id=<PACKAGE_NAME>
  *
  * CURRENTLY WHITELISTED:
- *  • Your own app              (com.example.noexcuse)
- *  • System UI / Launcher      (navigating home is fine)
- *  • Duolingo                  (language learning)
- *  • Khan Academy              (courses)
- *  • Coursera                  (online learning)
- *  • Anki                      (flashcards)
- *  • Notion                    (note-taking)
- *  • Google Docs               (writing)
- *  • Google Calendar           (planning)
- *  • Google Drive              (documents)
+ * • Your own app              (com.example.noexcuse)
+ * • System UI / Launcher      (navigating home is fine)
+ * • Duolingo                  (language learning)
+ * • Khan Academy              (courses)
+ * • Coursera                  (online learning)
+ * • Anki                      (flashcards)
+ * • Notion                    (note-taking)
+ * • Google Docs               (writing)
+ * • Google Calendar           (planning)
+ * • Google Drive              (documents)
  */
 public final class AllowedAppsConfig {
 
@@ -54,7 +54,7 @@ public final class AllowedAppsConfig {
             "com.sololearn",                             // SoloLearn (coding)
             "com.grasshopper.android",                   // Grasshopper (coding)
             "com.photomath",                             // Photomath
-            "ai.edsby.android",                         // Edsby
+            "ai.edsby.android",                          // Edsby
             "com.quizlet.quizletandroid",                // Quizlet
 
             // ── Productivity & note-taking ───────────────────────────────────
@@ -78,7 +78,9 @@ public final class AllowedAppsConfig {
      * Uses prefix matching so sub-packages of system apps also pass.
      */
     public static boolean isAllowed(String packageName) {
-        if (packageName == null) return true;
+        // FIX: Changed from 'return true' to 'return false'.
+        // If the package is null (detection lag), we do NOT treat it as an allowed app.
+        if (packageName == null) return false;
 
         // Exact match
         if (ALLOWED_PACKAGES.contains(packageName)) return true;
