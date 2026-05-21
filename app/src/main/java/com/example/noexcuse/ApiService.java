@@ -42,6 +42,27 @@ public interface ApiService {
     @POST("chat")
     Call<Map<String, Object>> chatWithAI(@Body Map<String, Object> requestBody);
 
+    @POST("study_helper")
+    Call<Map<String, Object>> studyHelper(@Body Map<String, Object> requestBody);
+
+    @GET("study_conversations/{uid}/{education_id}")
+    Call<Map<String, Object>> getStudyConversations(
+            @Path("uid") String uid,
+            @Path("education_id") int educationId
+    );
+
+    @GET("study_history/{uid}/{conversation_id}")
+    Call<Map<String, Object>> getStudyHistory(
+            @Path("uid") String uid,
+            @Path("conversation_id") String conversationId
+    );
+
+    @DELETE("study_conversations/{uid}/{conversation_id}")
+    Call<Map<String, Object>> deleteStudyConversation(
+            @Path("uid") String uid,
+            @Path("conversation_id") String conversationId
+    );
+
     @GET("chat_conversations/{uid}")
     Call<Map<String, Object>> getAiChatConversations(@Path("uid") String uid);
 

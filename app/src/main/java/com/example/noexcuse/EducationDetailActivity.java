@@ -87,6 +87,12 @@ public class EducationDetailActivity extends AppCompatActivity {
 
         AppViewModel viewModel = new ViewModelProvider(this).get(AppViewModel.class);
         btnBack.setOnClickListener(v -> finish());
+        btnStudyHelper.setOnClickListener(v -> {
+            drawerLayout.closeDrawer(GravityCompat.END);
+            Intent intent = new Intent(this, StudyHelperActivity.class);
+            intent.putExtra("EDU_ID", eduId);
+            startActivity(intent);
+        });
 
         Executors.newSingleThreadExecutor().execute(() -> {
             EducationTask edu = viewModel.getEducationById(eduId);

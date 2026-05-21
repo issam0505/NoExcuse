@@ -123,6 +123,7 @@
         <activity android:name=".QrScanActivity"          android:exported="false" />
         <activity android:name=".TaskDetailActivity"       android:exported="false" />
         <activity android:name=".EducationDetailActivity"  android:exported="false" />
+        <activity android:name=".StudyHelperActivity"      android:exported="false" />
         <activity android:name=".GymSetupActivity"         android:exported="false" />
         <activity android:name=".GymDetailActivity"        android:exported="false" />
         <activity android:name=".WeekPlanActivity"         android:exported="false" />
