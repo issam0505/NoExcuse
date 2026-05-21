@@ -41,8 +41,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -136,13 +138,13 @@ public class StudyHelperActivity extends AppCompatActivity implements TextToSpee
             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                 textToSpeech.setLanguage(Locale.FRENCH);
             }
-            selectProfessorVoice();
+            selectFemaleStudyVoice();
             textToSpeech.setSpeechRate(0.9f);
-            textToSpeech.setPitch(1.06f);
+            textToSpeech.setPitch(1.12f);
         }
     }
 
-    private void selectProfessorVoice() {
+    private void selectFemaleStudyVoice() {
         if (textToSpeech == null || textToSpeech.getVoices() == null) return;
 
         Voice bestVoice = null;
@@ -204,7 +206,7 @@ public class StudyHelperActivity extends AppCompatActivity implements TextToSpee
                 }
                 educationTask = task;
                 tvStudyContext.setText(task.moduleName + " - " + safeText(task.studyPlan, "No study plan"));
-                addAiMessage("Bonjour. Je suis ton professeur IA pour cette session. Pose-moi seulement des questions sur " + task.moduleName + ".");
+                addAiMessage("Bonjour. Je suis ta study helper IA pour cette session. Pose-moi seulement des questions sur " + task.moduleName + ".");
             });
         });
     }
@@ -246,7 +248,7 @@ public class StudyHelperActivity extends AppCompatActivity implements TextToSpee
         speechIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         speechIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
         speechIntent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
-        speechIntent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Ask your study professor");
+        speechIntent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Ask your study helper");
 
         speechRecognizer.setRecognitionListener(new RecognitionListener() {
             @Override public void onReadyForSpeech(Bundle params) { setListening(true); }
@@ -346,7 +348,7 @@ public class StudyHelperActivity extends AppCompatActivity implements TextToSpee
         setLoading(true);
 
         Map<String, Object> body = buildStudyRequestBody(message);
-        activeCall = apiService.studyHelper(body);
+        activeCall = apiService.chatWithAI(body);
         activeCall.enqueue(new Callback<Map<String, Object>>() {
             @Override
             public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
@@ -365,6 +367,7 @@ public class StudyHelperActivity extends AppCompatActivity implements TextToSpee
                 Object conversationId = response.body().get("conversation_id");
                 if (conversationId != null && !"null".equals(String.valueOf(conversationId))) {
                     currentConversationId = String.valueOf(conversationId);
+                    rememberStudyConversation(currentConversationId);
                 }
                 addAiMessage(reply);
                 if (shouldSpeakNextReply) {
@@ -397,11 +400,20 @@ public class StudyHelperActivity extends AppCompatActivity implements TextToSpee
 
         Map<String, Object> body = new HashMap<>();
         body.put("uid", getUserUid());
+        body.put("education_id", educationTask.id);
+        body.put("module_name", educationTask.moduleName);
+        body.put("study_plan", educationTask.studyPlan);
+        body.put("save_to_mongodb", true);
         if (currentConversationId != null && !currentConversationId.trim().isEmpty()) {
             body.put("conversation_id", currentConversationId);
         }
         body.put("message", message);
+        body.put("prompt", message);
+        body.put("question", message);
         body.put("education_task", education);
+        ArrayList<Map<String, Object>> educationTasks = new ArrayList<>();
+        educationTasks.add(education);
+        body.put("education_tasks", educationTasks);
         return body;
     }
 
@@ -460,7 +472,7 @@ public class StudyHelperActivity extends AppCompatActivity implements TextToSpee
         newConversation.setOnClickListener(v -> {
             currentConversationId = null;
             chatContainer.removeAllViews();
-            addAiMessage("Bonjour. Je suis ton professeur IA pour cette session. Pose-moi seulement des questions sur " + educationTask.moduleName + ".");
+            addAiMessage("Bonjour. Je suis ta study helper IA pour cette session. Pose-moi seulement des questions sur " + educationTask.moduleName + ".");
             Toast.makeText(this, "Nouvelle discussion", Toast.LENGTH_SHORT).show();
         });
         content.addView(newConversation);
@@ -491,7 +503,7 @@ public class StudyHelperActivity extends AppCompatActivity implements TextToSpee
     }
 
     private void loadStudyConversations(AlertDialog dialog, LinearLayout historyContainer) {
-        apiService.getStudyConversations(getUserUid(), educationTask.id).enqueue(new Callback<Map<String, Object>>() {
+        apiService.getAiChatConversations(getUserUid()).enqueue(new Callback<Map<String, Object>>() {
             @Override
             public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
                 historyContainer.removeAllViews();
@@ -502,20 +514,37 @@ public class StudyHelperActivity extends AppCompatActivity implements TextToSpee
 
                 Object raw = response.body().get("conversations");
                 if (!(raw instanceof java.util.List) || ((java.util.List<?>) raw).isEmpty()) {
+                    addHistoryStatus(historyContainer, "Aucune discussion enregistree pour le moment.");
+                    return;
+                }
+
+                Set<String> studyConversationIds = getStudyConversationIds();
+                if (studyConversationIds.isEmpty()) {
                     addHistoryStatus(historyContainer, "Aucune discussion d'etude pour ce module.");
                     return;
                 }
 
                 String currentDate = "";
+                boolean hasRows = false;
                 for (Object itemRaw : (java.util.List<?>) raw) {
                     if (!(itemRaw instanceof Map)) continue;
                     Map<?, ?> item = (Map<?, ?>) itemRaw;
+                    String conversationId = valueAsString(item.get("conversation_id"), "");
+                    if (conversationId.isEmpty()) {
+                        conversationId = valueAsString(item.get("id"), "");
+                    }
+                    if (!studyConversationIds.contains(conversationId)) continue;
+
                     String dateLabel = valueAsString(item.get("date_label"), "Sans date");
                     if (!dateLabel.equals(currentDate)) {
                         currentDate = dateLabel;
                         addDateHeader(historyContainer, dateLabel);
                     }
                     addStudyConversationRow(dialog, historyContainer, item);
+                    hasRows = true;
+                }
+                if (!hasRows) {
+                    addHistoryStatus(historyContainer, "Aucune discussion d'etude pour ce module.");
                 }
             }
 
@@ -529,7 +558,11 @@ public class StudyHelperActivity extends AppCompatActivity implements TextToSpee
 
     private void addStudyConversationRow(AlertDialog dialog, LinearLayout historyContainer, Map<?, ?> item) {
         String conversationId = valueAsString(item.get("conversation_id"), "");
+        if (conversationId.isEmpty()) {
+            conversationId = valueAsString(item.get("id"), "");
+        }
         if (conversationId.isEmpty()) return;
+        String selectedId = conversationId;
 
         String title = valueAsString(item.get("title"), "Discussion");
         String preview = valueAsString(item.get("preview"), "");
@@ -575,8 +608,8 @@ public class StudyHelperActivity extends AppCompatActivity implements TextToSpee
         delete.setPadding(dp(8), dp(8), dp(8), dp(8));
         row.addView(delete);
 
-        row.setOnClickListener(v -> openStudyConversation(dialog, conversationId));
-        delete.setOnClickListener(v -> confirmDeleteStudyConversation(dialog, historyContainer, conversationId));
+        row.setOnClickListener(v -> openStudyConversation(dialog, selectedId));
+        delete.setOnClickListener(v -> confirmDeleteStudyConversation(dialog, historyContainer, selectedId));
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -587,7 +620,7 @@ public class StudyHelperActivity extends AppCompatActivity implements TextToSpee
     }
 
     private void openStudyConversation(AlertDialog dialog, String conversationId) {
-        apiService.getStudyHistory(getUserUid(), conversationId).enqueue(new Callback<Map<String, Object>>() {
+        apiService.getAiChatHistory(getUserUid(), conversationId).enqueue(new Callback<Map<String, Object>>() {
             @Override
             public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
                 if (!response.isSuccessful() || response.body() == null) {
@@ -628,14 +661,15 @@ public class StudyHelperActivity extends AppCompatActivity implements TextToSpee
     }
 
     private void deleteStudyConversation(AlertDialog dialog, LinearLayout historyContainer, String conversationId) {
-        apiService.deleteStudyConversation(getUserUid(), conversationId).enqueue(new Callback<Map<String, Object>>() {
+        apiService.deleteAiChatConversation(getUserUid(), conversationId).enqueue(new Callback<Map<String, Object>>() {
             @Override
             public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
                 if (conversationId.equals(currentConversationId)) {
                     currentConversationId = null;
                     chatContainer.removeAllViews();
-                    addAiMessage("Bonjour. Je suis ton professeur IA pour cette session. Pose-moi seulement des questions sur " + educationTask.moduleName + ".");
+                    addAiMessage("Bonjour. Je suis ta study helper IA pour cette session. Pose-moi seulement des questions sur " + educationTask.moduleName + ".");
                 }
+                forgetStudyConversation(conversationId);
                 Toast.makeText(StudyHelperActivity.this, "Discussion supprimee", Toast.LENGTH_SHORT).show();
                 historyContainer.removeAllViews();
                 addHistoryStatus(historyContainer, "Chargement des discussions...");
@@ -733,6 +767,35 @@ public class StudyHelperActivity extends AppCompatActivity implements TextToSpee
     private String getUserUid() {
         String uid = getSharedPreferences("UserPrefs", MODE_PRIVATE).getString("uid", null);
         return uid != null && !uid.trim().isEmpty() ? uid : "local_user";
+    }
+
+    private String studyConversationPrefsKey() {
+        int id = educationTask != null ? educationTask.id : getIntent().getIntExtra("EDU_ID", -1);
+        return "study_conversation_ids_" + id;
+    }
+
+    private Set<String> getStudyConversationIds() {
+        return new HashSet<>(getSharedPreferences("StudyHelperPrefs", MODE_PRIVATE)
+                .getStringSet(studyConversationPrefsKey(), new HashSet<>()));
+    }
+
+    private void rememberStudyConversation(String conversationId) {
+        if (conversationId == null || conversationId.trim().isEmpty()) return;
+        Set<String> ids = getStudyConversationIds();
+        ids.add(conversationId);
+        getSharedPreferences("StudyHelperPrefs", MODE_PRIVATE)
+                .edit()
+                .putStringSet(studyConversationPrefsKey(), ids)
+                .apply();
+    }
+
+    private void forgetStudyConversation(String conversationId) {
+        Set<String> ids = getStudyConversationIds();
+        if (!ids.remove(conversationId)) return;
+        getSharedPreferences("StudyHelperPrefs", MODE_PRIVATE)
+                .edit()
+                .putStringSet(studyConversationPrefsKey(), ids)
+                .apply();
     }
 
     private String safeText(String text, String fallback) {

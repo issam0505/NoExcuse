@@ -94,19 +94,20 @@ public class ProfessorAvatarView extends View {
         float lift = pulse * (state == STATE_IDLE ? size * 0.008f : size * 0.012f);
 
         drawGlow(canvas, cx, cy + lift, size);
-        drawBody(canvas, cx, cy + size * 0.27f + lift, size);
-        drawNeck(canvas, cx, cy + size * 0.08f + lift, size);
-        drawHead(canvas, cx, cy - size * 0.12f + lift, size);
-        drawHair(canvas, cx, cy - size * 0.12f + lift, size);
-        drawProfessorCap(canvas, cx, cy - size * 0.12f + lift, size);
-        drawFace(canvas, cx, cy - size * 0.12f + lift, size);
+        drawBody(canvas, cx, cy + size * 0.22f + lift, size);
+        drawNeck(canvas, cx, cy + size * 0.04f + lift, size);
+        drawHairBack(canvas, cx, cy - size * 0.18f + lift, size);
+        drawEars(canvas, cx, cy - size * 0.18f + lift, size);
+        drawHead(canvas, cx, cy - size * 0.18f + lift, size);
+        drawHair(canvas, cx, cy - size * 0.18f + lift, size);
+        drawFace(canvas, cx, cy - size * 0.18f + lift, size, pulse);
     }
 
     private void drawGlow(Canvas canvas, float cx, float cy, float size) {
         paint.setShader(new RadialGradient(
                 cx, cy, size * 0.54f,
-                new int[]{Color.argb(82, 33, 150, 243), Color.argb(28, 76, 175, 80), Color.TRANSPARENT},
-                new float[]{0f, 0.56f, 1f},
+                new int[]{Color.argb(90, 76, 175, 80), Color.argb(30, 33, 150, 243), Color.TRANSPARENT},
+                new float[]{0f, 0.55f, 1f},
                 Shader.TileMode.CLAMP
         ));
         canvas.drawCircle(cx, cy, size * 0.54f, paint);
@@ -114,18 +115,25 @@ public class ProfessorAvatarView extends View {
     }
 
     private void drawBody(Canvas canvas, float cx, float cy, float size) {
-        float bodyW = size * 0.66f;
-        float bodyH = size * 0.44f;
+        float bodyW = size * 0.78f;
+        float bodyH = size * 0.48f;
 
-        rect.set(cx - bodyW / 2f, cy - bodyH * 0.35f, cx + bodyW / 2f, cy + bodyH * 0.55f);
+        path.reset();
+        path.moveTo(cx - bodyW * 0.47f, cy - bodyH * 0.08f);
+        path.cubicTo(cx - bodyW * 0.34f, cy - bodyH * 0.32f, cx - bodyW * 0.15f, cy - bodyH * 0.36f, cx, cy - bodyH * 0.32f);
+        path.cubicTo(cx + bodyW * 0.15f, cy - bodyH * 0.36f, cx + bodyW * 0.34f, cy - bodyH * 0.32f, cx + bodyW * 0.47f, cy - bodyH * 0.08f);
+        path.lineTo(cx + bodyW * 0.34f, cy + bodyH * 0.48f);
+        path.lineTo(cx - bodyW * 0.34f, cy + bodyH * 0.48f);
+        path.close();
         paint.setShader(new LinearGradient(
-                rect.left, rect.top, rect.right, rect.bottom,
-                new int[]{Color.rgb(36, 49, 64), Color.rgb(12, 18, 25)},
+                cx - bodyW * 0.42f, cy - bodyH * 0.34f,
+                cx + bodyW * 0.36f, cy + bodyH * 0.5f,
+                new int[]{Color.rgb(42, 42, 42), Color.rgb(8, 10, 12), Color.rgb(0, 0, 0)},
                 null,
                 Shader.TileMode.CLAMP
         ));
-        paint.setShadowLayer(18f, 0f, 12f, Color.argb(130, 0, 0, 0));
-        canvas.drawRoundRect(rect, size * 0.06f, size * 0.06f, paint);
+        paint.setShadowLayer(22f, 0f, 15f, Color.argb(150, 0, 0, 0));
+        canvas.drawPath(path, paint);
         paint.clearShadowLayer();
         paint.setShader(null);
 
@@ -137,7 +145,7 @@ public class ProfessorAvatarView extends View {
         path.close();
         canvas.drawPath(path, paint);
 
-        paint.setColor(Color.rgb(33, 150, 243));
+        paint.setColor(Color.rgb(76, 175, 80));
         path.reset();
         path.moveTo(cx - size * 0.025f, cy - bodyH * 0.18f);
         path.lineTo(cx + size * 0.025f, cy - bodyH * 0.18f);
@@ -149,11 +157,28 @@ public class ProfessorAvatarView extends View {
     }
 
     private void drawNeck(Canvas canvas, float cx, float cy, float size) {
-        float neckW = size * 0.16f;
-        float neckH = size * 0.16f;
+        float neckW = size * 0.18f;
+        float neckH = size * 0.17f;
         rect.set(cx - neckW / 2f, cy - neckH / 2f, cx + neckW / 2f, cy + neckH / 2f);
-        paint.setColor(Color.rgb(218, 159, 116));
-        canvas.drawRoundRect(rect, size * 0.03f, size * 0.03f, paint);
+        paint.setShader(new LinearGradient(
+                rect.left, rect.top, rect.right, rect.bottom,
+                new int[]{Color.rgb(226, 170, 126), Color.rgb(145, 82, 55)},
+                null,
+                Shader.TileMode.CLAMP
+        ));
+        canvas.drawRoundRect(rect, neckW * 0.25f, neckW * 0.25f, paint);
+        paint.setShader(null);
+    }
+
+    private void drawEars(Canvas canvas, float cx, float cy, float size) {
+        float earW = size * 0.052f;
+        float earH = size * 0.098f;
+        float headW = size * 0.34f;
+        paint.setColor(Color.rgb(202, 126, 86));
+        rect.set(cx - headW * 0.55f, cy - earH * 0.08f, cx - headW * 0.55f + earW, cy + earH);
+        canvas.drawOval(rect, paint);
+        rect.set(cx + headW * 0.55f - earW, cy - earH * 0.08f, cx + headW * 0.55f, cy + earH);
+        canvas.drawOval(rect, paint);
     }
 
     private void drawHead(Canvas canvas, float cx, float cy, float size) {
@@ -163,75 +188,85 @@ public class ProfessorAvatarView extends View {
         rect.set(cx - headW / 2f, cy - headH / 2f, cx + headW / 2f, cy + headH / 2f + jawDrop);
         paint.setShader(new LinearGradient(
                 rect.left, rect.top, rect.right, rect.bottom,
-                new int[]{Color.rgb(255, 223, 188), Color.rgb(218, 143, 96), Color.rgb(135, 75, 55)},
+                new int[]{Color.rgb(255, 221, 185), Color.rgb(224, 148, 96), Color.rgb(121, 63, 46)},
                 null,
                 Shader.TileMode.CLAMP
         ));
+        paint.setShadowLayer(18f, 0f, 10f, Color.argb(135, 0, 0, 0));
         canvas.drawOval(rect, paint);
+        paint.clearShadowLayer();
+        paint.setShader(null);
+
+        paint.setColor(Color.argb(70, 255, 255, 255));
+        canvas.drawOval(cx - headW * 0.28f, cy - headH * 0.25f, cx + headW * 0.08f, cy + headH * 0.08f, paint);
+    }
+
+    private void drawHairBack(Canvas canvas, float cx, float cy, float size) {
+        float hairW = size * 0.48f;
+        float hairH = size * 0.58f;
+        paint.setShader(new LinearGradient(
+                cx - hairW * 0.35f, cy - hairH * 0.55f,
+                cx + hairW * 0.35f, cy + hairH * 0.45f,
+                new int[]{Color.rgb(54, 36, 27), Color.rgb(18, 12, 10)},
+                null,
+                Shader.TileMode.CLAMP
+        ));
+        path.reset();
+        path.moveTo(cx - hairW * 0.44f, cy + hairH * 0.46f);
+        path.cubicTo(cx - hairW * 0.62f, cy - hairH * 0.05f, cx - hairW * 0.42f, cy - hairH * 0.62f, cx, cy - hairH * 0.64f);
+        path.cubicTo(cx + hairW * 0.42f, cy - hairH * 0.62f, cx + hairW * 0.62f, cy - hairH * 0.05f, cx + hairW * 0.44f, cy + hairH * 0.46f);
+        path.cubicTo(cx + hairW * 0.16f, cy + hairH * 0.34f, cx - hairW * 0.16f, cy + hairH * 0.34f, cx - hairW * 0.44f, cy + hairH * 0.46f);
+        path.close();
+        canvas.drawPath(path, paint);
         paint.setShader(null);
     }
 
     private void drawHair(Canvas canvas, float cx, float cy, float size) {
-        float headW = size * 0.38f;
-        float headH = size * 0.43f;
-        paint.setColor(Color.rgb(62, 45, 38));
+        float headW = size * 0.36f;
+        float headH = size * 0.42f;
         path.reset();
-        path.moveTo(cx - headW * 0.5f, cy - headH * 0.03f);
-        path.cubicTo(cx - headW * 0.56f, cy - headH * 0.5f, cx - headW * 0.18f, cy - headH * 0.64f, cx + headW * 0.2f, cy - headH * 0.54f);
-        path.cubicTo(cx + headW * 0.54f, cy - headH * 0.44f, cx + headW * 0.54f, cy - headH * 0.08f, cx + headW * 0.45f, cy + headH * 0.42f);
-        path.cubicTo(cx + headW * 0.2f, cy + headH * 0.22f, cx - headW * 0.18f, cy + headH * 0.22f, cx - headW * 0.45f, cy + headH * 0.42f);
-        path.cubicTo(cx - headW * 0.52f, cy + headH * 0.12f, cx - headW * 0.5f, cy + headH * 0.02f, cx - headW * 0.5f, cy - headH * 0.03f);
+        path.moveTo(cx - headW * 0.48f, cy - headH * 0.12f);
+        path.cubicTo(cx - headW * 0.52f, cy - headH * 0.48f, cx - headW * 0.18f, cy - headH * 0.63f, cx + headW * 0.16f, cy - headH * 0.55f);
+        path.cubicTo(cx + headW * 0.48f, cy - headH * 0.48f, cx + headW * 0.52f, cy - headH * 0.16f, cx + headW * 0.36f, cy + headH * 0.02f);
+        path.cubicTo(cx + headW * 0.18f, cy - headH * 0.06f, cx - headW * 0.08f, cy - headH * 0.08f, cx - headW * 0.48f, cy - headH * 0.12f);
         path.close();
+        paint.setShader(new LinearGradient(
+                cx - headW * 0.4f, cy - headH * 0.58f,
+                cx + headW * 0.35f, cy + headH * 0.06f,
+                new int[]{Color.rgb(54, 36, 27), Color.rgb(18, 12, 10)},
+                null,
+                Shader.TileMode.CLAMP
+        ));
         canvas.drawPath(path, paint);
+        paint.setShader(null);
     }
 
-    private void drawProfessorCap(Canvas canvas, float cx, float cy, float size) {
-        float y = cy - size * 0.27f;
-        paint.setColor(Color.rgb(22, 31, 42));
-        path.reset();
-        path.moveTo(cx - size * 0.22f, y);
-        path.lineTo(cx, y - size * 0.085f);
-        path.lineTo(cx + size * 0.22f, y);
-        path.lineTo(cx, y + size * 0.075f);
-        path.close();
-        canvas.drawPath(path, paint);
-
-        rect.set(cx - size * 0.105f, y + size * 0.018f, cx + size * 0.105f, y + size * 0.075f);
-        canvas.drawRoundRect(rect, size * 0.016f, size * 0.016f, paint);
-
-        paint.setColor(Color.rgb(33, 150, 243));
-        paint.setStrokeWidth(size * 0.006f);
-        canvas.drawLine(cx + size * 0.1f, y + size * 0.012f, cx + size * 0.16f, y + size * 0.12f, paint);
-        canvas.drawCircle(cx + size * 0.16f, y + size * 0.125f, size * 0.012f, paint);
-    }
-
-    private void drawFace(Canvas canvas, float cx, float cy, float size) {
+    private void drawFace(Canvas canvas, float cx, float cy, float size, float pulse) {
         float energy = getSpeechEnergy();
-        float eyeY = cy - size * 0.055f;
-        float eyeOffset = size * 0.062f;
-        float eyeR = size * 0.012f;
+        float eyeY = cy - size * 0.05f;
+        float eyeOffset = size * 0.065f;
+        float eyeR = size * (state == STATE_THINKING ? 0.014f + (pulse + 1f) * 0.003f : 0.015f);
         float look = getEyeLook(size);
         float blink = blinkPulse(0.18f, 0.024f) + (state == STATE_SPEAKING ? blinkPulse(0.72f, 0.025f) : 0f);
-        float eyeH = Math.max(size * 0.002f, eyeR * (1f - blink * 0.82f));
+        float eyeH = Math.max(size * 0.002f, eyeR * (1f - blink * 0.86f));
 
-        paint.setStyle(Paint.Style.STROKE);
-        paint.setStrokeWidth(size * 0.009f);
-        paint.setColor(Color.rgb(42, 49, 56));
-        canvas.drawCircle(cx - eyeOffset, eyeY, size * 0.034f, paint);
-        canvas.drawCircle(cx + eyeOffset, eyeY, size * 0.034f, paint);
-        canvas.drawLine(cx - size * 0.028f, eyeY, cx + size * 0.028f, eyeY, paint);
-        paint.setStyle(Paint.Style.FILL);
-
-        paint.setColor(Color.rgb(33, 25, 20));
+        paint.setColor(Color.rgb(35, 20, 14));
         rect.set(cx - eyeOffset - eyeR + look, eyeY - eyeH, cx - eyeOffset + eyeR + look, eyeY + eyeH);
         canvas.drawOval(rect, paint);
         rect.set(cx + eyeOffset - eyeR + look, eyeY - eyeH, cx + eyeOffset + eyeR + look, eyeY + eyeH);
         canvas.drawOval(rect, paint);
 
-        paint.setColor(Color.rgb(90, 90, 86));
+        paint.setColor(Color.argb(190, 255, 255, 255));
+        if (blink < 0.72f) {
+            canvas.drawCircle(cx - eyeOffset + look + eyeR * 0.2f, eyeY - eyeR * 0.25f, eyeR * 0.28f, paint);
+            canvas.drawCircle(cx + eyeOffset + look + eyeR * 0.2f, eyeY - eyeR * 0.25f, eyeR * 0.28f, paint);
+        }
+
+        paint.setColor(Color.argb(105, 95, 49, 35));
         paint.setStrokeWidth(size * 0.008f);
-        canvas.drawLine(cx - eyeOffset - size * 0.03f, eyeY - size * 0.043f, cx - eyeOffset + size * 0.026f, eyeY - size * 0.047f, paint);
-        canvas.drawLine(cx + eyeOffset - size * 0.026f, eyeY - size * 0.047f, cx + eyeOffset + size * 0.03f, eyeY - size * 0.043f, paint);
+        float browLift = state == STATE_SPEAKING ? energy * size * 0.006f : 0f;
+        canvas.drawLine(cx - eyeOffset - size * 0.03f, eyeY - size * 0.035f - browLift, cx - eyeOffset + size * 0.026f, eyeY - size * 0.043f - browLift * 0.4f, paint);
+        canvas.drawLine(cx + eyeOffset - size * 0.026f, eyeY - size * 0.043f - browLift * 0.4f, cx + eyeOffset + size * 0.03f, eyeY - size * 0.035f - browLift, paint);
 
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(size * 0.007f);
@@ -242,11 +277,11 @@ public class ProfessorAvatarView extends View {
         drawMouth(canvas, cx, cy + energy * size * 0.004f, size, energy);
 
         if (state == STATE_THINKING) {
-            paint.setColor(Color.argb(220, 33, 150, 243));
-            float y = cy + size * 0.23f;
+            paint.setColor(Color.argb(210, 76, 175, 80));
+            float y = cy + size * 0.24f;
             for (int i = 0; i < 3; i++) {
                 float r = size * (0.008f + 0.007f * (float) Math.max(0, Math.sin((phase + i * 0.18f) * Math.PI * 2f)));
-                canvas.drawCircle(cx + (i - 1) * size * 0.045f, y, r, paint);
+                canvas.drawCircle(cx + (i - 1) * size * 0.05f, y, r, paint);
             }
         }
     }
