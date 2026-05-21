@@ -55,7 +55,7 @@ public class AiAvatarView extends View {
         animator = ValueAnimator.ofFloat(0f, 1f);
         animator.setRepeatCount(ValueAnimator.INFINITE);
         animator.setInterpolator(new LinearInterpolator());
-        animator.setDuration(1200L);
+        animator.setDuration(1000L);
         animator.addUpdateListener(animation -> {
             phase = (float) animation.getAnimatedValue();
             invalidate();
@@ -65,7 +65,7 @@ public class AiAvatarView extends View {
     public void setAvatarState(int newState) {
         state = newState;
         if (animator != null) {
-            animator.setDuration(state == STATE_SPEAKING ? 820L : state == STATE_THINKING ? 900L : 1800L);
+            animator.setDuration(state == STATE_SPEAKING ? 620L : state == STATE_THINKING ? 900L : 1800L);
             if (!animator.isStarted()) {
                 animator.start();
             }
@@ -290,7 +290,7 @@ public class AiAvatarView extends View {
     private void drawHead(Canvas canvas, float cx, float cy, float size, float pulse) {
         float headW = size * 0.34f;
         float headH = size * 0.42f;
-        float jawDrop = getSpeechEnergy() * size * 0.014f;
+        float jawDrop = getSpeechEnergy() * size * 0.004f;
         rect.set(cx - headW / 2f, cy - headH / 2f, cx + headW / 2f, cy + headH / 2f + jawDrop);
         paint.setShader(new LinearGradient(
                 rect.left, rect.top, rect.right, rect.bottom,
@@ -334,10 +334,8 @@ public class AiAvatarView extends View {
     private void drawFace(Canvas canvas, float cx, float cy, float size, float pulse) {
         float speechEnergy = getSpeechEnergy();
         float blink = getBlinkAmount();
-        float eyeLook = state == STATE_SPEAKING
-                ? (float) Math.sin(phase * Math.PI * 2.6f) * size * 0.006f
-                : (float) Math.sin(phase * Math.PI * 2f) * size * 0.0025f;
-        float jawDrop = speechEnergy * size * 0.014f;
+        float eyeLook = getEyeLookOffset(size);
+        float jawDrop = speechEnergy * size * 0.004f;
         float eyeY = cy - size * 0.05f;
         float eyeOffset = size * 0.065f;
         float eyeR = size * (state == STATE_THINKING ? 0.014f + (pulse + 1f) * 0.003f : 0.015f);
@@ -357,7 +355,7 @@ public class AiAvatarView extends View {
 
         paint.setColor(Color.argb(105, 95, 49, 35));
         paint.setStrokeWidth(size * 0.008f);
-        float browLift = state == STATE_SPEAKING ? speechEnergy * size * 0.012f : 0f;
+        float browLift = state == STATE_SPEAKING ? speechEnergy * size * 0.006f : 0f;
         canvas.drawLine(cx - eyeOffset - size * 0.03f, eyeY - size * 0.035f - browLift, cx - eyeOffset + size * 0.026f, eyeY - size * 0.043f - browLift * 0.4f, paint);
         canvas.drawLine(cx + eyeOffset - size * 0.026f, eyeY - size * 0.043f - browLift * 0.4f, cx + eyeOffset + size * 0.03f, eyeY - size * 0.035f - browLift, paint);
 
@@ -381,8 +379,8 @@ public class AiAvatarView extends View {
     }
 
     private void drawMouth(Canvas canvas, float cx, float cy, float size, float speechEnergy) {
-        float mouthW = size * (state == STATE_SPEAKING ? 0.11f + speechEnergy * 0.025f : 0.104f);
-        float open = state == STATE_SPEAKING ? size * (0.018f + speechEnergy * 0.058f) : size * 0.004f;
+        float mouthW = size * (state == STATE_SPEAKING ? 0.104f + speechEnergy * 0.006f : 0.104f);
+        float open = state == STATE_SPEAKING ? size * (0.014f + speechEnergy * 0.042f) : size * 0.004f;
         float mouthY = cy + size * 0.112f;
 
         paint.setColor(Color.rgb(116, 44, 45));
@@ -394,16 +392,16 @@ public class AiAvatarView extends View {
         canvas.drawPath(path, paint);
 
         paint.setColor(Color.rgb(65, 18, 22));
-        rect.set(cx - mouthW * 0.42f, mouthY - open * 0.16f, cx + mouthW * 0.42f, mouthY + open);
+        rect.set(cx - mouthW * 0.32f, mouthY - open * 0.12f, cx + mouthW * 0.32f, mouthY + open);
         canvas.drawOval(rect, paint);
 
         if (state == STATE_SPEAKING) {
             paint.setColor(Color.rgb(245, 238, 224));
-            rect.set(cx - mouthW * 0.31f, mouthY - open * 0.1f, cx + mouthW * 0.31f, mouthY + open * 0.18f);
+            rect.set(cx - mouthW * 0.24f, mouthY - open * 0.08f, cx + mouthW * 0.24f, mouthY + open * 0.12f);
             canvas.drawArc(rect, 0f, -180f, true, paint);
 
             paint.setColor(Color.rgb(170, 75, 76));
-            rect.set(cx - mouthW * 0.25f, mouthY + open * 0.42f, cx + mouthW * 0.25f, mouthY + open * 1.06f);
+            rect.set(cx - mouthW * 0.18f, mouthY + open * 0.46f, cx + mouthW * 0.18f, mouthY + open * 0.92f);
             canvas.drawOval(rect, paint);
         } else {
             paint.setColor(Color.rgb(226, 119, 112));
@@ -414,13 +412,13 @@ public class AiAvatarView extends View {
 
     private float getSpeechEnergy() {
         if (state != STATE_SPEAKING) {
-            lastMouthOpen *= 0.7f;
+            lastMouthOpen *= 0.55f;
             return lastMouthOpen;
         }
-        float fast = (float) Math.abs(Math.sin(phase * Math.PI * 8f));
-        float medium = (float) Math.abs(Math.sin((phase + 0.19f) * Math.PI * 5f));
-        float slow = (float) Math.abs(Math.sin((phase + 0.33f) * Math.PI * 2f));
-        lastMouthOpen = Math.min(1f, 0.18f + fast * 0.52f + medium * 0.22f + slow * 0.12f);
+        float fast = (float) Math.abs(Math.sin(phase * Math.PI * 10f));
+        float medium = (float) Math.abs(Math.sin((phase + 0.19f) * Math.PI * 6f));
+        float slow = (float) Math.abs(Math.sin((phase + 0.33f) * Math.PI * 3f));
+        lastMouthOpen = Math.min(1f, 0.12f + fast * 0.50f + medium * 0.22f + slow * 0.10f);
         return lastMouthOpen;
     }
 
@@ -429,6 +427,26 @@ public class AiAvatarView extends View {
             return blinkPulse(0.12f, 0.035f) + blinkPulse(0.68f, 0.028f);
         }
         return blinkPulse(0.18f, 0.025f);
+    }
+
+    private float getEyeLookOffset(float size) {
+        if (state == STATE_SPEAKING) {
+            return (float) Math.sin(phase * Math.PI * 2.6f) * size * 0.006f;
+        }
+
+        float look = 0f;
+        look += lookPulse(0.28f, 0.055f, -1f);
+        look += lookPulse(0.62f, 0.06f, 1f);
+        return look * size * 0.012f;
+    }
+
+    private float lookPulse(float center, float width, float direction) {
+        float distance = Math.abs(phase - center);
+        distance = Math.min(distance, 1f - distance);
+        if (distance > width) {
+            return 0f;
+        }
+        return direction * (1f - (distance / width));
     }
 
     private float blinkPulse(float center, float width) {

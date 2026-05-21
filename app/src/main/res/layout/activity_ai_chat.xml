@@ -42,9 +42,28 @@
         android:textSize="20sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="@id/btnBackAi"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/btnHistoryAi"
+        app:layout_constraintStart_toEndOf="@id/btnBackAi"
         app:layout_constraintTop_toTopOf="@id/btnBackAi" />
+
+    <FrameLayout
+        android:id="@+id/btnHistoryAi"
+        android:layout_width="38dp"
+        android:layout_height="38dp"
+        android:background="@drawable/bg_circle_dark"
+        android:clickable="true"
+        android:focusable="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="center"
+            android:contentDescription="Chat history"
+            android:src="@drawable/menu_24px"
+            app:tint="#FFFFFF" />
+    </FrameLayout>
 
     <com.example.noexcuse.AiAvatarView
         android:id="@+id/avatarView"

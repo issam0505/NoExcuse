@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
@@ -40,5 +41,20 @@ public interface ApiService {
     );
     @POST("chat")
     Call<Map<String, Object>> chatWithAI(@Body Map<String, Object> requestBody);
+
+    @GET("chat_conversations/{uid}")
+    Call<Map<String, Object>> getAiChatConversations(@Path("uid") String uid);
+
+    @GET("chat_history/{uid}/{conversation_id}")
+    Call<Map<String, Object>> getAiChatHistory(
+            @Path("uid") String uid,
+            @Path("conversation_id") String conversationId
+    );
+
+    @DELETE("chat_conversations/{uid}/{conversation_id}")
+    Call<Map<String, Object>> deleteAiChatConversation(
+            @Path("uid") String uid,
+            @Path("conversation_id") String conversationId
+    );
 
 }

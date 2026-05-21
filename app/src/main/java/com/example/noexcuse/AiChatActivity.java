@@ -1,6 +1,7 @@
 package com.example.noexcuse;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -80,6 +81,7 @@ public class AiChatActivity extends AppCompatActivity implements TextToSpeech.On
     private final ExecutorService dbExecutor = Executors.newSingleThreadExecutor();
     private ActivityResultLauncher<String> audioPermissionLauncher;
     private Call<Map<String, Object>> activeCall;
+    private String currentConversationId = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,6 +89,7 @@ public class AiChatActivity extends AppCompatActivity implements TextToSpeech.On
         setContentView(R.layout.activity_ai_chat);
 
         FrameLayout btnBack = findViewById(R.id.btnBackAi);
+        FrameLayout btnHistory = findViewById(R.id.btnHistoryAi);
         avatarView = findViewById(R.id.avatarView);
         chatContainer = findViewById(R.id.chatContainer);
         scrollChat = findViewById(R.id.scrollChat);
@@ -110,10 +113,11 @@ public class AiChatActivity extends AppCompatActivity implements TextToSpeech.On
         setupSpeechRecognizer();
 
         btnBack.setOnClickListener(v -> finish());
-        btnSend.setOnClickListener(v -> sendMessage(false));
+        btnHistory.setOnClickListener(v -> showChatHistory());
+        btnSend.setOnClickListener(v -> sendMessage(true));
         btnMic.setOnClickListener(v -> requestVoiceInput());
 
-        addAiMessage("Bonjour ! Je suis votre assistant IA général. Posez-moi votre question et je vous répondrai.");
+        addAiMessage("Bonjour ! Je suis votre assistant IA general. Posez-moi votre question et je vous repondrai.");
     }
 
     @Override
@@ -205,6 +209,11 @@ public class AiChatActivity extends AppCompatActivity implements TextToSpeech.On
 
             @Override
             public void onDone(String utteranceId) {
+                handler.post(() -> avatarView.setAvatarState(AiAvatarView.STATE_IDLE));
+            }
+
+            @Override
+            public void onStop(String utteranceId, boolean interrupted) {
                 handler.post(() -> avatarView.setAvatarState(AiAvatarView.STATE_IDLE));
             }
 
@@ -371,6 +380,10 @@ public class AiChatActivity extends AppCompatActivity implements TextToSpeech.On
                 if (reply.isEmpty()) {
                     reply = "I received the response, but could not read the AI message.";
                 }
+                Object conversationId = response.body().get("conversation_id");
+                if (conversationId != null && !"null".equals(String.valueOf(conversationId))) {
+                    currentConversationId = String.valueOf(conversationId);
+                }
                 addAiMessage(reply);
                 if (shouldSpeakNextReply) {
                     speakAiReply(reply);
@@ -397,6 +410,10 @@ public class AiChatActivity extends AppCompatActivity implements TextToSpeech.On
         long endOfDay = WeekUtils.getEndOfToday();
 
         Map<String, Object> body = new HashMap<>();
+        body.put("uid", getUserUid());
+        if (currentConversationId != null && !currentConversationId.trim().isEmpty()) {
+            body.put("conversation_id", currentConversationId);
+        }
         body.put("message", message);
         body.put("prompt", message);
         body.put("question", message);
@@ -409,6 +426,11 @@ public class AiChatActivity extends AppCompatActivity implements TextToSpeech.On
                 + ", gym=" + ((List<?>) body.get("gym_plans")).size()
                 + ", sleep=" + (body.get("sleep_settings") != null));
         return body;
+    }
+
+    private String getUserUid() {
+        String uid = getSharedPreferences("UserPrefs", MODE_PRIVATE).getString("uid", null);
+        return uid != null && !uid.trim().isEmpty() ? uid : "local_user";
     }
 
     private List<Map<String, Object>> buildDailyTasks(List<DailyTask> tasks) {
@@ -540,6 +562,262 @@ public class AiChatActivity extends AppCompatActivity implements TextToSpeech.On
         if (!loading || !isListening) {
             avatarView.setAvatarState(loading ? AiAvatarView.STATE_THINKING : AiAvatarView.STATE_IDLE);
         }
+    }
+
+    private void showChatHistory() {
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(dp(4), dp(8), dp(4), 0);
+
+        TextView newConversation = buildActionText("Nouvelle discussion");
+        newConversation.setOnClickListener(v -> {
+            currentConversationId = null;
+            chatContainer.removeAllViews();
+            addAiMessage("Bonjour ! Je suis votre assistant IA general. Posez-moi votre question et je vous repondrai.");
+            Toast.makeText(this, "Nouvelle discussion", Toast.LENGTH_SHORT).show();
+        });
+        content.addView(newConversation);
+
+        ScrollView historyScroll = new ScrollView(this);
+        historyScroll.setFillViewport(false);
+        historyScroll.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
+
+        LinearLayout historyContainer = new LinearLayout(this);
+        historyContainer.setOrientation(LinearLayout.VERTICAL);
+        historyContainer.setPadding(0, dp(8), 0, dp(8));
+        historyScroll.addView(historyContainer, new ScrollView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+
+        content.addView(historyScroll, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                dp(430)
+        ));
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Discussions")
+                .setView(content)
+                .setPositiveButton("Fermer", null)
+                .create();
+        dialog.show();
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Color.rgb(76, 175, 80));
+
+        addHistoryStatus(historyContainer, "Chargement des discussions...");
+        loadConversations(dialog, historyContainer);
+    }
+
+    private void loadConversations(AlertDialog dialog, LinearLayout historyContainer) {
+        apiService.getAiChatConversations(getUserUid()).enqueue(new Callback<Map<String, Object>>() {
+            @Override
+            public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
+                historyContainer.removeAllViews();
+                if (!response.isSuccessful() || response.body() == null) {
+                    addHistoryStatus(historyContainer, "Impossible de charger les discussions.");
+                    return;
+                }
+
+                Object rawConversations = response.body().get("conversations");
+                if (!(rawConversations instanceof List) || ((List<?>) rawConversations).isEmpty()) {
+                    addHistoryStatus(historyContainer, "Aucune discussion enregistree pour le moment.");
+                    return;
+                }
+
+                String currentDateLabel = "";
+                for (Object rawItem : (List<?>) rawConversations) {
+                    if (!(rawItem instanceof Map)) continue;
+                    Map<?, ?> item = (Map<?, ?>) rawItem;
+                    String dateLabel = valueAsString(item.get("date_label"), "Sans date");
+                    if (!dateLabel.equals(currentDateLabel)) {
+                        currentDateLabel = dateLabel;
+                        addDateHeader(historyContainer, dateLabel);
+                    }
+                    addConversationRow(dialog, historyContainer, item);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Map<String, Object>> call, Throwable t) {
+                historyContainer.removeAllViews();
+                addHistoryStatus(historyContainer, "Erreur reseau pendant le chargement.");
+            }
+        });
+    }
+
+    private void addConversationRow(AlertDialog dialog, LinearLayout historyContainer, Map<?, ?> item) {
+        String conversationId = valueAsString(item.get("conversation_id"), "");
+        if (conversationId.isEmpty()) {
+            conversationId = valueAsString(item.get("id"), "");
+        }
+        if (conversationId.isEmpty()) return;
+
+        String title = valueAsString(item.get("title"), "Discussion");
+        String preview = valueAsString(item.get("preview"), "");
+        String time = valueAsString(item.get("updated_time"), "");
+        String count = valueAsString(item.get("message_count"), "0");
+        String selectedId = conversationId;
+
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(dp(10), dp(9), dp(8), dp(9));
+
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(dp(12));
+        bg.setColor(selectedId.equals(currentConversationId) ? Color.rgb(40, 70, 42) : Color.rgb(28, 28, 28));
+        bg.setStroke(dp(1), Color.rgb(58, 58, 58));
+        row.setBackground(bg);
+
+        LinearLayout texts = new LinearLayout(this);
+        texts.setOrientation(LinearLayout.VERTICAL);
+        texts.setPadding(0, 0, dp(8), 0);
+
+        TextView titleView = new TextView(this);
+        titleView.setText(time.isEmpty() ? title : title + "  -  " + time);
+        titleView.setTextColor(Color.WHITE);
+        titleView.setTextSize(15f);
+        titleView.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        titleView.setSingleLine(true);
+
+        TextView previewView = new TextView(this);
+        previewView.setText((preview.isEmpty() ? "Aucun apercu" : preview) + "  (" + count + ")");
+        previewView.setTextColor(Color.rgb(170, 170, 170));
+        previewView.setTextSize(13f);
+        previewView.setMaxLines(2);
+
+        texts.addView(titleView);
+        texts.addView(previewView);
+        row.addView(texts, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        TextView delete = new TextView(this);
+        delete.setText("Supprimer");
+        delete.setTextColor(Color.rgb(239, 83, 80));
+        delete.setTextSize(13f);
+        delete.setPadding(dp(8), dp(8), dp(8), dp(8));
+        row.addView(delete);
+
+        row.setOnClickListener(v -> openConversation(dialog, selectedId));
+        delete.setOnClickListener(v -> confirmDeleteConversation(dialog, historyContainer, selectedId));
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        params.setMargins(0, 0, 0, dp(8));
+        historyContainer.addView(row, params);
+    }
+
+    private void openConversation(AlertDialog dialog, String conversationId) {
+        apiService.getAiChatHistory(getUserUid(), conversationId).enqueue(new Callback<Map<String, Object>>() {
+            @Override
+            public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
+                if (!response.isSuccessful() || response.body() == null) {
+                    Toast.makeText(AiChatActivity.this, "Impossible d'ouvrir la discussion", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                Object rawMessages = response.body().get("messages");
+                if (!(rawMessages instanceof List)) {
+                    Toast.makeText(AiChatActivity.this, "Discussion vide", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                currentConversationId = conversationId;
+                chatContainer.removeAllViews();
+                for (Object rawItem : (List<?>) rawMessages) {
+                    if (!(rawItem instanceof Map)) continue;
+                    Map<?, ?> item = (Map<?, ?>) rawItem;
+                    String role = valueAsString(item.get("role"), "");
+                    String text = valueAsString(item.get("content"), "");
+                    if (text.isEmpty()) continue;
+                    addBubble(text, "user".equalsIgnoreCase(role));
+                }
+                if (dialog != null && dialog.isShowing()) {
+                    dialog.dismiss();
+                }
+                Toast.makeText(AiChatActivity.this, "Discussion ouverte", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onFailure(Call<Map<String, Object>> call, Throwable t) {
+                Toast.makeText(AiChatActivity.this, "Erreur reseau", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void confirmDeleteConversation(AlertDialog dialog, LinearLayout historyContainer, String conversationId) {
+        new AlertDialog.Builder(this)
+                .setTitle("Supprimer cette discussion ?")
+                .setMessage("Cette discussion sera supprimee de l'historique.")
+                .setNegativeButton("Annuler", null)
+                .setPositiveButton("Supprimer", (confirmDialog, which) -> deleteConversation(dialog, historyContainer, conversationId))
+                .show();
+    }
+
+    private void deleteConversation(AlertDialog dialog, LinearLayout historyContainer, String conversationId) {
+        apiService.deleteAiChatConversation(getUserUid(), conversationId).enqueue(new Callback<Map<String, Object>>() {
+            @Override
+            public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
+                if (conversationId.equals(currentConversationId)) {
+                    currentConversationId = null;
+                    chatContainer.removeAllViews();
+                    addAiMessage("Bonjour ! Je suis votre assistant IA general. Posez-moi votre question et je vous repondrai.");
+                }
+                Toast.makeText(AiChatActivity.this, "Discussion supprimee", Toast.LENGTH_SHORT).show();
+                historyContainer.removeAllViews();
+                addHistoryStatus(historyContainer, "Chargement des discussions...");
+                loadConversations(dialog, historyContainer);
+            }
+
+            @Override
+            public void onFailure(Call<Map<String, Object>> call, Throwable t) {
+                Toast.makeText(AiChatActivity.this, "Impossible de supprimer", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private TextView buildActionText(String text) {
+        TextView view = new TextView(this);
+        view.setText(text);
+        view.setTextColor(Color.WHITE);
+        view.setTextSize(15f);
+        view.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        view.setGravity(Gravity.CENTER);
+        view.setPadding(dp(12), dp(12), dp(12), dp(12));
+        GradientDrawable bg = new GradientDrawable();
+        bg.setCornerRadius(dp(12));
+        bg.setColor(Color.rgb(76, 175, 80));
+        view.setBackground(bg);
+        return view;
+    }
+
+    private void addDateHeader(LinearLayout container, String text) {
+        TextView header = new TextView(this);
+        header.setText(text);
+        header.setTextColor(Color.rgb(90, 90, 90));
+        header.setTextSize(13f);
+        header.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        header.setPadding(dp(4), dp(12), dp(4), dp(6));
+        container.addView(header);
+    }
+
+    private void addHistoryStatus(LinearLayout container, String text) {
+        TextView status = new TextView(this);
+        status.setText(text);
+        status.setTextColor(Color.rgb(80, 80, 80));
+        status.setTextSize(15f);
+        status.setGravity(Gravity.CENTER);
+        status.setPadding(dp(10), dp(18), dp(10), dp(18));
+        container.addView(status, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        ));
+    }
+
+    private String valueAsString(Object value, String fallback) {
+        if (value == null) return fallback;
+        String text = String.valueOf(value).trim();
+        return text.isEmpty() || "null".equals(text) ? fallback : text;
     }
 
     private void speakAiReply(String reply) {
