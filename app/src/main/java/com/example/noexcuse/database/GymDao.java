@@ -51,6 +51,9 @@ public interface GymDao {
     @Query("SELECT * FROM gym_plans WHERE dayOfWeek = :day AND weekStartDate = :weekStart LIMIT 1")
     GymPlan getPlanForDayAndWeek(String day, String weekStart);
 
+    @Query("SELECT * FROM gym_plans WHERE dayOfWeek = :day AND weekStartDate = :weekStart ORDER BY id ASC")
+    List<GymPlan> getPlansForDayAndWeek(String day, String weekStart);
+
     // ─────────────────────────────────────────────────────────────────────
     //  PLANNED EXERCISE
     // ─────────────────────────────────────────────────────────────────────

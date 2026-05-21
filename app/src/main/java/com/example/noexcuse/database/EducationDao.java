@@ -33,6 +33,9 @@ public interface EducationDao {
     @Query("SELECT * FROM education_tasks ORDER BY startTime ASC")
     LiveData<List<EducationTask>> getPendingEducationLive();
 
+    @Query("SELECT * FROM education_tasks WHERE startTime <= :endOfDay AND endTime >= :startOfDay ORDER BY startTime ASC")
+    List<EducationTask> getSessionsForDay(long startOfDay, long endOfDay);
+
     @Query("SELECT * FROM education_tasks WHERE id = :id LIMIT 1")
     EducationTask getById(int id);
 

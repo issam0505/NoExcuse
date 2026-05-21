@@ -38,4 +38,7 @@ public interface ApiService {
     Call<Map<String, Object>> getExercise(
             @Path("ex_id") String exId
     );
+    @POST("chat")
+    Call<Map<String, Object>> chatWithAI(@Body Map<String, Object> requestBody);
+
 }

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
@@ -10,6 +10,7 @@
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -37,7 +38,7 @@
         android:theme="@style/Theme.NoExcuse"
         android:usesCleartextTraffic="true">
 
-        <!-- FileProvider — required to share/open saved QR image -->
+        <!-- FileProvider â€” required to share/open saved QR image -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
@@ -104,6 +105,7 @@
         <activity android:name=".RegisterActivity"   android:exported="false" />
         <activity android:name=".LoginActivity"      android:exported="false" />
         <activity android:name=".MainActivity"       android:exported="false" />
+        <activity android:name=".AiChatActivity"     android:exported="false" />
         <activity android:name=".WelcomeActivity"    android:exported="false" />
         <activity android:name=".AlarmActivity"      android:exported="false" />
 
@@ -134,3 +136,5 @@
     </application>
 
 </manifest>
+
+

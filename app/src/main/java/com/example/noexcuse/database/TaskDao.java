@@ -18,6 +18,9 @@ public interface TaskDao {
     @Query("SELECT * FROM daily_tasks ORDER BY taskTime ASC")
     LiveData<List<DailyTask>> getPendingTasksLive();
 
+    @Query("SELECT * FROM daily_tasks WHERE taskTime BETWEEN :startOfDay AND :endOfDay ORDER BY taskTime ASC")
+    List<DailyTask> getTasksForDay(long startOfDay, long endOfDay);
+
     @Update
     void updateTask(DailyTask task);
 

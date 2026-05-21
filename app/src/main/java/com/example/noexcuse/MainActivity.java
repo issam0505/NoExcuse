@@ -160,7 +160,10 @@ public class MainActivity extends AppCompatActivity {
 
         btnDash.setOnClickListener(v -> drawerLayout.closeDrawer(GravityCompat.END));
         btnSettings.setOnClickListener(v -> drawerLayout.closeDrawer(GravityCompat.END));
-        btnAI.setOnClickListener(v -> drawerLayout.closeDrawer(GravityCompat.END));
+        btnAI.setOnClickListener(v -> {
+            drawerLayout.closeDrawer(GravityCompat.END);
+            startActivity(new Intent(this, AiChatActivity.class));
+        });
         btnPlanGym.setOnClickListener(v -> {
             drawerLayout.closeDrawer(GravityCompat.END);
             startActivity(new Intent(this, WeekPlanActivity.class));
