@@ -61,6 +61,7 @@ public class AiChatActivity extends AppCompatActivity implements TextToSpeech.On
 
     private static final String TAG = "AiChatActivity";
     private static final String TTS_UTTERANCE_ID = "noexcuse_ai_reply";
+    private static final Locale AI_VOICE_LOCALE = Locale.FRANCE;
 
     private AiAvatarView avatarView;
     private LinearLayout chatContainer;
@@ -112,7 +113,7 @@ public class AiChatActivity extends AppCompatActivity implements TextToSpeech.On
         btnSend.setOnClickListener(v -> sendMessage(false));
         btnMic.setOnClickListener(v -> requestVoiceInput());
 
-        addAiMessage("Salam! Ana AI General. Sift liya ay question w njawebk.");
+        addAiMessage("Bonjour ! Je suis votre assistant IA général. Posez-moi votre question et je vous répondrai.");
     }
 
     @Override
@@ -135,35 +136,27 @@ public class AiChatActivity extends AppCompatActivity implements TextToSpeech.On
     public void onInit(int status) {
         isTtsReady = status == TextToSpeech.SUCCESS;
         if (isTtsReady) {
-            int result = textToSpeech.setLanguage(Locale.getDefault());
+            int result = textToSpeech.setLanguage(AI_VOICE_LOCALE);
             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                 textToSpeech.setLanguage(Locale.FRENCH);
             }
-            selectPreferredMaleVoice();
-            textToSpeech.setSpeechRate(0.96f);
-            textToSpeech.setPitch(0.78f);
+            selectPreferredFrenchVoice();
+            textToSpeech.setSpeechRate(0.92f);
+            textToSpeech.setPitch(0.86f);
         }
     }
 
-    private void selectPreferredMaleVoice() {
+    private void selectPreferredFrenchVoice() {
         if (textToSpeech == null || textToSpeech.getVoices() == null) return;
 
-        Locale currentLocale = Locale.getDefault();
-        Voice fallbackSameLanguage = null;
+        Voice bestVoice = null;
+        int bestScore = Integer.MIN_VALUE;
         for (Voice voice : textToSpeech.getVoices()) {
             if (voice == null || voice.getLocale() == null) continue;
-            if (voice.isNetworkConnectionRequired()) continue;
 
             String name = voice.getName() != null ? voice.getName().toLowerCase(Locale.US) : "";
-            String language = voice.getLocale().getLanguage();
-            boolean sameLanguage = language.equals(currentLocale.getLanguage())
-                    || language.equals(Locale.FRENCH.getLanguage())
-                    || language.equals(Locale.ENGLISH.getLanguage());
-            if (!sameLanguage) continue;
-
-            if (fallbackSameLanguage == null) {
-                fallbackSameLanguage = voice;
-            }
+            Locale locale = voice.getLocale();
+            if (!Locale.FRENCH.getLanguage().equals(locale.getLanguage())) continue;
 
             boolean soundsMale = name.contains("male")
                     || name.contains("man")
@@ -176,16 +169,29 @@ public class AiChatActivity extends AppCompatActivity implements TextToSpeech.On
                     || name.contains("femme")
                     || name.contains("girl");
 
-            if (soundsMale && !soundsFemale) {
-                textToSpeech.setVoice(voice);
-                Log.d(TAG, "Selected male TTS voice: " + voice.getName());
-                return;
+            int score = 0;
+            if (AI_VOICE_LOCALE.getCountry().equals(locale.getCountry())) score += 35;
+            if (soundsMale && !soundsFemale) score += 24;
+            if (voice.getQuality() >= Voice.QUALITY_HIGH) score += 18;
+            if (voice.getQuality() >= Voice.QUALITY_VERY_HIGH) score += 24;
+            if (!voice.isNetworkConnectionRequired()) score += 10;
+            if (voice.getLatency() <= Voice.LATENCY_NORMAL) score += 8;
+            if (name.contains("fr-fr") || name.contains("fra-fra") || name.contains("france")) score += 18;
+            if (name.contains("enhanced") || name.contains("premium") || name.contains("neural")) score += 12;
+            if (soundsFemale) score -= 10;
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestVoice = voice;
             }
         }
 
-        if (fallbackSameLanguage != null) {
-            textToSpeech.setVoice(fallbackSameLanguage);
-            Log.d(TAG, "Selected fallback TTS voice: " + fallbackSameLanguage.getName());
+        if (bestVoice != null) {
+            textToSpeech.setVoice(bestVoice);
+            Log.d(TAG, "Selected French-accent TTS voice: " + bestVoice.getName()
+                    + ", locale=" + bestVoice.getLocale()
+                    + ", quality=" + bestVoice.getQuality()
+                    + ", network=" + bestVoice.isNetworkConnectionRequired());
         }
     }
 
@@ -273,6 +279,7 @@ public class AiChatActivity extends AppCompatActivity implements TextToSpeech.On
         }
         if (textToSpeech != null) {
             textToSpeech.stop();
+            avatarView.setAvatarState(AiAvatarView.STATE_IDLE);
         }
         hideKeyboard();
         etMessage.setText("");
@@ -329,6 +336,7 @@ public class AiChatActivity extends AppCompatActivity implements TextToSpeech.On
         }
         if (textToSpeech != null) {
             textToSpeech.stop();
+            avatarView.setAvatarState(AiAvatarView.STATE_IDLE);
         }
 
                 shouldSpeakNextReply = speakReply;

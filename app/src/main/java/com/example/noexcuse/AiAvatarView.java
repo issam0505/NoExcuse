@@ -32,6 +32,7 @@ public class AiAvatarView extends View {
     private ValueAnimator animator;
     private float phase = 0f;
     private int state = STATE_IDLE;
+    private float lastMouthOpen = 0f;
 
     public AiAvatarView(Context context) {
         super(context);
@@ -54,7 +55,7 @@ public class AiAvatarView extends View {
         animator = ValueAnimator.ofFloat(0f, 1f);
         animator.setRepeatCount(ValueAnimator.INFINITE);
         animator.setInterpolator(new LinearInterpolator());
-        animator.setDuration(1800L);
+        animator.setDuration(1200L);
         animator.addUpdateListener(animation -> {
             phase = (float) animation.getAnimatedValue();
             invalidate();
@@ -64,7 +65,7 @@ public class AiAvatarView extends View {
     public void setAvatarState(int newState) {
         state = newState;
         if (animator != null) {
-            animator.setDuration(state == STATE_THINKING ? 900L : 1800L);
+            animator.setDuration(state == STATE_SPEAKING ? 820L : state == STATE_THINKING ? 900L : 1800L);
             if (!animator.isStarted()) {
                 animator.start();
             }
@@ -289,7 +290,7 @@ public class AiAvatarView extends View {
     private void drawHead(Canvas canvas, float cx, float cy, float size, float pulse) {
         float headW = size * 0.34f;
         float headH = size * 0.42f;
-        float jawDrop = state == STATE_SPEAKING ? Math.abs(pulse) * size * 0.012f : 0f;
+        float jawDrop = getSpeechEnergy() * size * 0.014f;
         rect.set(cx - headW / 2f, cy - headH / 2f, cx + headW / 2f, cy + headH / 2f + jawDrop);
         paint.setShader(new LinearGradient(
                 rect.left, rect.top, rect.right, rect.bottom,
@@ -331,23 +332,34 @@ public class AiAvatarView extends View {
     }
 
     private void drawFace(Canvas canvas, float cx, float cy, float size, float pulse) {
-        float jawDrop = state == STATE_SPEAKING ? Math.abs(pulse) * size * 0.012f : 0f;
+        float speechEnergy = getSpeechEnergy();
+        float blink = getBlinkAmount();
+        float eyeLook = state == STATE_SPEAKING
+                ? (float) Math.sin(phase * Math.PI * 2.6f) * size * 0.006f
+                : (float) Math.sin(phase * Math.PI * 2f) * size * 0.0025f;
+        float jawDrop = speechEnergy * size * 0.014f;
         float eyeY = cy - size * 0.05f;
         float eyeOffset = size * 0.065f;
         float eyeR = size * (state == STATE_THINKING ? 0.014f + (pulse + 1f) * 0.003f : 0.015f);
+        float visibleEyeH = Math.max(size * 0.002f, eyeR * (1f - blink * 0.86f));
 
         paint.setColor(Color.rgb(35, 20, 14));
-        canvas.drawCircle(cx - eyeOffset, eyeY, eyeR, paint);
-        canvas.drawCircle(cx + eyeOffset, eyeY, eyeR, paint);
+        rect.set(cx - eyeOffset - eyeR, eyeY - visibleEyeH, cx - eyeOffset + eyeR, eyeY + visibleEyeH);
+        canvas.drawOval(rect, paint);
+        rect.set(cx + eyeOffset - eyeR, eyeY - visibleEyeH, cx + eyeOffset + eyeR, eyeY + visibleEyeH);
+        canvas.drawOval(rect, paint);
 
         paint.setColor(Color.argb(190, 255, 255, 255));
-        canvas.drawCircle(cx - eyeOffset + eyeR * 0.2f, eyeY - eyeR * 0.25f, eyeR * 0.28f, paint);
-        canvas.drawCircle(cx + eyeOffset + eyeR * 0.2f, eyeY - eyeR * 0.25f, eyeR * 0.28f, paint);
+        if (blink < 0.72f) {
+            canvas.drawCircle(cx - eyeOffset + eyeLook + eyeR * 0.2f, eyeY - eyeR * 0.25f, eyeR * 0.28f, paint);
+            canvas.drawCircle(cx + eyeOffset + eyeLook + eyeR * 0.2f, eyeY - eyeR * 0.25f, eyeR * 0.28f, paint);
+        }
 
         paint.setColor(Color.argb(105, 95, 49, 35));
         paint.setStrokeWidth(size * 0.008f);
-        canvas.drawLine(cx - eyeOffset - size * 0.03f, eyeY - size * 0.035f, cx - eyeOffset + size * 0.026f, eyeY - size * 0.043f, paint);
-        canvas.drawLine(cx + eyeOffset - size * 0.026f, eyeY - size * 0.043f, cx + eyeOffset + size * 0.03f, eyeY - size * 0.035f, paint);
+        float browLift = state == STATE_SPEAKING ? speechEnergy * size * 0.012f : 0f;
+        canvas.drawLine(cx - eyeOffset - size * 0.03f, eyeY - size * 0.035f - browLift, cx - eyeOffset + size * 0.026f, eyeY - size * 0.043f - browLift * 0.4f, paint);
+        canvas.drawLine(cx + eyeOffset - size * 0.026f, eyeY - size * 0.043f - browLift * 0.4f, cx + eyeOffset + size * 0.03f, eyeY - size * 0.035f - browLift, paint);
 
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(size * 0.007f);
@@ -355,7 +367,7 @@ public class AiAvatarView extends View {
         canvas.drawLine(cx, cy - size * 0.015f, cx - size * 0.014f, cy + size * 0.042f, paint);
         paint.setStyle(Paint.Style.FILL);
 
-        drawMouth(canvas, cx, cy + jawDrop, size, pulse);
+        drawMouth(canvas, cx, cy + jawDrop, size, speechEnergy);
 
         if (state == STATE_THINKING) {
             paint.setColor(Color.argb(210, 76, 175, 80));
@@ -368,9 +380,9 @@ public class AiAvatarView extends View {
         }
     }
 
-    private void drawMouth(Canvas canvas, float cx, float cy, float size, float pulse) {
-        float mouthW = size * 0.104f;
-        float open = state == STATE_SPEAKING ? size * (0.02f + Math.abs(pulse) * 0.045f) : size * 0.004f;
+    private void drawMouth(Canvas canvas, float cx, float cy, float size, float speechEnergy) {
+        float mouthW = size * (state == STATE_SPEAKING ? 0.11f + speechEnergy * 0.025f : 0.104f);
+        float open = state == STATE_SPEAKING ? size * (0.018f + speechEnergy * 0.058f) : size * 0.004f;
         float mouthY = cy + size * 0.112f;
 
         paint.setColor(Color.rgb(116, 44, 45));
@@ -398,5 +410,33 @@ public class AiAvatarView extends View {
             rect.set(cx - mouthW * 0.38f, mouthY - size * 0.003f, cx + mouthW * 0.38f, mouthY + size * 0.006f);
             canvas.drawRoundRect(rect, size * 0.006f, size * 0.006f, paint);
         }
+    }
+
+    private float getSpeechEnergy() {
+        if (state != STATE_SPEAKING) {
+            lastMouthOpen *= 0.7f;
+            return lastMouthOpen;
+        }
+        float fast = (float) Math.abs(Math.sin(phase * Math.PI * 8f));
+        float medium = (float) Math.abs(Math.sin((phase + 0.19f) * Math.PI * 5f));
+        float slow = (float) Math.abs(Math.sin((phase + 0.33f) * Math.PI * 2f));
+        lastMouthOpen = Math.min(1f, 0.18f + fast * 0.52f + medium * 0.22f + slow * 0.12f);
+        return lastMouthOpen;
+    }
+
+    private float getBlinkAmount() {
+        if (state == STATE_SPEAKING) {
+            return blinkPulse(0.12f, 0.035f) + blinkPulse(0.68f, 0.028f);
+        }
+        return blinkPulse(0.18f, 0.025f);
+    }
+
+    private float blinkPulse(float center, float width) {
+        float distance = Math.abs(phase - center);
+        distance = Math.min(distance, 1f - distance);
+        if (distance > width) {
+            return 0f;
+        }
+        return Math.min(1f, 1f - (distance / width));
     }
 }
