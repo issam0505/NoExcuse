@@ -15,6 +15,7 @@ import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
+import android.speech.tts.Voice;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -73,6 +74,7 @@ public class AiChatActivity extends AppCompatActivity implements TextToSpeech.On
     private Intent speechIntent;
     private boolean isTtsReady = false;
     private boolean isListening = false;
+    private boolean shouldSpeakNextReply = false;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService dbExecutor = Executors.newSingleThreadExecutor();
     private ActivityResultLauncher<String> audioPermissionLauncher;
@@ -107,7 +109,7 @@ public class AiChatActivity extends AppCompatActivity implements TextToSpeech.On
         setupSpeechRecognizer();
 
         btnBack.setOnClickListener(v -> finish());
-        btnSend.setOnClickListener(v -> sendMessage());
+        btnSend.setOnClickListener(v -> sendMessage(false));
         btnMic.setOnClickListener(v -> requestVoiceInput());
 
         addAiMessage("Salam! Ana AI General. Sift liya ay question w njawebk.");
@@ -137,8 +139,53 @@ public class AiChatActivity extends AppCompatActivity implements TextToSpeech.On
             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                 textToSpeech.setLanguage(Locale.FRENCH);
             }
-            textToSpeech.setSpeechRate(1.02f);
-            textToSpeech.setPitch(1.0f);
+            selectPreferredMaleVoice();
+            textToSpeech.setSpeechRate(0.96f);
+            textToSpeech.setPitch(0.78f);
+        }
+    }
+
+    private void selectPreferredMaleVoice() {
+        if (textToSpeech == null || textToSpeech.getVoices() == null) return;
+
+        Locale currentLocale = Locale.getDefault();
+        Voice fallbackSameLanguage = null;
+        for (Voice voice : textToSpeech.getVoices()) {
+            if (voice == null || voice.getLocale() == null) continue;
+            if (voice.isNetworkConnectionRequired()) continue;
+
+            String name = voice.getName() != null ? voice.getName().toLowerCase(Locale.US) : "";
+            String language = voice.getLocale().getLanguage();
+            boolean sameLanguage = language.equals(currentLocale.getLanguage())
+                    || language.equals(Locale.FRENCH.getLanguage())
+                    || language.equals(Locale.ENGLISH.getLanguage());
+            if (!sameLanguage) continue;
+
+            if (fallbackSameLanguage == null) {
+                fallbackSameLanguage = voice;
+            }
+
+            boolean soundsMale = name.contains("male")
+                    || name.contains("man")
+                    || name.contains("homme")
+                    || name.contains("masc")
+                    || name.contains("baritone")
+                    || name.contains("low");
+            boolean soundsFemale = name.contains("female")
+                    || name.contains("woman")
+                    || name.contains("femme")
+                    || name.contains("girl");
+
+            if (soundsMale && !soundsFemale) {
+                textToSpeech.setVoice(voice);
+                Log.d(TAG, "Selected male TTS voice: " + voice.getName());
+                return;
+            }
+        }
+
+        if (fallbackSameLanguage != null) {
+            textToSpeech.setVoice(fallbackSameLanguage);
+            Log.d(TAG, "Selected fallback TTS voice: " + fallbackSameLanguage.getName());
         }
     }
 
@@ -165,7 +212,7 @@ public class AiChatActivity extends AppCompatActivity implements TextToSpeech.On
     private void setupSpeechRecognizer() {
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
             btnMic.setEnabled(false);
-            btnMic.setText("No mic");
+            btnMic.setIconResource(R.drawable.ic_mic_off_24);
             return;
         }
 
@@ -243,13 +290,13 @@ public class AiChatActivity extends AppCompatActivity implements TextToSpeech.On
         etMessage.setText(spokenText);
         etMessage.setSelection(etMessage.length());
         if (finalResult) {
-            sendMessage();
+            sendMessage(true);
         }
     }
 
     private void setListening(boolean listening) {
         isListening = listening;
-        btnMic.setText(listening ? "Stop" : "Mic");
+        btnMic.setIconResource(listening ? R.drawable.ic_mic_off_24 : R.drawable.ic_mic_24);
         btnMic.setEnabled(!btnSend.isEnabled() || !listening || speechRecognizer != null);
         avatarView.setAvatarState(listening ? AiAvatarView.STATE_THINKING : AiAvatarView.STATE_IDLE);
     }
@@ -269,7 +316,7 @@ public class AiChatActivity extends AppCompatActivity implements TextToSpeech.On
         }
     }
 
-    private void sendMessage() {
+    private void sendMessage(boolean speakReply) {
         String message = etMessage.getText() != null ? etMessage.getText().toString().trim() : "";
         if (message.isEmpty()) {
             Toast.makeText(this, "Write or say a message first", Toast.LENGTH_SHORT).show();
@@ -283,6 +330,8 @@ public class AiChatActivity extends AppCompatActivity implements TextToSpeech.On
         if (textToSpeech != null) {
             textToSpeech.stop();
         }
+
+                shouldSpeakNextReply = speakReply;
 
         addUserMessage(message);
         etMessage.setText("");
@@ -315,7 +364,12 @@ public class AiChatActivity extends AppCompatActivity implements TextToSpeech.On
                     reply = "I received the response, but could not read the AI message.";
                 }
                 addAiMessage(reply);
-                speakAiReply(reply);
+                if (shouldSpeakNextReply) {
+                    speakAiReply(reply);
+                } else {
+                    avatarView.setAvatarState(AiAvatarView.STATE_IDLE);
+                }
+                shouldSpeakNextReply = false;
             }
 
             @Override
