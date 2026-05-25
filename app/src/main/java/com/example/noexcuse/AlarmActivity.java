@@ -26,6 +26,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import com.example.noexcuse.database.AppDatabase;
+import com.example.noexcuse.database.SleepDao;
 import com.example.noexcuse.database.SleepSettings;
 
 import java.util.Locale;
@@ -41,16 +42,19 @@ public class AlarmActivity extends AppCompatActivity {
     private TextView       tvSleepTime;
     private TextView       tvAlarmStatus;
     private TextView       tvSleepDuration;
+    private View           viewStatusDot;
     private SwitchMaterial switchAlarm;
     private MaterialButton btnSave;
     private View           btnQrInfo;
 
+    // Default values: Sleep 23:00, Wake 07:00
     private int     wakeHour    = 7;
     private int     wakeMinute  = 0;
     private int     sleepHour   = 23;
     private int     sleepMinute = 0;
     private boolean isAlarmEnabled = false;
     private boolean pendingCameraCheck = false;
+    private boolean isLoadingData = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,10 +65,12 @@ public class AlarmActivity extends AppCompatActivity {
         tvSleepTime     = findViewById(R.id.tvSleepTime);
         tvAlarmStatus   = findViewById(R.id.tvAlarmStatus);
         tvSleepDuration = findViewById(R.id.tvSleepDuration);
+        viewStatusDot   = findViewById(R.id.viewStatusDot);
         switchAlarm     = findViewById(R.id.switchAlarm);
         btnSave         = findViewById(R.id.btnSaveAlarm);
         btnQrInfo       = findViewById(R.id.btnQrInfo);
 
+        // 1. Load data first to restore previous session or use defaults
         loadSavedSettings();
 
         tvWakeTime.setOnClickListener(v -> pickTime(true));
@@ -75,20 +81,17 @@ public class AlarmActivity extends AppCompatActivity {
             btnQrInfo.setOnClickListener(v -> showQrInfoDialog());
         }
 
-        isAlarmEnabled = WakeUpScheduler.isEnabled(this);
-        updateToggleUI();
-
         if (switchAlarm != null) {
             switchAlarm.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (isLoadingData) return;
                 isAlarmEnabled = isChecked;
                 updateToggleUI();
+                persistSelection(); // Save instantly
             });
         }
 
-        // Overlay permission
         requestOverlayPermissionIfNeeded();
 
-        // First time opening → show QR info dialog automatically
         SharedPreferences prefs = getSharedPreferences(PREF_FILE, Context.MODE_PRIVATE);
         if (!prefs.getBoolean(PREF_QR_INFO_SHOWN, false)) {
             prefs.edit().putBoolean(PREF_QR_INFO_SHOWN, true).apply();
@@ -97,16 +100,21 @@ public class AlarmActivity extends AppCompatActivity {
     }
 
     private void updateToggleUI() {
+        // Prevent recursive listener calls
         if (switchAlarm != null && switchAlarm.isChecked() != isAlarmEnabled) {
+            isLoadingData = true;
             switchAlarm.setChecked(isAlarmEnabled);
+            isLoadingData = false;
         }
         
         if (isAlarmEnabled) {
             tvAlarmStatus.setText("ON");
-            tvAlarmStatus.setTextColor(Color.parseColor("#4CAF50")); // Greenish
+            tvAlarmStatus.setTextColor(Color.parseColor("#4CAF50"));
+            if (viewStatusDot != null) viewStatusDot.setBackgroundResource(R.drawable.bg_status_dot_on);
         } else {
             tvAlarmStatus.setText("OFF");
             tvAlarmStatus.setTextColor(Color.parseColor("#888888"));
+            if (viewStatusDot != null) viewStatusDot.setBackgroundResource(R.drawable.bg_status_dot);
         }
         updateSleepDuration();
     }
@@ -116,93 +124,34 @@ public class AlarmActivity extends AppCompatActivity {
         int wakeTotalMins  = wakeHour  * 60 + wakeMinute;
 
         int diffMins = wakeTotalMins - sleepTotalMins;
-        if (diffMins <= 0) diffMins += 24 * 60; // overnight wrap
+        if (diffMins <= 0) diffMins += 24 * 60;
 
         int hours = diffMins / 60;
         int mins  = diffMins % 60;
 
         if (tvSleepDuration != null) {
-            String duration = String.format(Locale.getDefault(), "%dh %02dm", hours, mins);
-            tvSleepDuration.setText(duration);
+            tvSleepDuration.setText(String.format(Locale.getDefault(), "%dh %02dm", hours, mins));
         }
     }
 
-    private void showQrInfoDialog() {
-        int dp = (int) getResources().getDisplayMetrics().density;
-
-        ScrollView scrollView = new ScrollView(this);
-        scrollView.setPadding(8 * dp, 4 * dp, 8 * dp, 4 * dp);
-
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(16 * dp, 8 * dp, 16 * dp, 8 * dp);
-
-        TextView tv = new TextView(this);
-        tv.setText(
-                "1. Take a screenshot of the QR code below 📸\n\n"
-                        + "2. Print it and stick it in your bathroom or toilet 🚽\n\n"
-                        + "3. When your alarm fires, tap STOP to pause it.\n\n"
-                        + "4. After 5 minutes, you'll get a notification: \"Are you awake?\"\n\n"
-                        + "5. Tap YES to confirm — or the alarm will ring again!\n\n"
-                        + "6. If you still don't respond, the alarm fires again — and this time "
-                        + "you MUST go to the bathroom and scan the QR sticker to stop it.\n\n"
-                        + "This guarantees you actually got out of bed! 💪"
-        );
-        tv.setTextSize(14f);
-        tv.setLineSpacing(4f, 1f);
-        layout.addView(tv);
-
-        ImageView ivQr = new ImageView(this);
-        ivQr.setImageResource(R.drawable.qr_code);
-
-        int size = 220 * dp;
-        LinearLayout.LayoutParams imgParams = new LinearLayout.LayoutParams(size, size);
-        imgParams.gravity    = Gravity.CENTER_HORIZONTAL;
-        imgParams.topMargin  = 24 * dp;
-        imgParams.bottomMargin = 4 * dp;
-        ivQr.setLayoutParams(imgParams);
-        ivQr.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        layout.addView(ivQr);
-
-        TextView caption = new TextView(this);
-        caption.setText("📌 Screenshot this QR → Print it → Stick it in your bathroom");
-        caption.setTextSize(12f);
-        caption.setGravity(Gravity.CENTER_HORIZONTAL);
-        LinearLayout.LayoutParams capParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        capParams.topMargin    = 4 * dp;
-        capParams.bottomMargin = 8 * dp;
-        caption.setLayoutParams(capParams);
-        layout.addView(caption);
-
-        scrollView.addView(layout);
-
-        new AlertDialog.Builder(this)
-                .setTitle("📱 How does the QR alarm work?")
-                .setView(scrollView)
-                .setPositiveButton("Got it!", null)
-                .show();
-    }
-
-    private void requestOverlayPermissionIfNeeded() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (!Settings.canDrawOverlays(this)) {
-                new AlertDialog.Builder(this)
-                        .setTitle("⚠️ Permission Required")
-                        .setMessage(
-                                "To show the alarm screen instantly — even when your phone is locked "
-                                        + "or the app is closed — please enable \"Display over other apps\" for NoExcuse.\n\n"
-                                        + "Settings → Apps → NoExcuse → Display over other apps → Allow")
-                        .setPositiveButton("Open Settings", (d, w) -> {
-                            startActivity(new Intent(
-                                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                    Uri.parse("package:" + getPackageName())));
-                        })
-                        .setNegativeButton("Later", null)
-                        .show();
+    /**
+     * Saves the current UI selection to the database.
+     */
+    private void persistSelection() {
+        if (isLoadingData) return;
+        Executors.newSingleThreadExecutor().execute(() -> {
+            SleepDao dao = AppDatabase.getInstance(this).sleepDao();
+            SleepSettings s = dao.getSleepSettings();
+            if (s == null) {
+                s = new SleepSettings();
+                s.id = 1; // Dima record wahed
             }
-        }
+            s.sleepTime = String.format(Locale.getDefault(), "%02d:%02d", sleepHour, sleepMinute);
+            s.wakeUpTime = String.format(Locale.getDefault(), "%02d:%02d", wakeHour, wakeMinute);
+            s.isAlarmOn = isAlarmEnabled;
+            s.isQRRequired = true;
+            dao.insertSleepSettings(s);
+        });
     }
 
     private void pickTime(boolean isWakeUp) {
@@ -220,6 +169,7 @@ public class AlarmActivity extends AppCompatActivity {
                 tvSleepTime.setText(String.format(Locale.getDefault(), "%02d:%02d", h, m));
             }
             updateSleepDuration();
+            persistSelection();
         }, hour, minute, true).show();
     }
 
@@ -236,58 +186,27 @@ public class AlarmActivity extends AppCompatActivity {
                 return;
             }
         }
-
         applyAndSave(isAlarmEnabled);
-    }
-
-    private void showExactAlarmPermissionDialog() {
-        new AlertDialog.Builder(this)
-                .setTitle("⏰ Permission Required")
-                .setMessage("To ensure your alarm rings on time (even when the phone is asleep), "
-                        + "please allow 'Alarms & Reminders' in Settings.\n\n"
-                        + "Settings → Apps → NoExcuse → Alarms & Reminders → Allow")
-                .setPositiveButton("Open Settings", (d, w) -> {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        startActivity(new Intent(
-                                Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
-                                Uri.parse("package:" + getPackageName())));
-                    }
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
     }
 
     private void applyAndSave(boolean alarmOn) {
         if (alarmOn) {
             WakeUpScheduler.schedule(this, wakeHour, wakeMinute);
-            Toast.makeText(this,
-                    String.format(Locale.getDefault(),
-                            "⏰ Alarm set for %02d:%02d", wakeHour, wakeMinute),
-                    Toast.LENGTH_SHORT).show();
             SleepReminderReceiver.schedule(this, sleepHour, sleepMinute);
+            Toast.makeText(this, "⏰ Alarm scheduled!", Toast.LENGTH_SHORT).show();
         } else {
             WakeUpScheduler.cancel(this);
             SleepReminderReceiver.cancel(this);
             Toast.makeText(this, "Alarm disabled", Toast.LENGTH_SHORT).show();
         }
-
-        Executors.newSingleThreadExecutor().execute(() -> {
-            SleepSettings s = new SleepSettings();
-            s.id                = 1;
-            s.sleepTime         = String.format(Locale.getDefault(), "%02d:%02d", sleepHour, sleepMinute);
-            s.wakeUpTime        = String.format(Locale.getDefault(), "%02d:%02d", wakeHour, wakeMinute);
-            s.isAlarmOn         = alarmOn;
-            s.isQRRequired      = true;
-            AppDatabase.getInstance(this).sleepDao().insertSleepSettings(s);
-        });
-
+        persistSelection();
         finish();
     }
 
     private void loadSavedSettings() {
+        isLoadingData = true;
         Executors.newSingleThreadExecutor().execute(() -> {
-            SleepSettings saved = AppDatabase.getInstance(this)
-                    .sleepDao().getSleepSettings();
+            SleepSettings saved = AppDatabase.getInstance(this).sleepDao().getSleepSettings();
             if (saved != null) {
                 try {
                     String[] wake  = saved.wakeUpTime.split(":");
@@ -303,29 +222,53 @@ public class AlarmActivity extends AppCompatActivity {
                 tvWakeTime.setText(String.format(Locale.getDefault(), "%02d:%02d", wakeHour, wakeMinute));
                 tvSleepTime.setText(String.format(Locale.getDefault(), "%02d:%02d", sleepHour, sleepMinute));
                 updateToggleUI();
+                isLoadingData = false;
             });
         });
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == CAMERA_REQ) {
-            boolean granted = grantResults.length > 0
-                    && grantResults[0] == PackageManager.PERMISSION_GRANTED;
-            if (granted && pendingCameraCheck) {
-                pendingCameraCheck = false;
-                applyAndSave(true);
-            } else {
-                Toast.makeText(this,
-                        "Camera permission is required for QR scan alarm.",
-                        Toast.LENGTH_LONG).show();
-            }
+    private void showQrInfoDialog() {
+        int dp = (int) getResources().getDisplayMetrics().density;
+        ScrollView scrollView = new ScrollView(this);
+        scrollView.setPadding(8 * dp, 4 * dp, 8 * dp, 4 * dp);
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(16 * dp, 8 * dp, 16 * dp, 8 * dp);
+        TextView tv = new TextView(this);
+        tv.setText("1. Take a screenshot of the QR code\n2. Print it & stick it in your bathroom\n3. Scan it to stop the alarm! 💪");
+        tv.setTextSize(14f);
+        layout.addView(tv);
+        ImageView ivQr = new ImageView(this);
+        ivQr.setImageResource(R.drawable.qr_code);
+        int size = 220 * dp;
+        LinearLayout.LayoutParams imgParams = new LinearLayout.LayoutParams(size, size);
+        imgParams.gravity = Gravity.CENTER_HORIZONTAL;
+        imgParams.topMargin = 24 * dp;
+        ivQr.setLayoutParams(imgParams);
+        layout.addView(ivQr);
+        scrollView.addView(layout);
+        new AlertDialog.Builder(this).setTitle("📱 QR Alarm Info").setView(scrollView).setPositiveButton("Got it!", null).show();
+    }
+
+    private void requestOverlayPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            new AlertDialog.Builder(this).setTitle("Permission").setMessage("Allow overlay for alarm screen.").setPositiveButton("Settings", (d, w) -> {
+                startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName())));
+            }).show();
+        }
+    }
+
+    private void showExactAlarmPermissionDialog() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            startActivity(new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:" + getPackageName())));
         }
     }
 
     @Override
-    protected void onResume() { super.onResume(); }
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == CAMERA_REQ && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            if (pendingCameraCheck) { pendingCameraCheck = false; applyAndSave(true); }
+        }
+    }
 }
