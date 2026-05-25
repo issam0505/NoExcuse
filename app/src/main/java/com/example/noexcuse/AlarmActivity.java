@@ -6,11 +6,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.Gravity;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -37,14 +39,17 @@ public class AlarmActivity extends AppCompatActivity {
 
     private TextView       tvWakeTime;
     private TextView       tvSleepTime;
-    private SwitchMaterial swAlarm;
+    private TextView       tvAlarmStatus;
+    private TextView       tvSleepDuration;
+    private SwitchMaterial switchAlarm;
     private MaterialButton btnSave;
-    private MaterialButton btnQrInfo;
+    private View           btnQrInfo;
 
     private int     wakeHour    = 7;
     private int     wakeMinute  = 0;
     private int     sleepHour   = 23;
     private int     sleepMinute = 0;
+    private boolean isAlarmEnabled = false;
     private boolean pendingCameraCheck = false;
 
     @Override
@@ -52,11 +57,13 @@ public class AlarmActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.fragment_sleep_alarm);
 
-        tvWakeTime  = findViewById(R.id.tvWakeTime);
-        tvSleepTime = findViewById(R.id.tvSleepTime);
-        swAlarm     = findViewById(R.id.swAlarmEnabled);
-        btnSave     = findViewById(R.id.btnSaveAlarm);
-        btnQrInfo   = findViewById(R.id.btnQrInfo);
+        tvWakeTime      = findViewById(R.id.tvWakeTime);
+        tvSleepTime     = findViewById(R.id.tvSleepTime);
+        tvAlarmStatus   = findViewById(R.id.tvAlarmStatus);
+        tvSleepDuration = findViewById(R.id.tvSleepDuration);
+        switchAlarm     = findViewById(R.id.switchAlarm);
+        btnSave         = findViewById(R.id.btnSaveAlarm);
+        btnQrInfo       = findViewById(R.id.btnQrInfo);
 
         loadSavedSettings();
 
@@ -68,12 +75,20 @@ public class AlarmActivity extends AppCompatActivity {
             btnQrInfo.setOnClickListener(v -> showQrInfoDialog());
         }
 
-        swAlarm.setChecked(WakeUpScheduler.isEnabled(this));
+        isAlarmEnabled = WakeUpScheduler.isEnabled(this);
+        updateToggleUI();
 
-        // ✅ Overlay permission
+        if (switchAlarm != null) {
+            switchAlarm.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                isAlarmEnabled = isChecked;
+                updateToggleUI();
+            });
+        }
+
+        // Overlay permission
         requestOverlayPermissionIfNeeded();
 
-        // ✅ First time opening → show QR info dialog automatically
+        // First time opening → show QR info dialog automatically
         SharedPreferences prefs = getSharedPreferences(PREF_FILE, Context.MODE_PRIVATE);
         if (!prefs.getBoolean(PREF_QR_INFO_SHOWN, false)) {
             prefs.edit().putBoolean(PREF_QR_INFO_SHOWN, true).apply();
@@ -81,14 +96,40 @@ public class AlarmActivity extends AppCompatActivity {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // ✅ QR Info Dialog — image from res/drawable/qr_code, no save button
-    // ─────────────────────────────────────────────────────────────────────────
+    private void updateToggleUI() {
+        if (switchAlarm != null && switchAlarm.isChecked() != isAlarmEnabled) {
+            switchAlarm.setChecked(isAlarmEnabled);
+        }
+        
+        if (isAlarmEnabled) {
+            tvAlarmStatus.setText("ON");
+            tvAlarmStatus.setTextColor(Color.parseColor("#4CAF50")); // Greenish
+        } else {
+            tvAlarmStatus.setText("OFF");
+            tvAlarmStatus.setTextColor(Color.parseColor("#888888"));
+        }
+        updateSleepDuration();
+    }
+
+    private void updateSleepDuration() {
+        int sleepTotalMins = sleepHour * 60 + sleepMinute;
+        int wakeTotalMins  = wakeHour  * 60 + wakeMinute;
+
+        int diffMins = wakeTotalMins - sleepTotalMins;
+        if (diffMins <= 0) diffMins += 24 * 60; // overnight wrap
+
+        int hours = diffMins / 60;
+        int mins  = diffMins % 60;
+
+        if (tvSleepDuration != null) {
+            String duration = String.format(Locale.getDefault(), "%dh %02dm", hours, mins);
+            tvSleepDuration.setText(duration);
+        }
+    }
 
     private void showQrInfoDialog() {
         int dp = (int) getResources().getDisplayMetrics().density;
 
-        // Root scroll
         ScrollView scrollView = new ScrollView(this);
         scrollView.setPadding(8 * dp, 4 * dp, 8 * dp, 4 * dp);
 
@@ -96,7 +137,6 @@ public class AlarmActivity extends AppCompatActivity {
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(16 * dp, 8 * dp, 16 * dp, 8 * dp);
 
-        // ── Explanation text ──────────────────────────────────────────────
         TextView tv = new TextView(this);
         tv.setText(
                 "1. Take a screenshot of the QR code below 📸\n\n"
@@ -112,9 +152,8 @@ public class AlarmActivity extends AppCompatActivity {
         tv.setLineSpacing(4f, 1f);
         layout.addView(tv);
 
-        // ── QR image from res/drawable/qr_code ───────────────────────────
         ImageView ivQr = new ImageView(this);
-        ivQr.setImageResource(R.drawable.qr_code); // ← res/drawable/qr_code.png
+        ivQr.setImageResource(R.drawable.qr_code);
 
         int size = 220 * dp;
         LinearLayout.LayoutParams imgParams = new LinearLayout.LayoutParams(size, size);
@@ -125,7 +164,6 @@ public class AlarmActivity extends AppCompatActivity {
         ivQr.setScaleType(ImageView.ScaleType.FIT_CENTER);
         layout.addView(ivQr);
 
-        // ── Caption ───────────────────────────────────────────────────────
         TextView caption = new TextView(this);
         caption.setText("📌 Screenshot this QR → Print it → Stick it in your bathroom");
         caption.setTextSize(12f);
@@ -147,10 +185,6 @@ public class AlarmActivity extends AppCompatActivity {
                 .show();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Overlay permission
-    // ─────────────────────────────────────────────────────────────────────────
-
     private void requestOverlayPermissionIfNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!Settings.canDrawOverlays(this)) {
@@ -171,10 +205,6 @@ public class AlarmActivity extends AppCompatActivity {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Time picker
-    // ─────────────────────────────────────────────────────────────────────────
-
     private void pickTime(boolean isWakeUp) {
         int hour   = isWakeUp ? wakeHour   : sleepHour;
         int minute = isWakeUp ? wakeMinute : sleepMinute;
@@ -189,17 +219,12 @@ public class AlarmActivity extends AppCompatActivity {
                 sleepMinute = m;
                 tvSleepTime.setText(String.format(Locale.getDefault(), "%02d:%02d", h, m));
             }
+            updateSleepDuration();
         }, hour, minute, true).show();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Save settings
-    // ─────────────────────────────────────────────────────────────────────────
-
     private void saveSettings() {
-        boolean alarmOn = swAlarm.isChecked();
-
-        if (alarmOn) {
+        if (isAlarmEnabled) {
             if (WakeUpScheduler.needsExactAlarmPermission(this)) {
                 showExactAlarmPermissionDialog();
                 return;
@@ -212,7 +237,7 @@ public class AlarmActivity extends AppCompatActivity {
             }
         }
 
-        applyAndSave(alarmOn);
+        applyAndSave(isAlarmEnabled);
     }
 
     private void showExactAlarmPermissionDialog() {
@@ -248,11 +273,11 @@ public class AlarmActivity extends AppCompatActivity {
 
         Executors.newSingleThreadExecutor().execute(() -> {
             SleepSettings s = new SleepSettings();
+            s.id                = 1;
             s.sleepTime         = String.format(Locale.getDefault(), "%02d:%02d", sleepHour, sleepMinute);
             s.wakeUpTime        = String.format(Locale.getDefault(), "%02d:%02d", wakeHour, wakeMinute);
             s.isAlarmOn         = alarmOn;
             s.isQRRequired      = true;
-            s.lastSleepDuration = 0;
             AppDatabase.getInstance(this).sleepDao().insertSleepSettings(s);
         });
 
@@ -271,11 +296,13 @@ public class AlarmActivity extends AppCompatActivity {
                     wakeMinute  = Integer.parseInt(wake[1]);
                     sleepHour   = Integer.parseInt(sleep[0]);
                     sleepMinute = Integer.parseInt(sleep[1]);
+                    isAlarmEnabled = saved.isAlarmOn;
                 } catch (Exception ignored) {}
             }
             runOnUiThread(() -> {
                 tvWakeTime.setText(String.format(Locale.getDefault(), "%02d:%02d", wakeHour, wakeMinute));
                 tvSleepTime.setText(String.format(Locale.getDefault(), "%02d:%02d", sleepHour, sleepMinute));
+                updateToggleUI();
             });
         });
     }
