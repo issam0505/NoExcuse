@@ -184,7 +184,9 @@ public class MainActivity extends AppCompatActivity {
         
         // ─── Launch AlarmActivity from iconClock ──────────────────────────
         iconClock.setOnClickListener(v -> {
-            startActivity(new Intent(this, AlarmActivity.class));
+            Intent intent = new Intent(this, AlarmActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
         });
 
         btnDash.setOnClickListener(v -> drawerLayout.closeDrawer(GravityCompat.END));

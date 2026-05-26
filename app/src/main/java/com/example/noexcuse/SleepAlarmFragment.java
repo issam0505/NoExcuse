@@ -108,11 +108,11 @@ public class SleepAlarmFragment extends Fragment {
         });
 
         if (isAlarmOn) {
-            tvAlarmStatus.setText("Alarm is active");
+            tvAlarmStatus.setText("Alarme On");
             tvAlarmStatus.setTextColor(COLOR_STATUS_ON);
             viewStatusDot.setBackgroundTintList(ColorStateList.valueOf(COLOR_STATUS_ON));
         } else {
-            tvAlarmStatus.setText("Alarm is off");
+            tvAlarmStatus.setText("Alarme Off");
             tvAlarmStatus.setTextColor(COLOR_INACTIVE);
             viewStatusDot.setBackgroundTintList(ColorStateList.valueOf(COLOR_STATUS_OFF));
         }

@@ -42,6 +42,8 @@ public class AlarmActivity extends AppCompatActivity {
     private TextView       tvSleepTime;
     private TextView       tvAlarmStatus;
     private TextView       tvSleepDuration;
+    private View           cardWakeTime;
+    private View           cardSleepTime;
     private View           viewStatusDot;
     private SwitchMaterial switchAlarm;
     private MaterialButton btnSave;
@@ -65,6 +67,8 @@ public class AlarmActivity extends AppCompatActivity {
         tvSleepTime     = findViewById(R.id.tvSleepTime);
         tvAlarmStatus   = findViewById(R.id.tvAlarmStatus);
         tvSleepDuration = findViewById(R.id.tvSleepDuration);
+        cardWakeTime    = findViewById(R.id.cardWakeTime);
+        cardSleepTime   = findViewById(R.id.cardSleepTime);
         viewStatusDot   = findViewById(R.id.viewStatusDot);
         switchAlarm     = findViewById(R.id.switchAlarm);
         btnSave         = findViewById(R.id.btnSaveAlarm);
@@ -75,6 +79,8 @@ public class AlarmActivity extends AppCompatActivity {
 
         tvWakeTime.setOnClickListener(v -> pickTime(true));
         tvSleepTime.setOnClickListener(v -> pickTime(false));
+        if (cardWakeTime != null) cardWakeTime.setOnClickListener(v -> pickTime(true));
+        if (cardSleepTime != null) cardSleepTime.setOnClickListener(v -> pickTime(false));
         btnSave.setOnClickListener(v -> saveSettings());
 
         if (btnQrInfo != null) {
@@ -99,6 +105,13 @@ public class AlarmActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        loadSavedSettings();
+    }
+
     private void updateToggleUI() {
         // Prevent recursive listener calls
         if (switchAlarm != null && switchAlarm.isChecked() != isAlarmEnabled) {
@@ -108,11 +121,11 @@ public class AlarmActivity extends AppCompatActivity {
         }
         
         if (isAlarmEnabled) {
-            tvAlarmStatus.setText("ON");
+            tvAlarmStatus.setText("Alarm On");
             tvAlarmStatus.setTextColor(Color.parseColor("#4CAF50"));
             if (viewStatusDot != null) viewStatusDot.setBackgroundResource(R.drawable.bg_status_dot_on);
         } else {
-            tvAlarmStatus.setText("OFF");
+            tvAlarmStatus.setText("Alarm Off");
             tvAlarmStatus.setTextColor(Color.parseColor("#888888"));
             if (viewStatusDot != null) viewStatusDot.setBackgroundResource(R.drawable.bg_status_dot);
         }

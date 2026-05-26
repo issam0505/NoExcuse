@@ -249,7 +249,7 @@
                         android:id="@+id/tvAlarmStatus"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Alarm is off"
+                        android:text="Alarme Off"
                         android:textColor="#555555"
                         android:textSize="12sp"/>
 
