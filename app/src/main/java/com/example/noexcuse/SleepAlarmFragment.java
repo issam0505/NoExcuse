@@ -42,6 +42,8 @@ public class SleepAlarmFragment extends Fragment {
     private TextView       tvSleepTime;
     private TextView       tvAlarmStatus;
     private TextView       tvSleepDuration;
+    private View           cardWakeTime;
+    private View           cardSleepTime;
     private View           viewStatusDot;
     private com.google.android.material.switchmaterial.SwitchMaterial switchAlarm;
     private MaterialButton btnSave;
@@ -70,12 +72,14 @@ public class SleepAlarmFragment extends Fragment {
         tvSleepTime     = view.findViewById(R.id.tvSleepTime);
         tvAlarmStatus   = view.findViewById(R.id.tvAlarmStatus);
         tvSleepDuration = view.findViewById(R.id.tvSleepDuration);
+        cardWakeTime    = view.findViewById(R.id.cardWakeTime);
+        cardSleepTime   = view.findViewById(R.id.cardSleepTime);
         viewStatusDot   = view.findViewById(R.id.viewStatusDot);
         switchAlarm     = view.findViewById(R.id.switchAlarm);
         btnSave         = view.findViewById(R.id.btnSaveAlarm);
 
-        tvWakeTime.setOnClickListener(v -> pickTime(true));
-        tvSleepTime.setOnClickListener(v -> pickTime(false));
+        cardWakeTime.setOnClickListener(v -> pickTime(true));
+        cardSleepTime.setOnClickListener(v -> pickTime(false));
 
         switchAlarm.setOnCheckedChangeListener((btn, checked) -> {
             if (isLoadingData) return;
