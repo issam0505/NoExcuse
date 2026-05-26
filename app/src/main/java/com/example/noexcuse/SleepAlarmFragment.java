@@ -80,6 +80,8 @@ public class SleepAlarmFragment extends Fragment {
 
         cardWakeTime.setOnClickListener(v -> pickTime(true));
         cardSleepTime.setOnClickListener(v -> pickTime(false));
+        tvWakeTime.setOnClickListener(v -> pickTime(true));
+        tvSleepTime.setOnClickListener(v -> pickTime(false));
 
         switchAlarm.setOnCheckedChangeListener((btn, checked) -> {
             if (isLoadingData) return;
